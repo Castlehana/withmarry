@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 const WEDDING = new Date("2026-11-21T13:00:00+09:00");
 
 /** 로딩 화면 타이핑 문구 */
-const INTRO_FULL = "김도연 ♥ 이지유 결혼합니다.";
+const INTRO_FULL = "김철수 ♥ 이영희 결혼합니다.";
 
 const NAV: { id: string; label: string }[] = [
   { id: "main", label: "메인" },
@@ -41,8 +41,8 @@ function weddingCountLabel() {
   const start = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
   const end = new Date(WEDDING.getFullYear(), WEDDING.getMonth(), WEDDING.getDate()).getTime();
   const diffDays = Math.round((end - start) / (1000 * 60 * 60 * 24));
-  if (diffDays > 0) return { head: "도연 · 지유 결혼식까지", value: String(diffDays), tail: "일 남았습니다." };
-  if (diffDays < 0) return { head: "도연 · 지유의 결혼식이", value: String(Math.abs(diffDays)), tail: "일 지났습니다." };
+  if (diffDays > 0) return { head: "철수 · 영희 결혼식까지", value: String(diffDays), tail: "일 남았습니다." };
+  if (diffDays < 0) return { head: "철수 · 영희의 결혼식이", value: String(Math.abs(diffDays)), tail: "일 지났습니다." };
   return { head: "오늘은", value: "바로", tail: "결혼식 당일입니다." };
 }
 
@@ -52,14 +52,14 @@ const INTERVIEW = [
     a: (
       <>
         <p className="qa-speaker">
-          <span className="emoji">🤵🏻‍♂️</span> 도연
+          <span className="emoji">🤵🏻‍♂️</span> 철수
         </p>
         <p>
           인생은 지금부터 시작인 것 같아요. 앞으로 매일 함께 맛있는 밥을 먹고, 함께 기뻐하고, 함께 여행하고 모든 것을
           언제나 함께할 수 있다는 생각에 벌써부터 행복합니다. 😁
         </p>
         <p className="qa-speaker">
-          <span className="emoji">👰🏻‍♀️</span> 지유
+          <span className="emoji">👰🏻‍♀️</span> 영희
         </p>
         <p>
           매일 데이트하고 헤어질 때마다 아쉬웠는데 이제는 매일 함께 있을 수 있어서 행복해요. 💗 어떻게 하루를 보냈는지
@@ -216,7 +216,7 @@ export default function App() {
             <button type="button" className="icon-btn" onClick={() => setMenuOpen(true)} aria-label="메뉴">
               <span className="hamburger" />
             </button>
-            <span className="top-title">도연 · 지유</span>
+            <span className="top-title">철수 · 영희</span>
             <button type="button" className="icon-btn ghost" aria-label="음악(데모)">
               ♪
             </button>
@@ -260,9 +260,9 @@ export default function App() {
               <p className="hero-date-nums">26 · 11 · 21</p>
               <p className="hero-date-line">{formatDaysKo(WEDDING)} 오후 1시</p>
               <h1 className="hero-names">
-                <span>김도연</span>
+                <span>김철수</span>
                 <span className="ampersand">&</span>
-                <span>이지유</span>
+                <span>이영희</span>
               </h1>
               <p className="hero-venue">더살롱드웨딩홀 1층 레터홀</p>
               <div className="scroll-hint">
@@ -287,15 +287,17 @@ export default function App() {
 
           <section id="greeting" className="section greeting">
             <h2>소중한 분들을 초대합니다.</h2>
-            <p>오늘도, 내일<strong>도</strong> 함께하고 싶은 사람이 생겼습니다.</p>
+            <p>
+              오늘도, 내일<strong>도</strong> 함께하고 싶은 사람이 생겼습니다.
+            </p>
             <p>
               함께라는 걸 당<strong>연</strong>하게 생각하지 않겠습니다.
             </p>
             <p>
-              서로가 함께한<strong>지</strong> 10년, 평생을 함께하려 합니다.
+              소중한 <strong>영</strong>원을 약속하며, 평생을 함께하려 합니다.
             </p>
             <p>
-              김도연, 이지<strong>유</strong> 결혼식에 초대합니다.
+              김철수, 이영<strong>희</strong> 결혼식에 초대합니다.
             </p>
           </section>
 
@@ -304,7 +306,7 @@ export default function App() {
               <div className="avatar groom-a" aria-hidden />
               <div>
                 <p className="role">신랑</p>
-                <p className="name">김도연</p>
+                <p className="name">김철수</p>
                 <p className="tag">다정한 사랑꾼 ESFJ</p>
                 <p className="tag accent">빵 굽는 남자</p>
                 <p className="desc">사교적, 열정적, 적응력</p>
@@ -314,7 +316,7 @@ export default function App() {
               <div className="avatar bride-a" aria-hidden />
               <div>
                 <p className="role">신부</p>
-                <p className="name">이지유</p>
+                <p className="name">이영희</p>
                 <p className="tag">세상의 소금형 ISTJ</p>
                 <p className="tag accent">붓질하는 여자</p>
                 <p className="desc">책임감, 논리적, 헌신</p>
@@ -397,7 +399,7 @@ export default function App() {
             <h2>피로연 안내</h2>
             <p>거리가 멀어 본식에 참석하지 못하시는 분들을 위해 피로연 자리를 마련하였습니다.</p>
             <p>부디 참석하시어 두 사람의 앞날을 축복해 주시길 바랍니다.</p>
-            <p className="sign">신랑 김도연, 신부 이지유</p>
+            <p className="sign">신랑 김철수, 신부 이영희</p>
             <div className="notice-box">
               <p>📍 제주도 서귀포시 천지연로 00-00</p>
               <p>⏰ 2023년 5월 14일 토요일 오후 1시</p>
@@ -414,7 +416,7 @@ export default function App() {
               여부를 회신해 주시면 더욱 감사하겠습니다.
             </p>
             <div className="rsvp-card">
-              <p>신랑 김도연, 신부 이지유</p>
+              <p>신랑 김철수, 신부 이영희</p>
               <p>{formatDaysKo(WEDDING)} 오후 1시</p>
               <p>더살롱드웨딩홀 1층 레터홀</p>
             </div>
@@ -432,8 +434,8 @@ export default function App() {
               비대면으로 축하를 전하고자 하시는 분들을 위해 계좌번호를 기재하였습니다. 너그러운 마음으로 양해
               부탁드립니다.
             </p>
-            <AccountBlock title="신랑측" rows={[["신랑", "1111-1111-1111-1111", "카카오뱅크 김도연"], ["신랑 아버지", "1111-1111-1111-1111", "카카오뱅크 김종혁"], ["신랑 어머니", "1111-1111-1111-1111", "카카오뱅크 최은혜"]]} />
-            <AccountBlock title="신부측" rows={[["신부", "1111-1111-1111-1111", "카카오뱅크 이지유"], ["신부 아버지", "1111-1111-1111-1111", "카카오뱅크 이주영"], ["신부 어머니", "1111-1111-1111-1111", "카카오뱅크 강지은"]]} />
+            <AccountBlock title="신랑측" rows={[["신랑", "1111-1111-1111-1111", "카카오뱅크 김철수"], ["신랑 아버지", "1111-1111-1111-1111", "카카오뱅크 김종혁"], ["신랑 어머니", "1111-1111-1111-1111", "카카오뱅크 최은혜"]]} />
+            <AccountBlock title="신부측" rows={[["신부", "1111-1111-1111-1111", "카카오뱅크 이영희"], ["신부 아버지", "1111-1111-1111-1111", "카카오뱅크 이주영"], ["신부 어머니", "1111-1111-1111-1111", "카카오뱅크 강지은"]]} />
           </section>
 
           <section id="guestbook" className="section guestbook">
