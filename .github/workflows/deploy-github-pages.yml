@@ -1,4 +1,11 @@
-# GitHub 저장소 → Settings → Pages → Source: GitHub Actions 로 설정한 뒤 사용합니다.
+# =============================================================================
+# 배포 전 필수 설정 (404 "Failed to create deployment" 방지)
+# -----------------------------------------------------------------------------
+# 1) GitHub → 저장소 Settings → Pages
+# 2) Build and deployment → Source 를 **GitHub Actions** 로 선택
+#    (「Deploy from a branch」가 아니어야 합니다. 이걸로 두면 deploy-pages 가 404)
+# 3) 첫 실행 시 Actions 탭에서 `github-pages` 환경 승인 요청이 뜨면 승인
+# =============================================================================
 name: Deploy GitHub Pages
 
 on:
@@ -19,16 +26,18 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-node@v4
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - uses: actions/setup-node@v5
         with:
-          node-version: "20"
+          node-version: "22"
           cache: npm
 
       - name: Install & build
         env:
-          # https://<user>.github.io/<repo>/ 형태에 맞춤 (저장소 이름이 URL 경로와 같아야 함)
           VITE_BASE_PATH: /${{ github.event.repository.name }}/
         run: |
           npm ci
@@ -41,6 +50,9 @@ jobs:
   deploy:
     needs: build
     runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
