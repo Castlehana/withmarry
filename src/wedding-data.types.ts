@@ -81,7 +81,7 @@ export interface WeddingData {
     hallLine: string;
     address: string;
     links: { label: string; href: string }[];
-    transport: { title: string; lines: string[] }[];
+    transport: { title: string; lines: string[]; smallFromIndex?: number }[];
   };
   reception: {
     title: string;

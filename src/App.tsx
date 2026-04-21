@@ -1,9 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-
-const WEDDING = new Date("2026-11-21T13:00:00+09:00");
-
-/** 로딩 화면 타이핑 문구 */
-const INTRO_FULL = "김철수 ♥ 이영희 결혼합니다.";
+import { getCalendarWeeks } from "./calendar-grid";
+import type { AccountRow, GreetingParagraph, InterviewBlock, InterviewItem } from "./wedding-data.types";
+import { weddingData } from "./wedding-data";
 
 const NAV: { id: string; label: string }[] = [
   { id: "main", label: "메인" },
@@ -36,74 +34,63 @@ function formatDaysKo(d: Date) {
   });
 }
 
-function weddingCountLabel() {
+function weddingCountLabel(wedding: Date, c: (typeof weddingData)["countdown"]) {
   const now = new Date();
   const start = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-  const end = new Date(WEDDING.getFullYear(), WEDDING.getMonth(), WEDDING.getDate()).getTime();
+  const end = new Date(wedding.getFullYear(), wedding.getMonth(), wedding.getDate()).getTime();
   const diffDays = Math.round((end - start) / (1000 * 60 * 60 * 24));
-  if (diffDays > 0) return { head: "철수 · 영희 결혼식까지", value: String(diffDays), tail: "일 남았습니다." };
-  if (diffDays < 0) return { head: "철수 · 영희의 결혼식이", value: String(Math.abs(diffDays)), tail: "일 지났습니다." };
-  return { head: "오늘은", value: "바로", tail: "결혼식 당일입니다." };
+  if (diffDays > 0) return { head: c.headUntil, value: String(diffDays), tail: c.tailUntil };
+  if (diffDays < 0) return { head: c.headPast, value: String(Math.abs(diffDays)), tail: c.tailPast };
+  return { head: c.headToday, value: c.valueToday, tail: c.tailToday };
 }
 
-const INTERVIEW = [
-  {
-    q: "1. 결혼하시는 소감이 어떠세요?",
-    a: (
-      <>
-        <p className="qa-speaker">
-          <span className="emoji">🤵🏻‍♂️</span> 철수
-        </p>
-        <p>
-          인생은 지금부터 시작인 것 같아요. 앞으로 매일 함께 맛있는 밥을 먹고, 함께 기뻐하고, 함께 여행하고 모든 것을
-          언제나 함께할 수 있다는 생각에 벌써부터 행복합니다. 😁
-        </p>
-        <p className="qa-speaker">
-          <span className="emoji">👰🏻‍♀️</span> 영희
-        </p>
-        <p>
-          매일 데이트하고 헤어질 때마다 아쉬웠는데 이제는 매일 함께 있을 수 있어서 행복해요. 💗 어떻게 하루를 보냈는지
-          이야기하고 마주보며 웃는 그런 소박한 나날들을 보낼 생각에 설레입니다. 🥰
-        </p>
-      </>
-    ),
-  },
-  {
-    q: "2. 처음에 어떻게 만나셨어요?",
-    a: (
-      <p>
-        인도네시아 여행 중에 여행가방을 통째로 잃어버려 어쩔 줄 몰라 하고 있을 때, 남편의 도움으로 가방도 찾고 무사히
-        귀국할 수 있었어요. 그 모습이 어찌나 멋지고 듬직하던지 잊혀지지가 않습니다. 💕
-      </p>
-    ),
-  },
-  {
-    q: "3. 신혼여행은 어디로 가시나요?",
-    a: <p>바다를 좋아하는 저희는, 14박 15일 몰디브 🏝 로 떠납니다. ✈️</p>,
-  },
-  {
-    q: "4. 신혼집은 어디인가요?",
-    a: (
-      <p>
-        우리는 경치가 아름다운 양평에 아담한 집을 짓고 있어요! 편안하고 아늑한 공간을 만들기 위해 열심히 꾸미고 있어요.
-        곧 새 집에서의 생활이 시작될 생각에 설레고 있어요!
-      </p>
-    ),
-  },
-];
+function GreetingLine({ paragraph }: { paragraph: GreetingParagraph }) {
+  return (
+    <p>
+      {paragraph.segments.map(([text, bold], i) =>
+        bold ? (
+          <strong key={i}>{text}</strong>
+        ) : (
+          <span key={i}>{text}</span>
+        )
+      )}
+    </p>
+  );
+}
 
-function CalendarNovember2026() {
-  const weeks = [
-    [null, null, null, null, null, null, 1],
-    [2, 3, 4, 5, 6, 7, 8],
-    [9, 10, 11, 12, 13, 14, 15],
-    [16, 17, 18, 19, 20, 21, 22],
-    [23, 24, 25, 26, 27, 28, 29],
-    [30, null, null, null, null, null, null],
-  ];
+function InterviewAnswer({ blocks }: { blocks: InterviewBlock[] }) {
+  return (
+    <>
+      {blocks.map((b, i) =>
+        b.kind === "speaker" ? (
+          <p key={i} className="qa-speaker">
+            <span className="emoji">{b.emoji}</span> {b.name}
+          </p>
+        ) : (
+          <p key={i}>{b.content}</p>
+        )
+      )}
+    </>
+  );
+}
+
+function CalendarMonth({
+  year,
+  month,
+  weddingDay,
+  ceremonyNote,
+  caption,
+}: {
+  year: number;
+  month: number;
+  weddingDay: number;
+  ceremonyNote: string;
+  caption: string;
+}) {
+  const weeks = useMemo(() => getCalendarWeeks(year, month), [year, month]);
   return (
     <div className="cal-wrap">
-      <p className="cal-caption">십일월의 스물한 번째 날.</p>
+      <p className="cal-caption">{caption}</p>
       <table className="cal-table">
         <thead>
           <tr>
@@ -116,9 +103,9 @@ function CalendarNovember2026() {
           {weeks.map((row, ri) => (
             <tr key={ri}>
               {row.map((cell, ci) => (
-                <td key={ci} className={cell === 21 ? "cal-wedding" : ""}>
-                  {cell == null ? "" : cell === 21 ? <span className="cal-day">21</span> : cell}
-                  {cell === 21 ? <span className="cal-note">오후 1시</span> : null}
+                <td key={ci} className={cell === weddingDay ? "cal-wedding" : ""}>
+                  {cell == null ? "" : cell === weddingDay ? <span className="cal-day">{cell}</span> : cell}
+                  {cell === weddingDay ? <span className="cal-note">{ceremonyNote}</span> : null}
                 </td>
               ))}
             </tr>
@@ -130,15 +117,19 @@ function CalendarNovember2026() {
 }
 
 export default function App() {
+  const { meta, couple, wedding, calendar, countdown, greeting, poem, interview, map, reception, rsvp, accounts, contact, footer } =
+    weddingData;
+
+  const WEDDING = useMemo(() => new Date(wedding.dateTimeISO), [wedding.dateTimeISO]);
+  const INTRO_FULL = meta.introTypingLine;
+
   const [menuOpen, setMenuOpen] = useState(false);
   const [musicHint, setMusicHint] = useState(true);
   const [rsvpOpen, setRsvpOpen] = useState(false);
   const [privacyOpen, setPrivacyOpen] = useState(false);
   const [interviewOpen, setInterviewOpen] = useState(false);
   const [introPhase, setIntroPhase] = useState<"typing" | "hold" | "fade" | "done">(() =>
-    typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches
-      ? "fade"
-      : "typing"
+    typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "fade" : "typing"
   );
   const [introChars, setIntroChars] = useState(() =>
     typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches
@@ -146,9 +137,13 @@ export default function App() {
       : 0
   );
 
-  const count = useMemo(() => weddingCountLabel(), []);
+  const count = useMemo(() => weddingCountLabel(WEDDING, countdown), [WEDDING, countdown]);
 
   const closeMenu = useCallback(() => setMenuOpen(false), []);
+
+  useEffect(() => {
+    document.title = meta.documentTitle;
+  }, [meta.documentTitle]);
 
   useEffect(() => {
     if (introPhase !== "typing") return;
@@ -159,7 +154,7 @@ export default function App() {
     const delay = introChars < 2 ? 140 : introChars > INTRO_FULL.length - 4 ? 100 : 72;
     const t = window.setTimeout(() => setIntroChars((c) => c + 1), delay);
     return () => window.clearTimeout(t);
-  }, [introPhase, introChars]);
+  }, [introPhase, introChars, INTRO_FULL.length]);
 
   useEffect(() => {
     if (introPhase !== "hold") return;
@@ -183,6 +178,9 @@ export default function App() {
     );
     return () => document.body.classList.remove("overflow-lock");
   }, [menuOpen, rsvpOpen, privacyOpen, introPhase]);
+
+  const coupleSignLine = `신랑 ${couple.groom.fullName}, 신부 ${couple.bride.fullName}`;
+  const heroVenueLine = `${wedding.venueName} ${wedding.venueHall}`;
 
   return (
     <div className="desktop-stage">
@@ -216,7 +214,7 @@ export default function App() {
             <button type="button" className="icon-btn" onClick={() => setMenuOpen(true)} aria-label="메뉴">
               <span className="hamburger" />
             </button>
-            <span className="top-title">철수 · 영희</span>
+            <span className="top-title">{couple.topBarTitle}</span>
             <button type="button" className="icon-btn ghost" aria-label="음악(데모)">
               ♪
             </button>
@@ -257,14 +255,16 @@ export default function App() {
               <p className="hero-kicker">
                 SAVE <em className="the-italic">The</em> DATE
               </p>
-              <p className="hero-date-nums">26 · 11 · 21</p>
-              <p className="hero-date-line">{formatDaysKo(WEDDING)} 오후 1시</p>
+              <p className="hero-date-nums">{wedding.saveTheDateNums}</p>
+              <p className="hero-date-line">
+                {formatDaysKo(WEDDING)} {wedding.ceremonyTimeLabel}
+              </p>
               <h1 className="hero-names">
-                <span>김철수</span>
+                <span>{couple.groom.fullName}</span>
                 <span className="ampersand">&</span>
-                <span>이영희</span>
+                <span>{couple.bride.fullName}</span>
               </h1>
-              <p className="hero-venue">더살롱드웨딩홀 1층 레터홀</p>
+              <p className="hero-venue">{heroVenueLine}</p>
               <div className="scroll-hint">
                 <span>스크롤</span>
                 <span className="chev" />
@@ -274,31 +274,22 @@ export default function App() {
 
           <section id="quote" className="section poem">
             <div className="poem-lines">
-              <p>내가 그다지 사랑하던 그대여</p>
-              <p>내 한 평생에 차마</p>
-              <p>그대를 잊을 수 없소이다.</p>
-              <p>내 차례에 못 올 사랑인 줄 알면서도</p>
-              <p>나 혼자는 꾸준히 생각하리라.</p>
-              <p className="spacer" />
-              <p>자, 그러면 내내 어여쁘소서.</p>
+              {poem.lines.map((line, i) =>
+                line === "" ? (
+                  <p key={i} className="spacer" />
+                ) : (
+                  <p key={i}>{line}</p>
+                )
+              )}
             </div>
-            <p className="poem-src">《이런 시》, 이상</p>
+            <p className="poem-src">{poem.attribution}</p>
           </section>
 
           <section id="greeting" className="section greeting">
-            <h2>소중한 분들을 초대합니다.</h2>
-            <p>
-              오늘도, 내일<strong>도</strong> 함께하고 싶은 사람이 생겼습니다.
-            </p>
-            <p>
-              함께라는 걸 당<strong>연</strong>하게 생각하지 않겠습니다.
-            </p>
-            <p>
-              소중한 <strong>영</strong>원을 약속하며, 평생을 함께하려 합니다.
-            </p>
-            <p>
-              김철수, 이영<strong>희</strong> 결혼식에 초대합니다.
-            </p>
+            <h2>{greeting.heading}</h2>
+            {greeting.paragraphs.map((p, i) => (
+              <GreetingLine key={i} paragraph={p} />
+            ))}
           </section>
 
           <section id="intro" className="section couple">
@@ -306,25 +297,25 @@ export default function App() {
               <div className="avatar groom-a" aria-hidden />
               <div>
                 <p className="role">신랑</p>
-                <p className="name">김철수</p>
-                <p className="tag">다정한 사랑꾼 ESFJ</p>
-                <p className="tag accent">빵 굽는 남자</p>
-                <p className="desc">사교적, 열정적, 적응력</p>
+                <p className="name">{couple.groom.fullName}</p>
+                <p className="tag">{couple.groom.mbtiLine}</p>
+                <p className="tag accent">{couple.groom.tagAccent}</p>
+                <p className="desc">{couple.groom.description}</p>
               </div>
             </div>
             <div className="person-card bride">
               <div className="avatar bride-a" aria-hidden />
               <div>
                 <p className="role">신부</p>
-                <p className="name">이영희</p>
-                <p className="tag">세상의 소금형 ISTJ</p>
-                <p className="tag accent">붓질하는 여자</p>
-                <p className="desc">책임감, 논리적, 헌신</p>
+                <p className="name">{couple.bride.fullName}</p>
+                <p className="tag">{couple.bride.mbtiLine}</p>
+                <p className="tag accent">{couple.bride.tagAccent}</p>
+                <p className="desc">{couple.bride.description}</p>
               </div>
             </div>
             <div className="parents">
-              <p>故 김종혁 · 故 최은혜의 장남</p>
-              <p>故 이주영 · 故 강지은의 장녀</p>
+              <p>{couple.groomParentsLine}</p>
+              <p>{couple.brideParentsLine}</p>
             </div>
             <button type="button" className="text-link" onClick={() => scrollToId("contact-parents")}>
               혼주에게 연락하기
@@ -332,7 +323,13 @@ export default function App() {
           </section>
 
           <section id="calendar" className="section cal-section">
-            <CalendarNovember2026 />
+            <CalendarMonth
+              year={calendar.year}
+              month={calendar.month}
+              weddingDay={calendar.weddingDay}
+              ceremonyNote={calendar.ceremonyNote}
+              caption={calendar.caption}
+            />
             <div className="countdown">
               <p>{count.head}</p>
               <p className="count-big">{count.value}</p>
@@ -366,43 +363,45 @@ export default function App() {
           <section id="map" className="section map">
             <h2>오시는 길</h2>
             <div className="map-card">
-              <p className="map-place">더살롱드웨딩홀</p>
-              <p>1층 레터홀</p>
-              <p className="addr">제주특별자치도 서귀포시 중앙로 105</p>
+              <p className="map-place">{map.venueName}</p>
+              <p>{map.hallLine}</p>
+              <p className="addr">{map.address}</p>
               <div className="map-btns">
-                <a className="map-chip" href="https://tmap.co.kr/" target="_blank" rel="noreferrer">
-                  티맵
-                </a>
-                <a className="map-chip" href="https://map.kakao.com/" target="_blank" rel="noreferrer">
-                  카카오내비
-                </a>
-                <a className="map-chip" href="https://map.naver.com/" target="_blank" rel="noreferrer">
-                  네이버지도
-                </a>
+                {map.links.map((link) => (
+                  <a key={link.href} className="map-chip" href={link.href} target="_blank" rel="noreferrer">
+                    {link.label}
+                  </a>
+                ))}
               </div>
             </div>
             <div className="trans">
-              <h3>🚌 버스</h3>
-              <p>000번, 000번, 000번</p>
-              <p className="small">살롱드레터 정류소 하차 후 도보 3분</p>
-              <h3>🚆 지하철</h3>
-              <p>1호선: 살롱드레터 역 1번 출구 하차</p>
-              <p>2호선: 살롱드레터 역 2번 출구 하차</p>
-              <p className="small">출구 나와서 우측 신호등 건너 셔틀버스 탑승 또는 도보 5분</p>
-              <h3>🚗 자차</h3>
-              <p>살롱드레터 주차장 검색</p>
-              <p>살롱드레터 웨딩홀 검색</p>
+              {map.transport.map((block) => (
+                <div key={block.title}>
+                  <h3>{block.title}</h3>
+                  {block.lines.map((line, i) => (
+                    <p
+                      key={i}
+                      className={
+                        block.smallFromIndex != null && i >= block.smallFromIndex ? "small" : undefined
+                      }
+                    >
+                      {line}
+                    </p>
+                  ))}
+                </div>
+              ))}
             </div>
           </section>
 
           <section id="notice" className="section notice">
-            <h2>피로연 안내</h2>
-            <p>거리가 멀어 본식에 참석하지 못하시는 분들을 위해 피로연 자리를 마련하였습니다.</p>
-            <p>부디 참석하시어 두 사람의 앞날을 축복해 주시길 바랍니다.</p>
-            <p className="sign">신랑 김철수, 신부 이영희</p>
+            <h2>{reception.title}</h2>
+            {reception.paragraphs.map((t, i) => (
+              <p key={i}>{t}</p>
+            ))}
+            <p className="sign">{reception.signLine}</p>
             <div className="notice-box">
-              <p>📍 제주도 서귀포시 천지연로 00-00</p>
-              <p>⏰ 2023년 5월 14일 토요일 오후 1시</p>
+              <p>{reception.boxAddressLine}</p>
+              <p>{reception.boxWhenLine}</p>
               <button type="button" className="outline-btn sm" onClick={() => scrollToId("map")}>
                 오시는 길
               </button>
@@ -411,14 +410,13 @@ export default function App() {
 
           <section id="rsvp" className="section rsvp-intro">
             <h2>참석 여부 전달</h2>
-            <p>
-              소중한 시간을 내어 결혼식에 참석해 주시는 모든 분들께 감사드립니다. 예식이 지정좌석제로 진행되오니, 참석
-              여부를 회신해 주시면 더욱 감사하겠습니다.
-            </p>
+            <p>{rsvp.intro}</p>
             <div className="rsvp-card">
-              <p>신랑 김철수, 신부 이영희</p>
-              <p>{formatDaysKo(WEDDING)} 오후 1시</p>
-              <p>더살롱드웨딩홀 1층 레터홀</p>
+              <p>{coupleSignLine}</p>
+              <p>
+                {formatDaysKo(WEDDING)} {wedding.ceremonyTimeLabel}
+              </p>
+              <p>{heroVenueLine}</p>
             </div>
             <button type="button" className="primary-btn" onClick={() => setRsvpOpen(true)}>
               참석 여부 전달
@@ -430,12 +428,9 @@ export default function App() {
 
           <section id="account" className="section accounts">
             <h2>마음 전하실 곳</h2>
-            <p>
-              비대면으로 축하를 전하고자 하시는 분들을 위해 계좌번호를 기재하였습니다. 너그러운 마음으로 양해
-              부탁드립니다.
-            </p>
-            <AccountBlock title="신랑측" rows={[["신랑", "1111-1111-1111-1111", "카카오뱅크 김철수"], ["신랑 아버지", "1111-1111-1111-1111", "카카오뱅크 김종혁"], ["신랑 어머니", "1111-1111-1111-1111", "카카오뱅크 최은혜"]]} />
-            <AccountBlock title="신부측" rows={[["신부", "1111-1111-1111-1111", "카카오뱅크 이영희"], ["신부 아버지", "1111-1111-1111-1111", "카카오뱅크 이주영"], ["신부 어머니", "1111-1111-1111-1111", "카카오뱅크 강지은"]]} />
+            <p>{accounts.intro}</p>
+            <AccountBlock title={accounts.groomSideTitle} rows={accounts.groomSide} />
+            <AccountBlock title={accounts.brideSideTitle} rows={accounts.brideSide} />
           </section>
 
           <section id="guestbook" className="section guestbook">
@@ -459,27 +454,27 @@ export default function App() {
             <h2>혼주에게 연락하기</h2>
             <div className="contact-grid">
               <div>
-                <h3>신랑측</h3>
-                <p>아버지 김종혁</p>
-                <p>어머니 최은혜</p>
+                <h3>{contact.groomSideHeading}</h3>
+                <p>{contact.groomFather}</p>
+                <p>{contact.groomMother}</p>
               </div>
               <div>
-                <h3>신부측</h3>
-                <p>아버지 이주영</p>
-                <p>어머니 강지은</p>
+                <h3>{contact.brideSideHeading}</h3>
+                <p>{contact.brideFather}</p>
+                <p>{contact.brideMother}</p>
               </div>
             </div>
           </section>
 
           <footer id="ending" className="footer">
             <p className="heart">♥</p>
-            <p>COPYRIGHT NeedIT. All rights reserved.</p>
+            <p>{footer.copyright}</p>
             <p className="small">
-              본 페이지는{" "}
-              <a href="https://salondeletter.com/w/sample1_3" target="_blank" rel="noreferrer">
-                살롱드레터 샘플
+              {footer.creditBefore}
+              <a href={footer.creditLinkHref} target="_blank" rel="noreferrer">
+                {footer.creditLinkLabel}
               </a>
-              을 참고한 데모입니다.
+              {footer.creditAfter}
             </p>
           </footer>
         </main>
@@ -495,10 +490,12 @@ export default function App() {
                 </button>
               </div>
               <div className="modal-body">
-                {INTERVIEW.map((it) => (
-                  <article key={it.q} className="qa-block">
-                    <h3>{it.q}</h3>
-                    <div className="qa-a">{it.a}</div>
+                {interview.map((it: InterviewItem) => (
+                  <article key={it.question} className="qa-block">
+                    <h3>{it.question}</h3>
+                    <div className="qa-a">
+                      <InterviewAnswer blocks={it.blocks} />
+                    </div>
                   </article>
                 ))}
               </div>
@@ -614,16 +611,16 @@ export default function App() {
   );
 }
 
-function AccountBlock({ title, rows }: { title: string; rows: [string, string, string][] }) {
+function AccountBlock({ title, rows }: { title: string; rows: AccountRow[] }) {
   return (
     <div className="acc-group">
       <h3>{title}</h3>
       <ul>
-        {rows.map(([role, num, bank]) => (
-          <li key={role}>
-            <p className="acc-role">{role}</p>
-            <p className="acc-num">{num}</p>
-            <p className="acc-bank">{bank}</p>
+        {rows.map((row) => (
+          <li key={row.role}>
+            <p className="acc-role">{row.role}</p>
+            <p className="acc-num">{row.number}</p>
+            <p className="acc-bank">{row.bankLine}</p>
             <div className="acc-actions">
               <button type="button" className="chip-btn">
                 복사
