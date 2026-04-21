@@ -1,10 +1,11 @@
 # =============================================================================
-# 배포 전 필수 설정 (404 "Failed to create deployment" 방지)
+# 먼저 한 번만 수동 설정 (안 하면 deploy 단계에서 404)
 # -----------------------------------------------------------------------------
-# 1) GitHub → 저장소 Settings → Pages
-# 2) Build and deployment → Source 를 **GitHub Actions** 로 선택
-#    (「Deploy from a branch」가 아니어야 합니다. 이걸로 두면 deploy-pages 가 404)
-# 3) 첫 실행 시 Actions 탭에서 `github-pages` 환경 승인 요청이 뜨면 승인
+# Settings → Pages → Build and deployment → Source: **GitHub Actions**
+#
+# 참고: `configure-pages` 액션은 "이미 Pages가 켜진 저장소"에서만 API 조회가 됩니다.
+#       아무 설정 없이 돌리면 Get Pages site → 404 가 납니다.
+#       Vite 는 아래 VITE_BASE_PATH 로 base 를 쓰므로 configure-pages 는 쓰지 않습니다.
 # =============================================================================
 name: Deploy GitHub Pages
 
@@ -12,6 +13,9 @@ on:
   push:
     branches: [main, master]
   workflow_dispatch:
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 permissions:
   contents: read
@@ -27,9 +31,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-
-      - name: Configure Pages
-        uses: actions/configure-pages@v5
 
       - uses: actions/setup-node@v5
         with:
