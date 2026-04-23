@@ -1,7 +1,36 @@
 import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState, type PointerEvent } from "react";
+import { createPortal } from "react-dom";
+import { InterludeIllustrationFrames } from "./InterludeIllustrationFrames";
+import { InterludePhotoFilm } from "./InterludePhotoFilm";
+import { InterludeScriptSequence } from "./InterludeScriptSequence";
+import { InterludeSoundWaveCanvas } from "./InterludeSoundWaveCanvas";
 
 const SAND_CYCLE_MS = 5000;
 const SNAP_MS = 700;
+/** 모래 애니 시작 후 → 흰 페이드(2s) → 검 페이드(2s) → 인터루드 진입 */
+const INTERLUDE_FLASH_AFTER_SAND_MS = 2000;
+const INTERLUDE_FLASH_WHITE_MS = 2000;
+const INTERLUDE_FLASH_BLACK_MS = 2000;
+/** 스토리 페이지(인터루드) 마운트 후 첫 페이드(일러스트) 시작까지 */
+const INTERLUDE_REVEAL_ART_DELAY_MS = 1000;
+/** 일러스트 → 포토 → 웨이브 각 시작 사이 간격(페이드 길이는 CSS 1.5s 애니메이션) */
+const INTERLUDE_REVEAL_STAGGER_MS = 1000;
+/** 웨이브(phase 3) 시작 후 대본·음원 시퀀스까지 대기 */
+const INTERLUDE_SCRIPT_AFTER_WAVE_MS = 1000;
+/** 인터루드 닫기: 검게 덮기 → 본문으로(각 2s) */
+const INTERLUDE_EXIT_TO_BLACK_MS = 2000;
+const INTERLUDE_EXIT_FROM_BLACK_MS = 2000;
+
+/** 인터루드: 본문 숨김 | 닫기: 검은 레이어 페이드아웃과 함께 본문 페이드인 */
+export type HourglassInterludeShellMode = "normal" | "interlude" | "exit-reveal";
+
+export type HourglassInteractiveProps = {
+  /** 모래 흐름·인터루드 동안 스크롤 잠금 */
+  onScrollLockChange?: (locked: boolean) => void;
+  /** Our Story 셸: `exit-reveal`일 때 본문·헤더를 레이어와 동시에 서서히 표시 */
+  onInterludePageChange?: (mode: HourglassInterludeShellMode) => void;
+};
+
 /** 1번(0° 안정)으로 볼 각 허용 오차 — 이보다 벗어나면 회전 힌트 숨김 */
 const ROTATE_HINT_DEG_EPS = 1.25;
 
@@ -16,24 +45,16 @@ function pickStableTarget(rotationDeg: number): 0 | 180 {
   return 180;
 }
 
-/**
- * 스냅 직후 실제 각이 0° 또는 180°인지 확인하고, 부동소수 오차면 가장 가까운 안정 각으로 맞춤.
- */
 function ensureStableOrientation(angleDeg: number): 0 | 180 {
   const n = norm360(angleDeg);
   if (n < 90 || n > 270) return 0;
   return 180;
 }
 
-/**
- * 이 SVG 기준: 0°일 때는 모래가 아래쪽(아래 방)에 쌓이고,
- * 180°로 뒤집으면 그 방이 화면 위로 오므로 "모래가 위에 있음"으로 본다.
- */
 function isSandPileOnScreenTop(stable: 0 | 180): boolean {
   return stable === 180;
 }
 
-/** from → to 로 가장 짧은 각 차이(도) */
 function shortestDiffDeg(from: number, to: number): number {
   const nf = norm360(from);
   const nt = norm360(to);
@@ -48,49 +69,19 @@ function easeOutCubic(t: number): number {
   return 1 - u * u * u;
 }
 
-/** 180° 재생 시 로컬 path는 위→아래로 설계됨 → 화면에서 뒤집힌 유리에 맞게 Y 반전 */
 const SAND_DRAIN_FLIP = "translate(50,50) scale(1,-1) translate(-50,-50)";
-
-/** 모래+틀을 중심에서 살짝 축소해 틀 두께만 비율상 얇게(좌표 재작성 없이) */
 const HOURGLASS_CONTENT_SCALE = 0.988;
 
-/**
- * 회전 힌트(viewBox 0 0 24 26): 왼쪽 반원 + 아래 정삼각형에 가까운 화살.
- * 호 기하 하단(RH_BOTTOM)과 원심(RH_CX)에 밑변 중점을 맞춤 — 밑변 y는 스트로크 바깥선 기준.
- */
-const RH_CX = 15.5;
-const RH_CY = 11.5;
-const RH_R = 8.25;
-const RH_STROKE = 1.55;
-const RH_TOP = RH_CY - RH_R;
-const RH_BOTTOM = RH_CY + RH_R;
-const RH_STROKE_OUTER_BELOW = RH_BOTTOM + RH_STROKE / 2;
-const RH_TRI_GAP = 0.02;
-/** 꼭짓점~밑변 거리 h일 때 정삼각형이면 반밑변 = h/√3 (너비 과한 느낌 방지) */
-const RH_TRI_HEIGHT = 2.75;
-const RH_TRI_HALF_W = RH_TRI_HEIGHT / Math.sqrt(3);
-const RH_ARROW_Y_BASE = RH_STROKE_OUTER_BELOW + RH_TRI_GAP;
-const RH_ARROW_Y_TIP = RH_ARROW_Y_BASE + RH_TRI_HEIGHT;
-const RH_ARROW_XL = RH_CX - RH_TRI_HALF_W;
-const RH_ARROW_XR = RH_CX + RH_TRI_HALF_W;
+const ROTATE_HINT_IMG = `${import.meta.env.BASE_URL}static/그림1.svg`;
+const OUR_STORY_STATIC = `${import.meta.env.BASE_URL}static/${encodeURIComponent("Our Story")}/main_page`;
+/** 인터루드 중앙 일러스트 뒤 배경 레이어(back.png) — z-index는 일러스트·웨이브보다 낮음 */
+const OUR_STORY_BACK_IMG = `${OUR_STORY_STATIC}/back.png`;
 
-const ROTATE_HINT_ARC_D = `M ${RH_CX} ${RH_TOP} A ${RH_R} ${RH_R} 0 0 0 ${RH_CX} ${RH_BOTTOM}`;
-const ROTATE_HINT_ARROW_POINTS = `${RH_CX},${RH_ARROW_Y_TIP.toFixed(3)} ${RH_ARROW_XL.toFixed(3)},${RH_ARROW_Y_BASE.toFixed(3)} ${RH_ARROW_XR.toFixed(3)},${RH_ARROW_Y_BASE.toFixed(3)}`;
-
-/** 모래가 아래에 다 쌓인 뒤(애니메이션 종료) 고정 path — 로컬 좌표 기준 */
 const SAND_TOP_REST = "M50,50,50,50,50,50,50,50,50,50Z";
 const SAND_FALL_REST = "M49,50,49,78,51,78,51,50Z";
 const SAND_BOTTOM_REST = "M66,68,66,78,34,78,34,68,50,50Z";
 
-/**
- * 모래시계 SVG — 0° / 180°만 안정, 드래그 후 90° 기준 스냅.
- *
- * 상태 흐름:
- * 1. 기본: 애니메이션 마지막 프레임(정적 path) + 각도 0°
- * 2. 180°로 스냅되면: SMIL을 처음부터 1회 재생(각도 180° 유지)
- * 3. 재생 종료 후: 정적 path + 각도 0°로 즉시 복귀(회전 애니 없음)
- */
-export function HourglassInteractive() {
+export function HourglassInteractive({ onScrollLockChange, onInterludePageChange }: HourglassInteractiveProps = {}) {
   const uid = useId().replace(/:/g, "");
   const filterId = `granular-${uid}`;
 
@@ -99,12 +90,23 @@ export function HourglassInteractive() {
   const [stableOrientation, setStableOrientation] = useState<0 | 180>(0);
   const [sandPileOnTop, setSandPileOnTop] = useState(false);
   const [sandKey, setSandKey] = useState(0);
-  /** 180° 도착 직후 모래가 아래로 흐르는 SMIL 구간만 true (정적 1번과 분리) */
   const [sandDrainPlaying, setSandDrainPlaying] = useState(false);
-  /** 포인터가 모래시계에 닿아 드래그 중(또는 누른 직후) */
   const [pointerOnHourglass, setPointerOnHourglass] = useState(false);
-  /** 0↔180 스냅 보간 중 */
   const [snapAnimating, setSnapAnimating] = useState(false);
+  /** Our Story 인터루드 본문(플래시 시퀀스 끝에 열림) */
+  const [interludeOpen, setInterludeOpen] = useState(false);
+  /** 흰/검 전체 화면 플래시: off | white | black */
+  const [transitionFlash, setTransitionFlash] = useState<"off" | "white" | "black">("off");
+  /** 0=숨김, 1=일러스트, 2=+포토, 3=+웨이브 */
+  const [interludeRevealPhase, setInterludeRevealPhase] = useState(0);
+  /** 닫기 시: toBlack(검은 페이드 인) → fromBlack(검은 페이드 아웃) */
+  const [interludeExitPhase, setInterludeExitPhase] = useState<"off" | "toBlack" | "fromBlack">("off");
+  /** 웨이브 등장(phase≥3) 후 INTERLUDE_SCRIPT_AFTER_WAVE_MS 경과 시 대본 fetch·표시 */
+  const [interludeScriptGateOpen, setInterludeScriptGateOpen] = useState(false);
+  /** 대본 .wav → AnalyserNode(웨이브 캔버스와 공유) */
+  const interludeWaveAnalyserRef = useRef<AnalyserNode | null>(null);
+  /** true일 때만 웨이브 위상 진행 + RMS 연동 — 재생 없음/대기 구간에서는 false(정지) */
+  const interludeWavActiveRef = useRef(false);
 
   const dragging = useRef(false);
   const lastAngleRef = useRef<number | null>(null);
@@ -114,9 +116,27 @@ export function HourglassInteractive() {
   const rotationRef = useRef(rotation);
   rotationRef.current = rotation;
   const sandCycleTimeoutRef = useRef<number | null>(null);
+  const transitionFlashTimeoutsRef = useRef<number[]>([]);
+  const interludeRevealTimeoutsRef = useRef<number[]>([]);
+  const interludeExitTimeoutsRef = useRef<number[]>([]);
+
   const svgRef = useRef<SVGSVGElement>(null);
 
-  /** React가 SMIL 노드를 붙인 뒤에도 일부 브라우저는 자동 시작이 안 됨 → beginElement */
+  const clearTransitionFlashTimeouts = useCallback(() => {
+    transitionFlashTimeoutsRef.current.forEach((id) => window.clearTimeout(id));
+    transitionFlashTimeoutsRef.current = [];
+  }, []);
+
+  const clearInterludeRevealTimeouts = useCallback(() => {
+    interludeRevealTimeoutsRef.current.forEach((id) => window.clearTimeout(id));
+    interludeRevealTimeoutsRef.current = [];
+  }, []);
+
+  const clearInterludeExitTimeouts = useCallback(() => {
+    interludeExitTimeoutsRef.current.forEach((id) => window.clearTimeout(id));
+    interludeExitTimeoutsRef.current = [];
+  }, []);
+
   useLayoutEffect(() => {
     if (!sandDrainPlaying) return;
     const svg = svgRef.current;
@@ -126,7 +146,7 @@ export function HourglassInteractive() {
         try {
           (el as SVGAnimateElement).beginElement();
         } catch {
-          /* SMIL 미지원 등 */
+          /* noop */
         }
       });
     });
@@ -158,9 +178,87 @@ export function HourglassInteractive() {
         window.clearTimeout(sandCycleTimeoutRef.current);
         sandCycleTimeoutRef.current = null;
       }
+      transitionFlashTimeoutsRef.current.forEach((id) => window.clearTimeout(id));
+      transitionFlashTimeoutsRef.current = [];
+      interludeRevealTimeoutsRef.current.forEach((id) => window.clearTimeout(id));
+      interludeRevealTimeoutsRef.current = [];
+      interludeExitTimeoutsRef.current.forEach((id) => window.clearTimeout(id));
+      interludeExitTimeoutsRef.current = [];
     },
     [cancelSnap]
   );
+
+  useEffect(() => {
+    const locked =
+      sandDrainPlaying || interludeOpen || transitionFlash !== "off" || interludeExitPhase !== "off";
+    onScrollLockChange?.(locked);
+    return () => onScrollLockChange?.(false);
+  }, [sandDrainPlaying, interludeOpen, transitionFlash, interludeExitPhase, onScrollLockChange]);
+
+  useEffect(() => {
+    const mode: HourglassInterludeShellMode =
+      interludeExitPhase === "fromBlack"
+        ? "exit-reveal"
+        : interludeOpen || interludeExitPhase === "toBlack"
+          ? "interlude"
+          : "normal";
+    onInterludePageChange?.(mode);
+    return () => onInterludePageChange?.("normal");
+  }, [interludeOpen, interludeExitPhase, onInterludePageChange]);
+
+  const dismissInterlude = useCallback(() => {
+    if (interludeExitPhase !== "off" || !interludeOpen) return;
+    clearTransitionFlashTimeouts();
+    clearInterludeRevealTimeouts();
+    clearInterludeExitTimeouts();
+    setTransitionFlash("off");
+    /* toBlack 구간에는 reveal phase 유지(0이면 일러스트·포토가 즉시 opacity 0으로 떨어져 검은 셸만 보임) */
+    setInterludeExitPhase("toBlack");
+    const tClose = window.setTimeout(() => {
+      setInterludeOpen(false);
+      setInterludeExitPhase("fromBlack");
+    }, INTERLUDE_EXIT_TO_BLACK_MS);
+    const tDone = window.setTimeout(() => {
+      setInterludeExitPhase("off");
+      interludeExitTimeoutsRef.current = [];
+    }, INTERLUDE_EXIT_TO_BLACK_MS + INTERLUDE_EXIT_FROM_BLACK_MS);
+    interludeExitTimeoutsRef.current = [tClose, tDone];
+  }, [
+    clearInterludeExitTimeouts,
+    clearInterludeRevealTimeouts,
+    clearTransitionFlashTimeouts,
+    interludeExitPhase,
+    interludeOpen,
+  ]);
+
+  /** 인터루드가 열린 뒤 일러스트 → 포토 → 웨이브 순으로 페이드 인 */
+  useEffect(() => {
+    clearInterludeRevealTimeouts();
+    if (!interludeOpen) {
+      setInterludeRevealPhase(0);
+      return;
+    }
+    setInterludeRevealPhase(0);
+    const t1 = window.setTimeout(() => setInterludeRevealPhase(1), INTERLUDE_REVEAL_ART_DELAY_MS);
+    const t2 = window.setTimeout(
+      () => setInterludeRevealPhase(2),
+      INTERLUDE_REVEAL_ART_DELAY_MS + INTERLUDE_REVEAL_STAGGER_MS
+    );
+    const t3 = window.setTimeout(
+      () => setInterludeRevealPhase(3),
+      INTERLUDE_REVEAL_ART_DELAY_MS + INTERLUDE_REVEAL_STAGGER_MS * 2
+    );
+    interludeRevealTimeoutsRef.current = [t1, t2, t3];
+    return () => clearInterludeRevealTimeouts();
+  }, [interludeOpen, clearInterludeRevealTimeouts]);
+
+  useEffect(() => {
+    setInterludeScriptGateOpen(false);
+    if (!interludeOpen) return;
+    if (interludeRevealPhase < 3) return;
+    const t = window.setTimeout(() => setInterludeScriptGateOpen(true), INTERLUDE_SCRIPT_AFTER_WAVE_MS);
+    return () => window.clearTimeout(t);
+  }, [interludeOpen, interludeRevealPhase]);
 
   const applyResolvedStable = useCallback((rawAngle: number, prevStable: 0 | 180) => {
     const verified = ensureStableOrientation(rawAngle);
@@ -175,8 +273,32 @@ export function HourglassInteractive() {
         window.clearTimeout(sandCycleTimeoutRef.current);
         sandCycleTimeoutRef.current = null;
       }
+      clearTransitionFlashTimeouts();
+      clearInterludeExitTimeouts();
+      setInterludeExitPhase("off");
+      setTransitionFlash("off");
+      setInterludeOpen(false);
+      setInterludeRevealPhase(0);
+
       setSandKey((k) => k + 1);
       setSandDrainPlaying(true);
+
+      const tOpen =
+        INTERLUDE_FLASH_AFTER_SAND_MS + INTERLUDE_FLASH_WHITE_MS + INTERLUDE_FLASH_BLACK_MS;
+      const tWhite = window.setTimeout(() => setTransitionFlash("white"), INTERLUDE_FLASH_AFTER_SAND_MS);
+      const tBlack = window.setTimeout(
+        () => setTransitionFlash("black"),
+        INTERLUDE_FLASH_AFTER_SAND_MS + INTERLUDE_FLASH_WHITE_MS
+      );
+      const tInterlude = window.setTimeout(() => {
+        /* 인터루드를 먼저 마운트한 뒤 검은 플래시를 걷어야 한 프레임도 본문이 비치지 않음 */
+        setInterludeOpen(true);
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => setTransitionFlash("off"));
+        });
+      }, tOpen);
+      transitionFlashTimeoutsRef.current = [tWhite, tBlack, tInterlude];
+
       sandCycleTimeoutRef.current = window.setTimeout(() => {
         sandCycleTimeoutRef.current = null;
         setSandDrainPlaying(false);
@@ -188,7 +310,7 @@ export function HourglassInteractive() {
       }, SAND_CYCLE_MS);
     }
     prevStableRef.current = verified;
-  }, []);
+  }, [clearInterludeExitTimeouts, clearTransitionFlashTimeouts]);
 
   const startSnapTo = useCallback(
     (target: 0 | 180, from: number) => {
@@ -271,6 +393,109 @@ export function HourglassInteractive() {
   const showRotateHint =
     !sandDrainPlaying && atRestZero && !pointerOnHourglass && !snapAnimating;
 
+  const interludeStackRevealClass =
+    interludeRevealPhase >= 1 ? "hourglass-flash-overlay__interlude-stack--reveal-art" : "";
+  const interludeStackRevealPhoto =
+    interludeRevealPhase >= 2 ? "hourglass-flash-overlay__interlude-stack--reveal-photo" : "";
+  const interludeStackRevealWave =
+    interludeRevealPhase >= 3 ? "hourglass-flash-overlay__interlude-stack--reveal-wave" : "";
+
+  const flashPortal =
+    transitionFlash !== "off" && typeof document !== "undefined" ? (
+      <div className="hourglass-transition-flash" role="presentation" aria-hidden>
+        {(transitionFlash === "white" || transitionFlash === "black") && (
+          <div
+            className={`hourglass-transition-flash__layer hourglass-transition-flash__layer--white${
+              transitionFlash === "black" ? " hourglass-transition-flash__layer--solid" : ""
+            }`}
+          />
+        )}
+        {transitionFlash === "black" && (
+          <div className="hourglass-transition-flash__layer hourglass-transition-flash__layer--black" />
+        )}
+      </div>
+    ) : null;
+
+  const exitFlashPortal =
+    interludeExitPhase !== "off" && typeof document !== "undefined" ? (
+      <div
+        className="hourglass-transition-flash hourglass-transition-flash--interlude-exit"
+        role="presentation"
+        aria-hidden
+      >
+        {interludeExitPhase === "toBlack" && (
+          <div className="hourglass-transition-flash__layer hourglass-transition-flash__layer--interlude-exit-to-black" />
+        )}
+        {interludeExitPhase === "fromBlack" && (
+          <div className="hourglass-transition-flash__layer hourglass-transition-flash__layer--interlude-exit-from-black" />
+        )}
+      </div>
+    ) : null;
+
+  const interludePortal =
+    interludeOpen && typeof document !== "undefined" ? (
+      <div
+        className="hourglass-flash-overlay hourglass-flash-overlay--interlude-page"
+        role="presentation"
+      >
+        <div className="hourglass-flash-overlay__gutter hourglass-flash-overlay__gutter--left" aria-hidden />
+        <div
+          className="hourglass-flash-overlay__shell-column hourglass-interlude-page"
+          role="document"
+          aria-label="Our Story"
+        >
+          <div className="hourglass-flash-overlay__shell hourglass-flash-overlay__shell--solid-black">
+            <div className="hourglass-flash-overlay__panel hourglass-flash-overlay__panel--interlude" role="dialog" aria-modal="true" aria-labelledby={`hourglass-interlude-title-${uid}`}>
+              <p id={`hourglass-interlude-title-${uid}`} className="hourglass-flash-overlay__sr-only">
+                Our Story
+              </p>
+              <button
+                type="button"
+                className="hourglass-flash-overlay__back hourglass-flash-overlay__back--icon hourglass-flash-overlay__back--interlude-fade-in"
+                onClick={dismissInterlude}
+                aria-label="홈으로 돌아가기"
+              >
+                <svg
+                  className="hourglass-flash-overlay__back-home-icon"
+                  viewBox="0 0 24 24"
+                  width="24"
+                  height="24"
+                  aria-hidden
+                >
+                  <path
+                    fill="currentColor"
+                    d="M12 3.8 4.5 10.2V20h4v-6.5h7V20h4V10.2L12 3.8z"
+                  />
+                </svg>
+              </button>
+              <div
+                className={`hourglass-flash-overlay__interlude-stack ${interludeStackRevealClass} ${interludeStackRevealPhoto} ${interludeStackRevealWave}`.trim()}
+              >
+                <div className="hourglass-flash-overlay__interlude-bg" aria-hidden>
+                  <InterludePhotoFilm src={OUR_STORY_BACK_IMG} alt="" />
+                </div>
+                <div className="hourglass-flash-overlay__interlude-art">
+                  <InterludeIllustrationFrames baseUrl={OUR_STORY_STATIC} active={interludeOpen} />
+                </div>
+                <InterludeSoundWaveCanvas
+                  waveAnalyserRef={interludeWaveAnalyserRef}
+                  wavActiveRef={interludeWavActiveRef}
+                />
+                <InterludeScriptSequence
+                  interludeOpen={interludeOpen}
+                  scriptGateOpen={interludeScriptGateOpen}
+                  baseUrl={OUR_STORY_STATIC}
+                  waveAnalyserRef={interludeWaveAnalyserRef}
+                  wavActiveRef={interludeWavActiveRef}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="hourglass-flash-overlay__gutter hourglass-flash-overlay__gutter--right" aria-hidden />
+      </div>
+    ) : null;
+
   return (
     <div
       ref={wrapRef}
@@ -286,44 +511,10 @@ export function HourglassInteractive() {
       {showRotateHint ? (
         <>
           <div className="our-stroy__hourglass-rotate-hint our-stroy__hourglass-rotate-hint--left" aria-hidden>
-            <svg
-              className="our-stroy__hourglass-rotate-hint__svg"
-              width="24"
-              height="26"
-              viewBox="0 0 24 26"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                className="our-stroy__hourglass-rotate-hint__arc"
-                d={ROTATE_HINT_ARC_D}
-                stroke="currentColor"
-                strokeWidth={RH_STROKE}
-                strokeLinecap="round"
-              />
-              <polygon className="our-stroy__hourglass-rotate-hint__head" points={ROTATE_HINT_ARROW_POINTS} fill="currentColor" />
-            </svg>
+            <img className="our-stroy__hourglass-rotate-hint__img" src={ROTATE_HINT_IMG} alt="" width="573" height="963" decoding="async" />
           </div>
           <div className="our-stroy__hourglass-rotate-hint our-stroy__hourglass-rotate-hint--right" aria-hidden>
-            <svg
-              className="our-stroy__hourglass-rotate-hint__svg"
-              width="24"
-              height="26"
-              viewBox="0 0 24 26"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <g transform="translate(24,0) scale(-1,1)">
-                <path
-                  className="our-stroy__hourglass-rotate-hint__arc"
-                  d={ROTATE_HINT_ARC_D}
-                  stroke="currentColor"
-                  strokeWidth={RH_STROKE}
-                  strokeLinecap="round"
-                />
-                <polygon className="our-stroy__hourglass-rotate-hint__head" points={ROTATE_HINT_ARROW_POINTS} fill="currentColor" />
-              </g>
-            </svg>
+            <img className="our-stroy__hourglass-rotate-hint__img" src={ROTATE_HINT_IMG} alt="" width="573" height="963" decoding="async" />
           </div>
         </>
       ) : null}
@@ -368,7 +559,6 @@ export function HourglassInteractive() {
         </filter>
         <g className="hourglass" transform={`rotate(${rotation} 50 50)`}>
           <g transform={`translate(50 50) scale(${HOURGLASS_CONTENT_SCALE}) translate(-50 -50)`}>
-          {/* 모래 → 몸체 순: 틀 뒤 레이어. 몸체는 evenodd로 내부가 비어 모래가 비침 */}
           {sandDrainPlaying ? (
             <g key={sandKey} transform={SAND_DRAIN_FLIP}>
               <path
@@ -454,6 +644,9 @@ export function HourglassInteractive() {
           </g>
         </g>
       </svg>
+      {flashPortal ? createPortal(flashPortal, document.body) : null}
+      {exitFlashPortal ? createPortal(exitFlashPortal, document.body) : null}
+      {interludePortal ? createPortal(interludePortal, document.body) : null}
     </div>
   );
 }

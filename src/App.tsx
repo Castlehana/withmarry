@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { HeadsetSineWaves } from "./HeadsetSineWaves";
-import { HourglassInteractive } from "./HourglassInteractive";
+import { HourglassInteractive, type HourglassInterludeShellMode } from "./HourglassInteractive";
 import { GuestbookSection } from "./GuestbookSection";
 import { weddingData } from "./wedding-data";
 import "./audio-hint-waves";
@@ -48,10 +48,12 @@ export default function App() {
 
   const heroAudioWaveTrackRef = useRef<HTMLSpanElement>(null);
   const [menuOpen, setMenuOpen] = useState(false);
-  /** 인트로: 검은 화면 → 편지 등장 → 탭 유도 → 열림 → 본문 */
-  const [introPhase, setIntroPhase] = useState<
-    "black" | "letterIn" | "awaitClick" | "opening" | "done"
-  >(() => (reduceIntroMotion ? "letterIn" : "black"));
+  const [hourglassScrollLock, setHourglassScrollLock] = useState(false);
+  const [hourglassShellMode, setHourglassShellMode] = useState<HourglassInterludeShellMode>("normal");
+  /** 인트로: 검은 화면 → 봉투(흔들림·클릭) → 열림 애니메이션 → 본문 */
+  const [introPhase, setIntroPhase] = useState<"black" | "idle" | "opening" | "done">(() =>
+    reduceIntroMotion ? "idle" : "black"
+  );
 
   const closeMenu = useCallback(() => setMenuOpen(false), []);
 
@@ -62,28 +64,24 @@ export default function App() {
   useEffect(() => {
     if (introPhase !== "black") return;
     const ms = reduceIntroMotion ? 0 : 720;
-    const t = window.setTimeout(() => setIntroPhase("letterIn"), ms);
-    return () => window.clearTimeout(t);
-  }, [introPhase, reduceIntroMotion]);
-
-  useEffect(() => {
-    if (introPhase !== "letterIn") return;
-    const ms = reduceIntroMotion ? 0 : 2400;
-    const t = window.setTimeout(() => setIntroPhase("awaitClick"), ms);
+    const t = window.setTimeout(() => setIntroPhase("idle"), ms);
     return () => window.clearTimeout(t);
   }, [introPhase, reduceIntroMotion]);
 
   useEffect(() => {
     if (introPhase !== "opening") return;
-    const ms = reduceIntroMotion ? 220 : 980;
+    /* 2s 대기 후 커튼·봉퇴 퇴장(~0.45s) — App.css animation-delay와 맞춤 */
+    const ms = reduceIntroMotion ? 2000 : 2480;
     const t = window.setTimeout(() => setIntroPhase("done"), ms);
     return () => window.clearTimeout(t);
   }, [introPhase, reduceIntroMotion]);
 
   useEffect(() => {
-    document.body.classList.toggle("overflow-lock", menuOpen || introPhase !== "done");
-    return () => document.body.classList.remove("overflow-lock");
-  }, [menuOpen, introPhase]);
+    document.body.classList.toggle(
+      "overflow-lock",
+      menuOpen || introPhase !== "done" || hourglassScrollLock
+    );
+  }, [menuOpen, introPhase, hourglassScrollLock]);
 
   const heroVenueLine = `${wedding.venueName} ${wedding.venueHall}`;
 
@@ -96,42 +94,38 @@ export default function App() {
           role="presentation"
         >
           <div className="intro-gate__vignette" aria-hidden />
-          {(introPhase === "letterIn" || introPhase === "awaitClick" || introPhase === "opening") && (
+          {(introPhase === "idle" || introPhase === "opening") && (
             <div className="intro-gate__stage">
-              <div className="intro-gate__envelope">
-                <div className="intro-gate__paper">
-                  <p className="intro-gate__eyebrow">청첩장</p>
-                  <p className="intro-gate__names">
-                    {couple.groom.성이름} <span className="intro-gate__heart">♥</span> {couple.bride.성이름}
-                  </p>
-                  <p className="intro-gate__body">{meta.introTypingLine}</p>
+              <button
+                type="button"
+                className={`intro-gate__envelope-wrap${introPhase === "idle" ? " intro-gate__envelope-wrap--shake" : ""}`}
+                onClick={() => {
+                  if (introPhase === "idle") setIntroPhase("opening");
+                }}
+                aria-label="청첩장 열기"
+                disabled={introPhase === "opening"}
+              >
+                <div className={`intro-env ${introPhase === "opening" ? "intro-env--open" : "intro-env--close"}`}>
+                  <div className="intro-env__letter" aria-hidden />
+                  <div className="intro-env__hearts" aria-hidden>
+                    <div className="intro-env__heart intro-env__heart--a1" />
+                    <div className="intro-env__heart intro-env__heart--a2" />
+                    <div className="intro-env__heart intro-env__heart--a3" />
+                  </div>
+                  <div className="intro-env__pocket intro-env__front" />
+                  <div className="intro-env__flap intro-env__front" />
                 </div>
-                <div className="intro-gate__wax" aria-hidden />
-                <div className="intro-gate__flap" aria-hidden />
-              </div>
-              {introPhase === "awaitClick" || introPhase === "opening" ? (
-                <button
-                  type="button"
-                  className={`intro-gate__tap${introPhase === "opening" ? " intro-gate__tap--pressed" : ""}`}
-                  onClick={() => {
-                    if (introPhase === "awaitClick") setIntroPhase("opening");
-                  }}
-                  aria-label="청첩장 열기"
-                  disabled={introPhase === "opening"}
-                >
-                  <span className="intro-gate__tap-visual" aria-hidden>
-                    <span className="intro-gate__tap-ring" />
-                    <span className="intro-gate__tap-icon" />
-                  </span>
-                  <span className="intro-gate__tap-label">탭하여 열기</span>
-                </button>
-              ) : null}
+              </button>
             </div>
           )}
         </div>
       ) : null}
 
-      <div className="phone-shell">
+      <div
+        className="phone-shell"
+        data-hourglass-interlude={hourglassShellMode !== "normal" ? "" : undefined}
+        data-hourglass-interlude-exit-reveal={hourglassShellMode === "exit-reveal" ? "" : undefined}
+      >
         <div className="sticky-head">
           <header className="top-bar">
             <button type="button" className="icon-btn" onClick={() => setMenuOpen(true)} aria-label="메뉴">
@@ -174,7 +168,7 @@ export default function App() {
           </div>
         ) : null}
 
-        <main className="content">
+        <main className="content" aria-hidden={hourglassShellMode === "interlude" ? true : undefined}>
           <section id="main" className="hero">
             <div className="hero-inner">
               <p className="hero-kicker">
@@ -235,7 +229,10 @@ export default function App() {
           <section id="our-stroy" className="section our-stroy" lang="en">
             <h2>Our Stroy</h2>
             <div className="our-stroy__body">
-              <HourglassInteractive />
+              <HourglassInteractive
+                onScrollLockChange={setHourglassScrollLock}
+                onInterludePageChange={setHourglassShellMode}
+              />
             </div>
           </section>
 

@@ -38,7 +38,7 @@ body.overflow-lock {
   overflow: hidden;
 }
 
-/* ========== 인트로: 검은 화면 → 편지 → 탭 → 열림 ========== */
+/* ========== 인트로: 검은 화면 → 봉투(살짝 흔들림·클릭) → 열림 → 본문 ========== */
 .intro-gate {
   position: fixed;
   inset: 0;
@@ -64,132 +64,264 @@ body.overflow-lock {
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   max-width: 100%;
 }
 
-.intro-gate[data-phase="letterIn"] .intro-gate__stage {
+.intro-gate[data-phase="idle"] .intro-gate__stage {
   animation: introGateStageIn 2.2s ease forwards;
 }
 
-.intro-gate[data-phase="awaitClick"] .intro-gate__stage,
 .intro-gate[data-phase="opening"] .intro-gate__stage {
   opacity: 1;
   transform: translateY(0);
   animation: none;
 }
 
-.intro-gate__envelope {
+/* 클릭 영역: 탭 멘트·별도 버튼 없이 봉투 전체 */
+.intro-gate__envelope-wrap {
+  display: block;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  appearance: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.intro-gate__envelope-wrap:disabled {
+  cursor: default;
+}
+
+.intro-gate__envelope-wrap--shake {
+  animation: introEnvShake 2.6s ease-in-out infinite;
+  transform-origin: 50% 55%;
+}
+
+/* CodePen식 삼각형 봉투 (웨딩 톤으로 색만 조정) */
+.intro-env {
+  --intro-w: min(280px, 88vw);
+  --intro-h: calc(var(--intro-w) * 180 / 280);
+  --intro-heart-w: 22px;
+  --intro-env: #8a7a70;
+  --intro-env2: #75665d;
+  --intro-flap: #4a4039;
   position: relative;
-  width: min(19.5rem, 88vw);
-  perspective: 900px;
+  width: var(--intro-w);
+  height: var(--intro-h);
+  margin: 0 auto;
+  border-bottom-left-radius: 6px;
+  border-bottom-right-radius: 6px;
+  background-color: var(--intro-flap);
+  box-shadow: 0 10px 36px rgba(0, 0, 0, 0.38);
+  perspective: 880px;
   transform-style: preserve-3d;
 }
 
-.intro-gate__paper {
-  position: relative;
+.intro-env__front {
+  position: absolute;
+  left: 50%;
+  width: 0;
+  height: 0;
+  translate: -50% 0;
+  pointer-events: none;
+}
+
+.intro-env__pocket {
+  bottom: 0;
+  z-index: 3;
+  border-left: calc(var(--intro-w) / 2) solid var(--intro-env);
+  border-right: calc(var(--intro-w) / 2) solid var(--intro-env);
+  border-bottom: calc(var(--intro-h) / 2) solid var(--intro-env2);
+  border-top: calc(var(--intro-h) / 2) solid transparent;
+  border-bottom-left-radius: 6px;
+  border-bottom-right-radius: 6px;
+}
+
+.intro-env__flap {
+  top: 0;
+  z-index: 4;
+  transform: rotateX(0deg);
+  transform-origin: top center;
+  border-left: calc(var(--intro-w) / 2) solid transparent;
+  border-right: calc(var(--intro-w) / 2) solid transparent;
+  border-bottom: calc(var(--intro-h) / 2 - 8px) solid transparent;
+  border-top: calc(var(--intro-h) / 2 + 8px) solid var(--intro-flap);
+  transition: transform 0.48s ease;
+}
+
+.intro-env--open .intro-env__flap {
+  transform: rotateX(180deg);
+  z-index: 0;
+}
+
+.intro-env__letter {
+  position: absolute;
+  left: 5%;
+  right: 5%;
+  top: 10%;
+  width: 90%;
+  height: 82%;
   margin: 0 auto;
-  padding: 2rem 1.5rem 2.25rem;
-  border-radius: 3px;
-  text-align: center;
+  padding: 0;
+  border-radius: 6px;
   background: linear-gradient(165deg, #fffdf9 0%, #f3ebe3 48%, #ebe2d8 100%);
   box-shadow:
     0 1px 0 rgba(255, 255, 255, 0.65) inset,
-    0 18px 40px rgba(0, 0, 0, 0.35),
-    0 4px 12px rgba(0, 0, 0, 0.2);
-  border: 1px solid rgba(42, 38, 34, 0.12);
+    0 14px 28px rgba(0, 0, 0, 0.18);
+  border: 1px solid rgba(42, 38, 34, 0.1);
+  z-index: 1;
+  overflow: hidden;
 }
 
-.intro-gate__eyebrow {
-  margin: 0 0 0.75rem;
-  font-size: 11px;
-  letter-spacing: 0.35em;
-  text-transform: uppercase;
-  color: var(--gold);
-  font-weight: 500;
-}
-
-.intro-gate__names {
-  margin: 0 0 1rem;
-  font-family: var(--serif);
-  font-size: clamp(1.05rem, 3.8vw, 1.2rem);
-  font-weight: 600;
-  color: var(--ink);
-  line-height: 1.5;
-}
-
-.intro-gate__heart {
-  color: #c45c6a;
-  font-weight: 400;
-  margin: 0 0.2em;
-}
-
-.intro-gate__body {
-  margin: 0;
-  font-family: var(--serif);
-  font-size: clamp(0.95rem, 3.2vw, 1.05rem);
-  font-weight: 400;
-  color: var(--muted);
-  line-height: 1.75;
-  letter-spacing: 0.02em;
-  white-space: pre-line;
-}
-
-.intro-gate__wax {
+.intro-env__letter::after {
+  content: "";
   position: absolute;
-  left: 50%;
-  bottom: -0.55rem;
-  width: 2.75rem;
-  height: 2.75rem;
-  translate: -50% 0;
-  border-radius: 50%;
-  background: radial-gradient(circle at 35% 30%, #d4bc91, #8d7355 55%, #5c4a32);
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.35);
-  z-index: 2;
-}
-
-.intro-gate__flap {
-  position: absolute;
-  left: 50%;
-  top: 0;
-  width: 104%;
-  height: 46%;
-  translate: -50% 0;
-  transform-origin: 50% 100%;
-  background: linear-gradient(180deg, #e8dfd6 0%, #d8cfc4 45%, #c9bfb4 100%);
-  clip-path: polygon(0 100%, 50% 0, 100% 100%);
-  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.12);
-  transition: transform 0.65s cubic-bezier(0.4, 0, 0.2, 1);
-  z-index: 3;
-}
-
-.intro-gate--opening .intro-gate__flap {
-  transform: rotateX(-152deg);
-}
-
-.intro-gate--opening .intro-gate__wax {
-  opacity: 0;
-  transform: scale(0.6);
-  transition:
-    opacity 0.35s ease,
-    transform 0.35s ease;
-}
-
-.intro-gate--opening .intro-gate__envelope {
-  animation: introGateEnvelopeOut 0.95s cubic-bezier(0.33, 0, 0.2, 1) forwards;
-}
-
-.intro-gate--opening .intro-gate__tap {
-  opacity: 0;
-  transform: translateY(12px);
+  inset: 0;
+  border-radius: 6px;
   pointer-events: none;
-  transition:
-    opacity 0.35s ease,
-    transform 0.35s ease;
+  background-image: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0) 22%,
+    rgba(215, 227, 239, 0.45) 52%,
+    rgba(215, 227, 239, 0.85) 100%
+  );
+}
+
+.intro-env--close .intro-env__letter {
+  transform: translateY(0);
+  z-index: 1;
+  transition: transform 0.45s ease;
+}
+
+.intro-env--open .intro-env__letter {
+  transform: translateY(calc(-1 * var(--intro-h) / 3));
+  z-index: 1;
+  transition: transform 0.5s ease 0.18s;
+}
+
+/* CodePen식: 열릴 때 하트가 위로 떠오르며 좌우로 흔들림 */
+.intro-env__hearts {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 48%;
+  z-index: 2;
+  height: 0;
+  pointer-events: none;
+}
+
+.intro-env__heart {
+  position: absolute;
+  bottom: 0;
+  width: 0;
+  height: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.intro-env__heart::before,
+.intro-env__heart::after {
+  content: "";
+  position: absolute;
+  left: var(--intro-heart-w);
+  top: 0;
+  width: var(--intro-heart-w);
+  height: calc(var(--intro-heart-w) * 1.6);
+  background: #c45c6a;
+  border-radius: var(--intro-heart-w) var(--intro-heart-w) 0 0;
+  transform: rotate(-45deg);
+  transform-origin: 0 100%;
+  pointer-events: none;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.12);
+}
+
+.intro-env__heart::after {
+  left: 0;
+  transform: rotate(45deg);
+  transform-origin: 100% 100%;
+}
+
+.intro-env--close .intro-env__heart {
+  opacity: 0;
+  animation: none;
+}
+
+.intro-env--open .intro-env__heart--a1 {
+  left: 18%;
+  opacity: 1;
+  animation:
+    introHeartRise1 3.2s linear forwards,
+    introHeartSideSway 2s ease-in-out 4 alternate;
+  animation-delay: 0.22s;
+}
+
+.intro-env--open .intro-env__heart--a2 {
+  left: 52%;
+  opacity: 1;
+  animation:
+    introHeartRise2 3.8s linear forwards,
+    introHeartSideSway 2.4s ease-in-out 3 alternate;
+  animation-delay: 0.28s;
+}
+
+.intro-env--open .intro-env__heart--a3 {
+  left: 8%;
+  opacity: 1;
+  animation:
+    introHeartRise3 4.4s linear forwards,
+    introHeartSideSway 2s ease-in-out 5 alternate;
+  animation-delay: 0.18s;
+}
+
+@keyframes introHeartRise1 {
+  from {
+    transform: translateY(0) scale(0.65);
+  }
+  to {
+    transform: translateY(min(-260px, -40vh)) scale(0.65);
+  }
+}
+
+@keyframes introHeartRise2 {
+  from {
+    transform: translateY(0) scale(1);
+  }
+  to {
+    transform: translateY(min(-300px, -46vh)) scale(1);
+  }
+}
+
+@keyframes introHeartRise3 {
+  from {
+    transform: translateY(0) scale(0.82);
+  }
+  to {
+    transform: translateY(min(-280px, -44vh)) scale(0.82);
+  }
+}
+
+@keyframes introHeartSideSway {
+  from {
+    margin-inline-start: 0;
+  }
+  to {
+    margin-inline-start: 22px;
+  }
+}
+
+.intro-gate--opening .intro-gate__envelope-wrap {
+  animation: introGateEnvelopeOut 0.45s cubic-bezier(0.33, 0, 0.2, 1) forwards;
+  animation-delay: 2s;
 }
 
 .intro-gate--opening {
   pointer-events: none;
-  animation: introGateCurtainOut 0.95s ease forwards;
+  animation: introGateCurtainFade 0.45s ease forwards;
+  animation-delay: 2s;
 }
 
 @keyframes introGateStageIn {
@@ -205,164 +337,72 @@ body.overflow-lock {
   }
 }
 
+@keyframes introEnvShake {
+  0%,
+  100% {
+    transform: rotate(-1.4deg);
+  }
+  50% {
+    transform: rotate(1.4deg);
+  }
+}
+
 @keyframes introGateEnvelopeOut {
   0% {
     transform: scale(1) translateY(0);
     opacity: 1;
   }
   55% {
-    transform: scale(1.04) translateY(-12px);
+    transform: scale(1.03) translateY(-10px);
     opacity: 1;
   }
   100% {
-    transform: scale(0.72) translateY(42vh);
+    transform: scale(0.7) translateY(42vh);
     opacity: 0;
   }
 }
 
-@keyframes introGateCurtainOut {
+@keyframes introGateCurtainFade {
+  from {
+    opacity: 1;
+  }
   to {
     opacity: 0;
     visibility: hidden;
   }
 }
 
-.intro-gate__tap {
-  position: relative;
-  margin-top: 2rem;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-  padding: 0;
-  border: none;
-  background: none;
-  cursor: pointer;
-  color: rgba(247, 241, 234, 0.92);
-  font-family: var(--serif);
-  animation: introGateTapIn 0.55s ease forwards;
-}
-
-.intro-gate__tap:disabled {
-  cursor: default;
-}
-
-.intro-gate__tap-label {
-  font-size: 13px;
-  letter-spacing: 0.18em;
-  font-weight: 500;
-}
-
-/* 링·아이콘을 같은 박스 안에서 동심으로 겹침 (클릭 영역과 시각 정렬) */
-.intro-gate__tap-visual {
-  position: relative;
-  width: 56px;
-  height: 56px;
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.intro-gate__tap-ring {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 54px;
-  height: 54px;
-  margin: -27px 0 0 -27px;
-  border-radius: 50%;
-  border: 2px solid rgba(212, 188, 145, 0.55);
-  box-sizing: border-box;
-  pointer-events: none;
-  animation: introGateTapPulse 1.6s ease-in-out infinite;
-}
-
-.intro-gate__tap-icon {
-  position: relative;
-  z-index: 1;
-  display: block;
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  background: rgba(255, 253, 249, 0.12);
-  border: 1px solid rgba(255, 253, 249, 0.28);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
-  flex-shrink: 0;
-}
-
-.intro-gate__tap-icon::before {
-  content: "";
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 0;
-  height: 0;
-  translate: -50% -55%;
-  border-left: 7px solid transparent;
-  border-right: 7px solid transparent;
-  border-top: 11px solid rgba(247, 241, 234, 0.95);
-  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.2));
-}
-
-.intro-gate__tap-icon::after {
-  content: "";
-  position: absolute;
-  left: 50%;
-  top: 42%;
-  width: 5px;
-  height: 5px;
-  translate: -50% -50%;
-  border-radius: 50%;
-  background: rgba(247, 241, 234, 0.95);
-}
-
-@keyframes introGateTapIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes introGateTapPulse {
-  0%,
-  100% {
-    transform: scale(1);
-    opacity: 0.55;
-  }
-  50% {
-    transform: scale(1.1);
-    opacity: 0.95;
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
-  .intro-gate[data-phase="letterIn"] .intro-gate__stage {
+  .intro-gate[data-phase="idle"] .intro-gate__stage {
     animation: none;
     opacity: 1;
     transform: none;
     filter: none;
   }
 
-  .intro-gate__flap {
-    transition-duration: 0.2s;
+  .intro-gate__envelope-wrap--shake {
+    animation: none;
   }
 
-  .intro-gate--opening .intro-gate__envelope {
-    animation-duration: 0.35s;
+  .intro-env__flap,
+  .intro-env__letter {
+    transition-duration: 0.2s;
+    transition-delay: 0s !important;
+  }
+
+  .intro-env--open .intro-env__heart {
+    animation: none !important;
+    opacity: 0;
+  }
+
+  .intro-gate--opening .intro-gate__envelope-wrap {
+    animation-duration: 0.28s;
+    animation-delay: 1.65s;
   }
 
   .intro-gate--opening {
-    animation-duration: 0.35s;
-  }
-
-  .intro-gate__tap-ring {
-    animation: none;
-    opacity: 0.75;
+    animation-duration: 0.28s;
+    animation-delay: 1.65s;
   }
 }
 
@@ -393,6 +433,64 @@ body.overflow-lock {
   background: var(--paper);
   position: relative;
   -webkit-overflow-scrolling: touch;
+}
+
+.phone-shell[data-hourglass-interlude] {
+  overflow: hidden !important;
+  touch-action: none;
+}
+
+.phone-shell[data-hourglass-interlude] .sticky-head {
+  visibility: hidden;
+  height: 0;
+  min-height: 0;
+  padding: 0;
+  border: none;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.phone-shell[data-hourglass-interlude] main.content {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* 닫기 페이드아웃: 검은 레이어 아래에서 본문·헤더를 같은 2s로 페이드 인 (종이 배경만 비치는 현상 방지) */
+.phone-shell[data-hourglass-interlude][data-hourglass-interlude-exit-reveal] .sticky-head {
+  visibility: visible;
+  height: auto;
+  min-height: 0;
+  padding: 0;
+  border: none;
+  overflow: visible;
+  pointer-events: none;
+  opacity: 0;
+  animation: hourglass-interlude-exit-shell-reveal 2s ease-out forwards;
+}
+
+.phone-shell[data-hourglass-interlude][data-hourglass-interlude-exit-reveal] main.content {
+  visibility: visible;
+  pointer-events: none;
+  opacity: 0;
+  animation: hourglass-interlude-exit-shell-reveal 2s ease-out forwards;
+}
+
+@keyframes hourglass-interlude-exit-shell-reveal {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .phone-shell[data-hourglass-interlude][data-hourglass-interlude-exit-reveal] .sticky-head,
+  .phone-shell[data-hourglass-interlude][data-hourglass-interlude-exit-reveal] main.content {
+    animation: none;
+    opacity: 1;
+  }
 }
 
 @media (max-width: 520px) {
@@ -951,11 +1049,13 @@ body.overflow-lock {
 
 .our-stroy__hourglass-rotate-hint--right {
   right: 2px;
-  transform: translateY(-50%);
+  transform: translateY(-50%) scaleX(-1);
 }
 
-.our-stroy__hourglass-rotate-hint__svg {
+.our-stroy__hourglass-rotate-hint__img {
   display: block;
+  height: 26px;
+  width: auto;
 }
 
 @keyframes our-stroy-hourglass-rotate-hint-blink {
@@ -984,6 +1084,417 @@ body.overflow-lock {
   max-width: 100%;
   height: auto;
   margin: 0 auto;
+}
+
+/* Our Story 인터루드: 전환 애니 없이 즉시 표시 (좌우 레터박스 + 셸 폭) */
+.hourglass-flash-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background-color: transparent;
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  justify-content: center;
+  width: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
+  overscroll-behavior: none;
+  touch-action: none;
+  pointer-events: auto;
+}
+
+.hourglass-flash-overlay--interlude-page {
+  z-index: 1001;
+}
+
+/* 모래 뒤집기 → 흰 화면(2s) → 검은 화면(2s) → 인터루드 */
+.hourglass-transition-flash {
+  position: fixed;
+  inset: 0;
+  z-index: 2500;
+  pointer-events: auto;
+}
+
+.hourglass-transition-flash__layer {
+  position: absolute;
+  inset: 0;
+}
+
+.hourglass-transition-flash__layer--white {
+  background: #fff;
+  opacity: 0;
+  animation: hourglass-transition-flash-fade-in 2s ease forwards;
+}
+
+.hourglass-transition-flash__layer--white.hourglass-transition-flash__layer--solid {
+  animation: none;
+  opacity: 1;
+}
+
+.hourglass-transition-flash__layer--black {
+  background: #000;
+  opacity: 0;
+  animation: hourglass-transition-flash-fade-in 2s ease forwards;
+}
+
+@keyframes hourglass-transition-flash-fade-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+/* 인터루드 닫기: 검게 덮은 뒤(위 .layer--black) → 본문으로 페이드아웃 */
+.hourglass-transition-flash--interlude-exit {
+  z-index: 2600;
+}
+
+/* 스토리 위 검은 덮개: 처음부터 끝까지 서서히 불투명 (진입용 .layer--black과 분리) */
+.hourglass-transition-flash__layer--interlude-exit-to-black {
+  background: #000;
+  opacity: 0;
+  animation: hourglass-interlude-exit-to-black 2s ease-in-out forwards;
+}
+
+@keyframes hourglass-interlude-exit-to-black {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.hourglass-transition-flash__layer--interlude-exit-from-black {
+  background: #000;
+  opacity: 1;
+  animation: hourglass-transition-flash-fade-out 2s ease-out forwards;
+}
+
+@keyframes hourglass-transition-flash-fade-out {
+  from {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0;
+  }
+}
+
+.hourglass-flash-overlay__gutter {
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 100%;
+  min-height: 100dvh;
+  background-color: #000;
+}
+
+.hourglass-flash-overlay__shell-column {
+  flex: 0 1 var(--shell-max);
+  width: min(100%, var(--shell-max));
+  max-width: var(--shell-max);
+  min-height: 100%;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+.hourglass-interlude-page {
+  min-height: 100dvh;
+}
+
+.hourglass-flash-overlay__shell--solid-black {
+  flex: 1;
+  width: 100%;
+  min-height: 100%;
+  min-height: 100dvh;
+  margin: 0;
+  position: relative;
+  background-color: #000;
+}
+
+@media (max-width: 520px) {
+  .hourglass-flash-overlay__shell-column {
+    flex-basis: 100%;
+    max-width: none;
+    width: 100%;
+  }
+}
+
+.hourglass-flash-overlay__panel--interlude {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  /* 좌우 패딩 없음 — 포토·웨이브가 셸 가로와 동일한 콘텐츠 폭을 쓰도록 */
+  padding: 12px 0 28px;
+  box-sizing: border-box;
+}
+
+/* Our Story 대본 — 웨이브보다 위(z-index)·세로는 웨이브보다 약 1.25rem 위 */
+.hourglass-interlude-script {
+  position: absolute;
+  left: 50%;
+  top: calc(var(--interlude-wave-top) - 1.25rem - 3px);
+  width: var(--interlude-content-w);
+  max-width: 100%;
+  transform: translateX(-50%);
+  z-index: 10;
+  min-height: clamp(180px, 34dvh, 380px);
+  box-sizing: border-box;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  text-align: center;
+}
+
+.hourglass-interlude-script__text {
+  margin: 0;
+  max-width: 100%;
+  font-size: 0.9375rem;
+  line-height: 1.55;
+  color: rgb(255 255 255 / 0.93);
+  text-shadow: 0 1px 4px rgb(0 0 0 / 0.9);
+  opacity: 0;
+  transition: opacity 0.45s ease;
+}
+
+.hourglass-interlude-script__text--visible {
+  opacity: 1;
+}
+
+/* 사진: 셸 안 세로·가로 정중앙 고정 / 웨이브: 그 아래 별도 띠 */
+.hourglass-flash-overlay__interlude-stack {
+  position: relative;
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: min(52dvh, 560px);
+  /* 셸 컬럼 안에서의 공통 콘텐츠 최대 폭(좌우 패딩 없이 100%까지 사용) */
+  --interlude-content-w: min(100%, 92vw, 22rem);
+  /* 웨이브 세로 위치(대본은 .hourglass-interlude-script에서 추가로 위로 올림) */
+  --interlude-wave-top: calc(50% + min(20.5vh, 122px) + 6px);
+}
+
+/* 인터루드: 일러스트 → 포토 → 웨이브 순 페이드(전환 대신 animation으로 첫 프레임부터 보간) */
+.hourglass-flash-overlay__interlude-stack .hourglass-flash-overlay__interlude-bg,
+.hourglass-flash-overlay__interlude-stack .hourglass-flash-overlay__interlude-art,
+.hourglass-flash-overlay__interlude-stack .hourglass-flash-overlay__wave-wrap {
+  opacity: 0;
+  animation: none;
+}
+
+.hourglass-flash-overlay__interlude-stack--reveal-art .hourglass-flash-overlay__interlude-art {
+  animation: hourglass-interlude-art-fade-in 1.5s ease forwards;
+}
+
+.hourglass-flash-overlay__interlude-stack--reveal-photo .hourglass-flash-overlay__interlude-bg {
+  animation: hourglass-interlude-layer-fade-in 1.5s ease forwards;
+}
+
+.hourglass-flash-overlay__interlude-stack--reveal-wave .hourglass-flash-overlay__wave-wrap {
+  animation: hourglass-interlude-layer-fade-in 1.5s ease forwards;
+}
+
+@keyframes hourglass-interlude-layer-fade-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes hourglass-interlude-art-fade-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 0.7;
+  }
+}
+
+/* 실사 포토: 가로를 콘텐츠 폭과 동일한 박스에 맞춤, 위쪽에 배치 */
+.hourglass-flash-overlay__interlude-bg {
+  position: absolute;
+  left: 50%;
+  top: 21%;
+  width: var(--interlude-content-w);
+  max-width: 100%;
+  box-sizing: border-box;
+  max-height: min(48dvh, 520px);
+  transform: translate(-50%, -50%);
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hourglass-flash-overlay__interlude-bg-img {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 100%;
+  max-width: 100%;
+  height: auto;
+  max-height: min(48dvh, 520px);
+  object-fit: contain;
+  object-position: center center;
+}
+
+.hourglass-flash-overlay__interlude-art {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  padding: 0;
+  box-sizing: border-box;
+  transform: scale(0.7);
+  transform-origin: center center;
+}
+
+.hourglass-flash-overlay__couple-img {
+  display: block;
+  width: auto;
+  max-width: min(var(--interlude-content-w), 16.25rem);
+  height: auto;
+  max-height: min(38dvh, 300px);
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+  /* 밝은 실사 위에도 모래 선이 읽히도록 */
+  filter: drop-shadow(0 0 1.5px rgb(0 0 0 / 0.75)) drop-shadow(0 0 18px rgb(0 0 0 / 0.45));
+}
+
+/* 일러스트 frame 더블버퍼 — 겹쳐 두고 z-index만 교체 */
+.hourglass-interlude-frame-stack {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: min(38dvh, 300px);
+}
+
+.hourglass-interlude-frame-stack__img {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.hourglass-flash-overlay__wave-wrap {
+  position: absolute;
+  left: 50%;
+  width: var(--interlude-content-w);
+  max-width: 100%;
+  transform: translateX(-50%);
+  z-index: 1;
+  background: transparent;
+  top: var(--interlude-wave-top);
+  height: clamp(180px, 34dvh, 380px);
+  border-radius: 0;
+  overflow: visible;
+}
+
+.hourglass-flash-overlay__wave-canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.hourglass-flash-overlay__sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.hourglass-flash-overlay__back {
+  margin: 0;
+  padding: 0;
+  border: 1px solid rgb(255 255 255 / 0.35);
+  border-radius: 12px;
+  background: transparent;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  color: #fff;
+}
+
+.hourglass-flash-overlay__back--icon {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 4;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  font-size: 0;
+  line-height: 0;
+}
+
+/* 인터루드 진입 직후 뒤로가기가 서서히 드러남 */
+@keyframes hourglass-interlude-back-fade-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.hourglass-flash-overlay__back--interlude-fade-in {
+  opacity: 0;
+  animation: hourglass-interlude-back-fade-in 1.75s ease 0.55s forwards;
+}
+
+.hourglass-flash-overlay__back-home-icon {
+  display: block;
+  width: 22px;
+  height: 22px;
+  color: rgb(255 255 255 / 0.96);
+}
+
+.hourglass-flash-overlay__back--icon:hover {
+  background: rgb(255 255 255 / 0.1);
+}
+
+.hourglass-flash-overlay__back--icon:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hourglass-flash-overlay__back--interlude-fade-in {
+    animation: none;
+    opacity: 1;
+  }
 }
 
 .poem {
