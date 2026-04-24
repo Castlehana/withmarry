@@ -125,6 +125,7 @@ export default function App() {
         className="phone-shell"
         data-hourglass-interlude={hourglassShellMode !== "normal" ? "" : undefined}
         data-hourglass-interlude-exit-reveal={hourglassShellMode === "exit-reveal" ? "" : undefined}
+        {...(hourglassShellMode !== "normal" ? { inert: true } : {})}
       >
         <div className="sticky-head">
           <header className="top-bar">

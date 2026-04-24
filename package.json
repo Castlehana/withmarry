@@ -4,8 +4,9 @@
   "version": "0.0.1",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
+    "our-story:chapters": "node scripts/generate-our-story-chapters.mjs",
+    "dev": "node scripts/generate-our-story-chapters.mjs && vite",
+    "build": "node scripts/generate-our-story-chapters.mjs && vite build",
     "preview": "vite preview"
   },
   "dependencies": {

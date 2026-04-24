@@ -1,37 +1,39 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-const MAX_FRAME_PROBE = 120;
-/** 프레임 전환 간격(이중 버퍼로 빈 틈 없이 즉시 전환) */
-const FRAME_INTERVAL_MS = 1000;
+/** `App.css` `.hourglass-flash-overlay__interlude-art__video` 의 `transition: opacity` 와 동일하게 유지 */
+const LOOP_CROSSFADE_SEC = 1;
 
-function probeFrameExists(url: string): Promise<boolean> {
-  return new Promise((resolve) => {
-    const img = new Image();
-    const t = window.setTimeout(() => resolve(false), 12000);
-    img.onload = () => {
-      window.clearTimeout(t);
-      resolve(true);
-    };
-    img.onerror = () => {
-      window.clearTimeout(t);
-      resolve(false);
-    };
-    img.src = url;
-  });
+const ILLUSTRATION_FILE = "animation.mp4";
+const ILLUSTRATION_FLIP_FILE = "animation_flip.mp4";
+
+/** HEAD/GET이 200이어도 index.html 폴백(text/html)이면 false — 실제 mp4만 true */
+async function isRealMp4Asset(url: string, signal?: AbortSignal): Promise<boolean> {
+  try {
+    const head = await fetch(url, { method: "HEAD", signal });
+    if (!head.ok) return false;
+    const headCt = (head.headers.get("content-type") || "").toLowerCase();
+    if (headCt.includes("text/html")) return false;
+    if (headCt.includes("video/") || headCt.includes("application/octet-stream")) return true;
+    if (headCt.length > 0) return false;
+    const range = await fetch(url, {
+      method: "GET",
+      headers: { Range: "bytes=0-0" },
+      signal,
+    });
+    if (!range.ok && range.status !== 206) return false;
+    const ct = (range.headers.get("content-type") || "").toLowerCase();
+    if (ct.includes("text/html")) return false;
+    return ct.includes("video/") || ct.includes("application/octet-stream");
+  } catch {
+    return false;
+  }
 }
 
-async function discoverFrameUrls(assetBase: string): Promise<string[]> {
-  const urls: string[] = [];
-  for (let n = 1; n <= MAX_FRAME_PROBE; n++) {
-    const u = `${assetBase}/frame${n}.png`;
-    if (!(await probeFrameExists(u))) break;
-    urls.push(u);
-  }
-  if (urls.length === 0) {
-    const fallback = `${assetBase}/frame1.png`;
-    if (await probeFrameExists(fallback)) return [fallback];
-  }
-  return urls;
+function silenceIllustrationVideo(v: HTMLVideoElement | null) {
+  if (!v) return;
+  v.defaultMuted = true;
+  v.muted = true;
+  v.volume = 0;
 }
 
 type InterludeIllustrationFramesProps = {
@@ -40,107 +42,197 @@ type InterludeIllustrationFramesProps = {
 };
 
 /**
- * `frame1.png` … 연속 번호. 두 `<img>`에 현재·다음 프레임을 유지하고
- * 앞만 opacity 1·뒤는 0으로 두어 반투명 PNG가 겹쳐 보이지 않게 함(z-index도 교체).
+ * 인터루드 중앙: `baseUrl/animation.mp4` 무음 재생.
+ * 같은 폴더에 `animation_flip.mp4`가 있으면 그 파일을 쓰고 좌우 반전(스택 `scaleX(-1)`).
+ * 끝나기 LOOP_CROSSFADE_SEC 초 전에 다음 레이어 재생·크로스페이드(페이드아웃/인 동시).
  */
 export function InterludeIllustrationFrames({ baseUrl, active }: InterludeIllustrationFramesProps) {
   const assetBase = baseUrl.replace(/\/$/, "");
-  const [urls, setUrls] = useState<string[]>([]);
-  /** 현재 화면에 보이는 프레임 인덱스 */
-  const [k, setK] = useState(0);
-  /** true면 A가 위(앞), false면 B가 위 */
-  const [aOnTop, setAOnTop] = useState(true);
-  const lenRef = useRef(0);
-  lenRef.current = urls.length;
+  const videoRef0 = useRef<HTMLVideoElement>(null);
+  const videoRef1 = useRef<HTMLVideoElement>(null);
+  /** 현재 화면에 보이는 레이어(불투명 쪽) */
+  const frontRef = useRef<0 | 1>(0);
+  /** 이번 루프에서 끝 직전 크로스페이드 이미 시작함 */
+  const crossfadeScheduledRef = useRef(false);
+  const [o0, setO0] = useState(0);
+  const [o1, setO1] = useState(0);
+  const [z0, setZ0] = useState(2);
+  const [z1, setZ1] = useState(1);
+  /** `animation_flip.mp4` 존재 시 true — HEAD 탐지 */
+  const [useFlipAsset, setUseFlipAsset] = useState(false);
 
   useEffect(() => {
-    if (!active) {
-      setUrls([]);
-      setK(0);
-      setAOnTop(true);
-      return;
-    }
     let cancelled = false;
+    const ac = new AbortController();
+    const flipUrl = `${assetBase}/${ILLUSTRATION_FLIP_FILE}`;
     (async () => {
-      const found = await discoverFrameUrls(assetBase);
+      const ok = await isRealMp4Asset(flipUrl, ac.signal);
       if (cancelled) return;
-      setUrls(found);
-      setK(0);
-      setAOnTop(true);
+      setUseFlipAsset(ok);
     })();
     return () => {
       cancelled = true;
+      ac.abort();
     };
-  }, [active, assetBase]);
+  }, [assetBase]);
+
+  const illustrationSrc = useMemo(
+    () => `${assetBase}/${useFlipAsset ? ILLUSTRATION_FLIP_FILE : ILLUSTRATION_FILE}`,
+    [assetBase, useFlipAsset]
+  );
+
+  const pauseAndReset = useCallback((idx: 0 | 1) => {
+    const v = idx === 0 ? videoRef0.current : videoRef1.current;
+    if (!v) return;
+    v.pause();
+    v.currentTime = 0;
+  }, []);
+
+  const startLoopCrossfade = useCallback(
+    (fromIdx: 0 | 1) => {
+      if (!active) return;
+      if (fromIdx !== frontRef.current) return;
+      if (crossfadeScheduledRef.current) return;
+
+      const incoming = (1 - fromIdx) as 0 | 1;
+      const vIn = incoming === 0 ? videoRef0.current : videoRef1.current;
+      if (!vIn) return;
+      crossfadeScheduledRef.current = true;
+      vIn.currentTime = 0;
+      silenceIllustrationVideo(vIn);
+      void vIn.play().catch(() => {});
+      if (incoming === 1) {
+        setZ0(1);
+        setZ1(2);
+      } else {
+        setZ0(2);
+        setZ1(1);
+      }
+      setO0(incoming === 0 ? 1 : 0);
+      setO1(incoming === 1 ? 1 : 0);
+      frontRef.current = incoming;
+    },
+    [active]
+  );
+
+  const onTimeUpdate = useCallback(
+    (e: React.SyntheticEvent<HTMLVideoElement>) => {
+      if (!active) return;
+      const v = e.currentTarget;
+      const idx = (v === videoRef0.current ? 0 : 1) as 0 | 1;
+      if (idx !== frontRef.current) return;
+      const d = v.duration;
+      if (!Number.isFinite(d) || d <= 0) return;
+      const lead = d > LOOP_CROSSFADE_SEC + 0.02 ? LOOP_CROSSFADE_SEC : Math.max(0.05, d * 0.35);
+      if (v.currentTime < d - lead) return;
+      startLoopCrossfade(idx);
+    },
+    [active, startLoopCrossfade]
+  );
+
+  const onEnded = useCallback(
+    (endedIdx: 0 | 1) => () => {
+      if (!active) return;
+      if (endedIdx !== frontRef.current) {
+        pauseAndReset(endedIdx);
+        return;
+      }
+      startLoopCrossfade(endedIdx);
+    },
+    [active, pauseAndReset, startLoopCrossfade]
+  );
+
+  const onOpacityTransitionEnd = useCallback(
+    (idx: 0 | 1) => (e: React.TransitionEvent<HTMLVideoElement>) => {
+      if (e.propertyName !== "opacity") return;
+      if (idx === frontRef.current) return;
+      pauseAndReset(idx);
+      crossfadeScheduledRef.current = false;
+    },
+    [pauseAndReset]
+  );
 
   useEffect(() => {
-    if (!active || urls.length < 2) return;
-    const id = window.setInterval(() => {
-      const len = lenRef.current;
-      if (len < 2) return;
-      setK((i) => (i + 1) % len);
-      setAOnTop((v) => !v);
-    }, FRAME_INTERVAL_MS);
-    return () => window.clearInterval(id);
-  }, [active, urls.length]);
+    const v0 = videoRef0.current;
+    const v1 = videoRef1.current;
+    if (!active) {
+      crossfadeScheduledRef.current = false;
+      frontRef.current = 0;
+      setO0(0);
+      setO1(0);
+      setZ0(2);
+      setZ1(1);
+      if (v0) {
+        v0.pause();
+        v0.currentTime = 0;
+      }
+      if (v1) {
+        v1.pause();
+        v1.currentTime = 0;
+      }
+      return;
+    }
+    crossfadeScheduledRef.current = false;
+    silenceIllustrationVideo(v0);
+    silenceIllustrationVideo(v1);
+    frontRef.current = 0;
+    setZ0(2);
+    setZ1(1);
+    setO0(0);
+    setO1(0);
+    const p = v0?.play();
+    if (p !== undefined) void p.catch(() => {});
+    const id = window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => {
+        setO0(1);
+        setO1(0);
+      });
+    });
+    return () => window.cancelAnimationFrame(id);
+  }, [active, illustrationSrc]);
+
+  const onIllustrationPlay = useCallback((e: React.SyntheticEvent<HTMLVideoElement>) => {
+    silenceIllustrationVideo(e.currentTarget);
+  }, []);
+
+  const videoProps = {
+    className: "hourglass-flash-overlay__interlude-art__video",
+    src: illustrationSrc,
+    muted: true as const,
+    defaultMuted: true as const,
+    playsInline: true as const,
+    preload: "auto" as const,
+    "aria-hidden": true as const,
+  };
+
+  const stackClass =
+    `hourglass-flash-overlay__interlude-art__video-stack${
+      useFlipAsset ? " hourglass-flash-overlay__interlude-art__video-stack--flip" : ""
+    }`.trim();
 
   if (!active) return null;
 
-  if (urls.length === 0) {
-    return (
-      <img
-        className="hourglass-flash-overlay__couple-img"
-        alt=""
-        width={1638}
-        height={2048}
-        decoding="async"
-        src={`${assetBase}/frame1.png`}
-      />
-    );
-  }
-
-  if (urls.length === 1) {
-    return (
-      <img
-        className="hourglass-flash-overlay__couple-img"
-        alt=""
-        width={1638}
-        height={2048}
-        decoding="async"
-        src={urls[0]}
-      />
-    );
-  }
-
-  const n = urls.length;
-  const srcA = aOnTop ? urls[k]! : urls[(k + 1) % n]!;
-  const srcB = aOnTop ? urls[(k + 1) % n]! : urls[k]!;
-  const zA = aOnTop ? 2 : 1;
-  const zB = aOnTop ? 1 : 2;
-  const opA = aOnTop ? 1 : 0;
-  const opB = aOnTop ? 0 : 1;
-
   return (
-    <div className="hourglass-interlude-frame-stack" aria-hidden>
-      <img
-        className="hourglass-flash-overlay__couple-img hourglass-interlude-frame-stack__img"
-        alt=""
-        width={1638}
-        height={2048}
-        decoding="async"
-        loading="eager"
-        src={srcA}
-        style={{ zIndex: zA, opacity: opA }}
+    <div key={illustrationSrc} className={stackClass}>
+      <video
+        ref={videoRef0}
+        {...videoProps}
+        style={{ opacity: o0, zIndex: z0 }}
+        onLoadedMetadata={onIllustrationPlay}
+        onPlay={onIllustrationPlay}
+        onTimeUpdate={onTimeUpdate}
+        onEnded={onEnded(0)}
+        onTransitionEnd={onOpacityTransitionEnd(0)}
       />
-      <img
-        className="hourglass-flash-overlay__couple-img hourglass-interlude-frame-stack__img"
-        alt=""
-        width={1638}
-        height={2048}
-        decoding="async"
-        loading="eager"
-        src={srcB}
-        style={{ zIndex: zB, opacity: opB }}
+      <video
+        ref={videoRef1}
+        {...videoProps}
+        style={{ opacity: o1, zIndex: z1 }}
+        onLoadedMetadata={onIllustrationPlay}
+        onPlay={onIllustrationPlay}
+        onTimeUpdate={onTimeUpdate}
+        onEnded={onEnded(1)}
+        onTransitionEnd={onOpacityTransitionEnd(1)}
       />
     </div>
   );

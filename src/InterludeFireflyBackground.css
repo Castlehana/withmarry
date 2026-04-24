@@ -1,0 +1,25 @@
+/* 스토리 인터루드 — `.hourglass-interlude-firefly-slot`(패널 콘텐츠 폭) 안 전체, 클릭·스와이프 통과 */
+.hourglass-interlude-firefly-host {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.hourglass-interlude-firefly-host canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* 패널 형제: 반딧불이 슬롯(60) > 뷰포트(45) — 뷰포트 안 탭 힌트는 커튼(40)보다 아래(z:39, App.css) */
+.hourglass-flash-overlay--interlude-page .our-story-chapter-viewport {
+  z-index: 45;
+}

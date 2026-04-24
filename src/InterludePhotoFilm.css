@@ -1,39 +1,75 @@
 /**
- * Our Story 인터루드 포토용 올드 필름 오버레이
- * (원본 스니펫의 film / effect / grain / 비네트만 — 전역 * { position } 등은 사용하지 않음)
+ * 백 사진(`back_img` 안) + 플래시(`back_photo_layer` 안, 사진과 동일 박스)
+ * 가로: `--interlude-content-w` 꽉 참(`object-fit: cover`) — 세로: `--ipf-back-max-h` 직사각형
+ * 그레인: `.flash .grain` · 가장자리 어둡게: `.flash .back_img__vignette`
  */
 
-.interlude-photo-film {
-  --ipf-black: #000;
+.back_img .back_img_inner {
   position: relative;
+  box-sizing: border-box;
   width: 100%;
-  height: 100%;
   min-height: 0;
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  overflow: visible;
   isolation: isolate;
+  margin: 0;
 }
 
-.interlude-photo-film__img {
+/* 실제 <img> — 콘텐츠 가로 100%·세로 박스 `--ipf-back-max-h`에 cover로 맞춤(그레인·플래시와 동일 크기) */
+.back_img__wrap {
   position: relative;
   z-index: 0;
+  display: block;
+  width: 100%;
+  height: var(--ipf-back-max-h, min(48dvh, 520px));
+  max-height: var(--ipf-back-max-h, min(48dvh, 520px));
+  margin: 0;
+  overflow: hidden;
+  line-height: 0;
 }
 
-.interlude-photo-film__vignette {
+.back_img__wrap .back_img__img {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  max-height: none;
+  object-fit: cover;
+  object-position: center center;
+  margin: 0;
+}
+
+.back_img__img {
+  display: block;
+}
+
+/* `flash` 루트 위치·크기는 App.css — 그레인은 `.grain` */
+
+/* 가장자리 비네트: 전체 + 위·아래 추가, 큰 blur로 서서히 어두워지는 띠를 두껍게 */
+/* -1px: 이미지/플래시 박스와 1~2px 어긋남(서브픽셀) 시 가장자리 틈 메움 */
+.flash .back_img__vignette {
   position: absolute;
-  inset: 0;
+  inset: -1px;
   z-index: 1;
   pointer-events: none;
   box-shadow:
-    inset 0 0 min(22vmin, 140px) 0 var(--ipf-black),
-    inset 0 0 min(5vmin, 36px) min(0.4vmin, 4px) var(--ipf-black),
-    inset 0 0 min(1.2vmin, 10px) min(0.9vmin, 8px) var(--ipf-black);
+    /* 위·아래 가장자리(세로로 긴 이미지에서도 상·하단 어둡게) */
+    inset 0 min(5vmin, 26px) min(44vmin, 220px) min(0.45vmin, 4px) rgb(0 0 0 / 0.4),
+    inset 0 calc(-1 * min(5vmin, 26px)) min(44vmin, 220px) min(0.45vmin, 4px) rgb(0 0 0 / 0.4),
+    inset 0 min(11vmin, 56px) min(30vmin, 150px) min(0.5vmin, 5px) rgb(0 0 0 / 0.34),
+    inset 0 calc(-1 * min(11vmin, 56px)) min(30vmin, 150px) min(0.5vmin, 5px) rgb(0 0 0 / 0.34),
+    inset 0 min(18vmin, 88px) min(20vmin, 100px) min(0.55vmin, 5px) rgb(0 0 0 / 0.42),
+    inset 0 calc(-1 * min(18vmin, 88px)) min(20vmin, 100px) min(0.55vmin, 5px) rgb(0 0 0 / 0.42),
+    /* 사방 공통 — blur 확대로 “서서히” 구간 두껍게 */
+    inset 0 0 min(92vmin, 420px) min(0.25vmin, 2px) rgb(0 0 0 / 0.4),
+    inset 0 0 min(72vmin, 320px) min(0.35vmin, 3px) rgb(0 0 0 / 0.38),
+    inset 0 0 min(52vmin, 240px) min(0.45vmin, 4px) rgb(0 0 0 / 0.46),
+    inset 0 0 min(34vmin, 150px) min(0.5vmin, 5px) rgb(0 0 0 / 0.52),
+    inset 0 0 min(18vmin, 80px) min(0.55vmin, 5px) rgb(0 0 0 / 0.58),
+    inset 0 0 min(5vmin, 24px) min(0.55vmin, 5px) rgb(0 0 0 / 0.45);
 }
 
-.interlude-photo-film__film,
-.interlude-photo-film__effect {
+.flash .back_img__film,
+.flash .flash__sparkle {
   position: absolute;
   inset: 0;
   z-index: 2;
@@ -44,12 +80,12 @@
   filter: blur(0.45px) drop-shadow(0 0 0 rgb(255 255 255 / 0.07));
 }
 
-.interlude-photo-film__effect {
+.flash .flash__sparkle {
   z-index: 3;
 }
 
-.interlude-photo-film__film-scratch,
-.interlude-photo-film__effect-scratch {
+.flash .back_img__film_scratch,
+.flash .flash__scratch {
   position: absolute;
   display: block;
   width: 120%;
@@ -67,12 +103,12 @@
   pointer-events: none;
 }
 
-.interlude-photo-film__effect-scratch {
+.flash .flash__scratch {
   left: 30%;
   animation: interlude-photo-film-effect-scratch 2s infinite;
 }
 
-.interlude-photo-film__grain {
+.flash .grain {
   position: absolute;
   inset: 0;
   z-index: 4;
@@ -82,7 +118,7 @@
   pointer-events: none;
 }
 
-.interlude-photo-film__grain::after {
+.flash .grain::after {
   content: "";
   position: absolute;
   width: 110%;
@@ -94,7 +130,6 @@
     repeating-conic-gradient(var(--ipf-black) 0%, transparent 0.00003%, transparent 0.0005%, transparent 0.00095%),
     repeating-conic-gradient(var(--ipf-black) 0%, transparent 0.00005%, transparent 0.00015%, transparent 0.0009%);
   animation: interlude-photo-film-grain 0.5s steps(1) infinite;
-  filter: drop-shadow(0 0 1px black);
 }
 
 @keyframes interlude-photo-film-grain {
@@ -207,3 +242,4 @@
     transform: translateX(30%);
   }
 }
+

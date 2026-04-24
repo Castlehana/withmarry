@@ -101,14 +101,15 @@ body.overflow-lock {
   transform-origin: 50% 55%;
 }
 
-/* CodePen식 삼각형 봉투 (웨딩 톤으로 색만 조정) */
+/* CodePen식 삼각형 봉투 — 아이보리·크림 톤 */
 .intro-env {
   --intro-w: min(280px, 88vw);
   --intro-h: calc(var(--intro-w) * 180 / 280);
   --intro-heart-w: 22px;
-  --intro-env: #8a7a70;
-  --intro-env2: #75665d;
-  --intro-flap: #4a4039;
+  /* 옆면·밑면·뚜껑 삼각 — 미묘한 단차로 입체 */
+  --intro-env: #f2ebe1;
+  --intro-env2: #dcd4c8;
+  --intro-flap: #e8e0d4;
   position: relative;
   width: var(--intro-w);
   height: var(--intro-h);
@@ -116,7 +117,9 @@ body.overflow-lock {
   border-bottom-left-radius: 6px;
   border-bottom-right-radius: 6px;
   background-color: var(--intro-flap);
-  box-shadow: 0 10px 36px rgba(0, 0, 0, 0.38);
+  box-shadow:
+    0 10px 32px rgba(58, 48, 40, 0.14),
+    0 2px 0 rgba(255, 255, 255, 0.35) inset;
   perspective: 880px;
   transform-style: preserve-3d;
 }
@@ -168,11 +171,11 @@ body.overflow-lock {
   margin: 0 auto;
   padding: 0;
   border-radius: 6px;
-  background: linear-gradient(165deg, #fffdf9 0%, #f3ebe3 48%, #ebe2d8 100%);
+  background: linear-gradient(165deg, #fffefa 0%, #f7f1e8 45%, #ede6dc 100%);
   box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.65) inset,
-    0 14px 28px rgba(0, 0, 0, 0.18);
-  border: 1px solid rgba(42, 38, 34, 0.1);
+    0 1px 0 rgba(255, 255, 255, 0.75) inset,
+    0 12px 26px rgba(58, 48, 40, 0.12);
+  border: 1px solid rgba(88, 76, 64, 0.12);
   z-index: 1;
   overflow: hidden;
 }
@@ -186,8 +189,8 @@ body.overflow-lock {
   background-image: linear-gradient(
     180deg,
     rgba(255, 255, 255, 0) 22%,
-    rgba(215, 227, 239, 0.45) 52%,
-    rgba(215, 227, 239, 0.85) 100%
+    rgba(236, 228, 216, 0.55) 52%,
+    rgba(214, 204, 188, 0.45) 100%
   );
 }
 
@@ -231,7 +234,7 @@ body.overflow-lock {
   top: 0;
   width: var(--intro-heart-w);
   height: calc(var(--intro-heart-w) * 1.6);
-  background: #c45c6a;
+  background: #b86b76;
   border-radius: var(--intro-heart-w) var(--intro-heart-w) 0 0;
   transform: rotate(-45deg);
   transform-origin: 0 100%;
@@ -962,7 +965,7 @@ body.overflow-lock {
   align-items: center;
 }
 
-/* Gallery — cinemagraph 느낌 이미지(회전·hue 등), 배경은 페이지와 동일 */
+/* Gallery — 기울어진 프레임 이미지, 배경은 페이지와 동일 */
 .section.gallery.gallery--cinemagraph h2 {
   font-family: "Cormorant", "Cormorant Garamond", serif;
   font-weight: 600;
@@ -999,22 +1002,6 @@ body.overflow-lock {
   border: 0.5em solid #fff;
   box-shadow: 5px 5px 15px rgb(20 20 20 / 0.5);
   border-radius: 0;
-  animation: gallery-hue-rotate 5s linear infinite;
-}
-
-@keyframes gallery-hue-rotate {
-  from {
-    filter: hue-rotate(0deg);
-  }
-  to {
-    filter: hue-rotate(360deg);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .gallery__image {
-    animation: none;
-  }
 }
 
 @media (max-width: 420px) {
@@ -1078,6 +1065,12 @@ body.overflow-lock {
   cursor: default;
 }
 
+/* 스토리 섹션 고정·전환 플래시·인터루드·닫기 페이드 — 터치가 아래로 새지 않도록 */
+.our-stroy__hourglass--interaction-frozen {
+  pointer-events: none;
+  cursor: default;
+}
+
 .our-stroy__hourglass-svg {
   display: block;
   width: min(44vw, 9.5rem);
@@ -1109,6 +1102,116 @@ body.overflow-lock {
 
 .hourglass-flash-overlay--interlude-page {
   z-index: 1001;
+}
+
+/* 스토리 패널: 텍스트·이미지·비디오·캔버스 선택·드래그 복사 방지(클립보드는 TS onCopy/onCut) */
+.hourglass-flash-overlay--interlude-page .hourglass-flash-overlay__panel--interlude,
+.hourglass-flash-overlay--interlude-page .hourglass-flash-overlay__panel--interlude * {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  user-select: none;
+  -webkit-user-drag: none;
+  -webkit-touch-callout: none;
+}
+
+/*
+ * 스토리 인터루드: 가로(콘텐츠 폭·92vw/22rem·패딩 좌우 0)는 기본 .hg-stack 과 동일.
+ * 세로만 100dvh/svh 안에 맞추고 스크롤 없음.
+ */
+.hourglass-flash-overlay--interlude-page.hourglass-flash-overlay {
+  height: 100vh;
+  height: 100dvh;
+  max-height: 100vh;
+  max-height: 100dvh;
+  max-height: 100svh;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.hourglass-flash-overlay--interlude-page .hourglass-flash-overlay__shell-column,
+.hourglass-flash-overlay--interlude-page .hourglass-interlude-page,
+.hourglass-flash-overlay--interlude-page .hourglass-flash-overlay__shell--solid-black {
+  height: 100%;
+  max-height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.hourglass-flash-overlay--interlude-page .hourglass-flash-overlay__panel--interlude {
+  overflow: hidden;
+  min-height: 0;
+  padding-top: clamp(4px, 1.2dvh, 12px);
+  padding-bottom: clamp(8px, 2dvh, 28px);
+}
+
+.hourglass-flash-overlay--interlude-page .hg-stack {
+  min-height: 0;
+  /* --interlude-content-w 는 건드리지 않음(전역과 동일) */
+  --interlude-wave-h: clamp(100px, min(28dvh, 30svh), 340px);
+  /* `50%`는 반드시 각 `top` 선언 안에 두고, 여기엔 고정분만(브라우저·픽셀 튜닝 안정) */
+  --interlude-wave-top-shift: calc(min(20.5dvh, 122px) + 6px);
+  --interlude-wave-top: calc(50% + var(--interlude-wave-top-shift));
+  --ipf-back-max-h: min(36dvh, 38svh, 520px);
+  /* 화자 이름 세로: 웨이브 박스 상단 대비 +아래 / -위 (이 블록이 인터루드에서 최종값) */
+  --interlude-name-y-offset: 14px;
+}
+
+.hourglass-flash-overlay--interlude-page .back_photo_layer {
+  top: clamp(14%, 16dvh, 21%);
+}
+
+.hourglass-flash-overlay--interlude-page .hourglass-flash-overlay__interlude-art__video-stack,
+.hourglass-flash-overlay--interlude-page .hourglass-flash-overlay__interlude-art__video-stack--flip {
+  transform: translateY(clamp(14px, 4dvh, 56px));
+}
+
+.hourglass-flash-overlay--interlude-page .hourglass-flash-overlay__interlude-art__video-stack--flip {
+  transform: translateY(clamp(14px, 4dvh, 56px)) scaleX(-1);
+}
+
+.hourglass-flash-overlay--interlude-page .hourglass-flash-overlay__interlude-art__video-stack .hourglass-flash-overlay__interlude-art__video {
+  max-height: min(44dvh, 52svh, 560px);
+}
+
+.hourglass-flash-overlay--interlude-page .hourglass-flash-overlay__couple-img {
+  max-height: min(22dvh, 28svh, 300px);
+}
+
+.hourglass-flash-overlay--interlude-page .hourglass-flash-overlay__wave-wrap {
+  height: var(--interlude-wave-h);
+}
+
+.hourglass-flash-overlay--interlude-page .hourglass-interlude-script__body {
+  min-height: var(--interlude-wave-h);
+  top: calc(50% + var(--interlude-wave-top-shift) - 1.25rem - 3px);
+}
+
+/* 반딧불이(60)보다 위 — 홈 버튼만(탭 힌트는 뷰포트 안 z:39·커튼 40 아래) */
+.hourglass-flash-overlay--interlude-page .hourglass-interlude-home-anchor {
+  bottom: calc(clamp(8px, 1.6dvh, 12px) + env(safe-area-inset-bottom, 0px));
+  z-index: 70;
+}
+
+/* 닫기 toBlack: 전체 화면 검은 페이드(포털)와 무관하게 손가락·화살표만 먼저 숨김 — 반투명 구간에서 겹쳐 보이지 않음 */
+.hourglass-flash-overlay--interlude-page.hourglass-flash-overlay--interlude-under-exit .hourglass-interlude-home-hint {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  filter: none;
+  transition: opacity 0.4s ease, visibility 0s linear 0.4s;
+}
+
+/* 자식에 pointer-events: none 이 많아도 투명 구간 클릭이 본문(#root)으로 통과하지 않도록 히트 면 유지 */
+.hourglass-flash-overlay--interlude-page .hourglass-flash-overlay__gutter,
+.hourglass-flash-overlay--interlude-page .hourglass-flash-overlay__shell-column,
+.hourglass-flash-overlay--interlude-page .hourglass-flash-overlay__shell--solid-black,
+.hourglass-flash-overlay--interlude-page .hourglass-flash-overlay__panel--interlude,
+.hourglass-flash-overlay--interlude-page .hourglass-interlude-home-anchor,
+.hourglass-flash-overlay--interlude-page .our-story-chapter-viewport,
+.hourglass-flash-overlay--interlude-page .our-story-chapter-curtain,
+.hourglass-flash-overlay--interlude-page .our-story-chapter-surface,
+.hourglass-flash-overlay--interlude-page .hg-stack {
+  pointer-events: auto;
 }
 
 /* 모래 뒤집기 → 흰 화면(2s) → 검은 화면(2s) → 인터루드 */
@@ -1154,6 +1257,45 @@ body.overflow-lock {
 /* 인터루드 닫기: 검게 덮은 뒤(위 .layer--black) → 본문으로 페이드아웃 */
 .hourglass-transition-flash--interlude-exit {
   z-index: 2600;
+}
+
+/* 인터루드 반딧불이: 패널(셸 콘텐츠 폭) 안에만 — 챕터 뷰포트(45)·커튼(40)·대본 등보다 위, 홈 앵커(70)보다 아래 */
+.hourglass-flash-overlay--interlude-page .hourglass-interlude-firefly-slot {
+  position: absolute;
+  inset: 0;
+  z-index: 60;
+  margin: 0;
+  padding: 0;
+  pointer-events: none;
+  overflow: hidden;
+  opacity: 0;
+  animation: hourglass-interlude-firefly-slot-fade-in 2.4s ease forwards;
+}
+
+@keyframes hourglass-interlude-firefly-slot-fade-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+/* 홈: 검은 toBlack(2s)과 비슷한 길이로 레이어 전체 투명 — 캔버스는 계속 그려져 자연스럽게 소멸 */
+.hourglass-flash-overlay--interlude-page .hourglass-interlude-firefly-slot--fade-out {
+  animation: hourglass-interlude-firefly-slot-fade-out 1.95s ease-out forwards;
+  pointer-events: none;
+}
+
+@keyframes hourglass-interlude-firefly-slot-fade-out {
+  from {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0;
+  }
 }
 
 /* 스토리 위 검은 덮개: 처음부터 끝까지 서서히 불투명 (진입용 .layer--black과 분리) */
@@ -1242,23 +1384,196 @@ body.overflow-lock {
   box-sizing: border-box;
 }
 
-/* Our Story 대본 — 웨이브보다 위(z-index)·세로는 웨이브보다 약 1.25rem 위 */
-.hourglass-interlude-script {
+/* Our Story: 폴더별 챕터 — 가로 스와이프로 이전/다음 */
+/* 패널 안에서 이전처럼 `.hg-stack`이 남은 세로를 전부 쓰도록 flex 체인 유지(50%·--interlude-wave-top-shift 기준 복구) */
+.our-story-chapter-viewport {
+  position: relative;
+  flex: 1 1 0;
+  align-self: stretch;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 탭 힌트: 챕터 커튼(z:40)보다 아래 — 닦기 시 손가락·화살표가 커튼에 가려짐. 세로는 홈 버튼(34px)+열 간격과 맞춤 */
+.hourglass-flash-overlay--interlude-page .our-story-chapter-viewport > .hourglass-interlude-home-hint-wrap {
   position: absolute;
   left: 50%;
-  top: calc(var(--interlude-wave-top) - 1.25rem - 3px);
+  transform: translateX(-50%);
+  bottom: calc(34px + clamp(6px, 1.2dvh, 10px) + clamp(8px, 1.6dvh, 12px) + env(safe-area-inset-bottom, 0px));
+  z-index: 39;
+  pointer-events: none;
+}
+
+.our-story-chapter-surface {
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  transform: translateX(0);
+}
+
+.our-story-chapter-surface > .hg-stack {
+  flex: 1 1 auto;
+}
+
+/* 챕터 전환: 다음=오른쪽에서 왼쪽으로 한 장이 덮임, 이전=반대(1s, 대본 오디오 페이드와 동일) */
+.our-story-chapter-curtain {
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  pointer-events: auto;
+  overflow: hidden;
+  transform: translateZ(0);
+  background: transparent;
+}
+
+.our-story-chapter-curtain__sheet {
+  position: absolute;
+  inset: 0;
+  box-sizing: border-box;
+  pointer-events: none;
+  will-change: transform;
+}
+
+/* 진행 방향 앞쪽 가장자리만 살짝 뿌옇게 */
+.our-story-chapter-curtain__sheet--next {
+  background: linear-gradient(
+    to right,
+    rgb(0 0 0 / 0.38) 0%,
+    rgb(0 0 0 / 0.94) 16%,
+    rgb(0 0 0 / 1) 100%
+  );
+  transform: translateX(100%);
+  animation: our-story-chapter-curtain-wipe-next-in 1s cubic-bezier(0.33, 0, 0.2, 1) forwards;
+}
+
+.our-story-chapter-curtain__sheet--prev {
+  background: linear-gradient(
+    to left,
+    rgb(0 0 0 / 0.38) 0%,
+    rgb(0 0 0 / 0.94) 16%,
+    rgb(0 0 0 / 1) 100%
+  );
+  transform: translateX(-100%);
+  animation: our-story-chapter-curtain-wipe-prev-in 1s cubic-bezier(0.33, 0, 0.2, 1) forwards;
+}
+
+@keyframes our-story-chapter-curtain-wipe-next-in {
+  from {
+    transform: translateX(100%);
+  }
+
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes our-story-chapter-curtain-wipe-prev-in {
+  from {
+    transform: translateX(-100%);
+  }
+
+  to {
+    transform: translateX(0);
+  }
+}
+
+.our-story-chapter-surface--enter-next {
+  animation: our-story-chapter-enter-from-right 0.42s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.our-story-chapter-surface--enter-prev {
+  animation: our-story-chapter-enter-from-left 0.42s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes our-story-chapter-enter-from-right {
+  from {
+    transform: translateX(100%);
+  }
+
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes our-story-chapter-enter-from-left {
+  from {
+    transform: translateX(-100%);
+  }
+
+  to {
+    transform: translateX(0);
+  }
+}
+
+/* Our Story 대본 루트 — `.hg-stack` 기준 자식 절대 배치(이름·본문 각각 독립) */
+.hourglass-interlude-script {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  pointer-events: none;
+  z-index: 10;
+}
+
+/*
+ * 화자 이름: 웨이브 상단 = `50% + --interlude-wave-top-shift`.
+ * `--interlude-name-y-offset`: 그 지점에서 **아래로** 얼마나 더 내릴지(+, 픽셀/rem). 음수면 위로.
+ * 인터루드에서는 `.hourglass-flash-overlay--interlude-page .hg-stack`에 변수를 둠(튜닝 확실히 반영).
+ */
+.hourglass-interlude-script__name {
+  position: absolute;
+  left: 50%;
+  top: calc(50% + var(--interlude-wave-top-shift) + var(--interlude-name-y-offset, 0px));
+  transform: translateX(-50%);
   width: var(--interlude-content-w);
   max-width: 100%;
+  margin: 0;
+  padding: 0 12px;
+  box-sizing: border-box;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  line-height: 1.35;
+  color: rgb(255 255 255 / 0.88);
+  /* 대본 `.hourglass-interlude-script__text`와 동일: 밝은 글로우 + 검은 림(가독) */
+  text-shadow:
+    0 0 8px rgb(255 255 255 / 0.28),
+    0 0 20px rgb(255 255 255 / 0.14),
+    0 0 36px rgb(255 255 255 / 0.06),
+    0 1px 2px rgb(0 0 0 / 0.95),
+    0 2px 10px rgb(0 0 0 / 0.78);
+  text-align: center;
+  opacity: 0;
+  transition: opacity 0.45s ease;
+  z-index: 11;
+}
+
+.hourglass-interlude-script__name--visible {
+  opacity: 1;
+}
+
+/* 대본만 — 기존과 동일 세로(웨이브보다 약 1.25rem 위)·이름 유무와 무관 */
+.hourglass-interlude-script__body {
+  position: absolute;
+  left: 50%;
+  top: calc(50% + var(--interlude-wave-top-shift) - 1.25rem - 3px);
   transform: translateX(-50%);
-  z-index: 10;
+  width: var(--interlude-content-w);
+  max-width: 100%;
   min-height: clamp(180px, 34dvh, 380px);
   box-sizing: border-box;
   padding: 10px 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  pointer-events: none;
   text-align: center;
+  z-index: 10;
 }
 
 .hourglass-interlude-script__text {
@@ -1267,7 +1582,12 @@ body.overflow-lock {
   font-size: 0.9375rem;
   line-height: 1.55;
   color: rgb(255 255 255 / 0.93);
-  text-shadow: 0 1px 4px rgb(0 0 0 / 0.9);
+  text-shadow:
+    0 0 8px rgb(255 255 255 / 0.28),
+    0 0 20px rgb(255 255 255 / 0.14),
+    0 0 36px rgb(255 255 255 / 0.06),
+    0 1px 2px rgb(0 0 0 / 0.95),
+    0 2px 10px rgb(0 0 0 / 0.78);
   opacity: 0;
   transition: opacity 0.45s ease;
 }
@@ -1276,35 +1596,137 @@ body.overflow-lock {
   opacity: 1;
 }
 
+/* 인터루드 홈 버튼 + 대본 종료 후 탭 힌트(손가락·양옆 화살표) */
+.hourglass-interlude-home-anchor {
+  position: absolute;
+  left: 50%;
+  bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  transform: translateX(-50%);
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(6px, 1.2dvh, 10px);
+  pointer-events: none;
+}
+
+.hourglass-flash-overlay--interlude-page .hourglass-interlude-home-anchor .hourglass-flash-overlay__back--icon {
+  position: relative;
+  left: auto;
+  top: auto;
+  bottom: auto;
+  transform: none;
+  pointer-events: auto;
+}
+
+.hourglass-interlude-home-hint {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(14px, 3.2dvw, 28px);
+  opacity: 0;
+  animation: hourglass-interlude-home-hint-fade-in 1.35s ease 0.2s forwards;
+  filter: drop-shadow(0 1px 3px rgb(0 0 0 / 0.75));
+}
+
+.hourglass-interlude-home-hint__arrow {
+  flex-shrink: 0;
+  display: block;
+  color: rgb(255 255 255 / 0.88);
+}
+
+.hourglass-interlude-home-hint__tap {
+  display: block;
+  width: clamp(14px, 3.8vw, 18px);
+  height: auto;
+  object-fit: contain;
+  animation: hourglass-interlude-home-hint-sway 2.1s ease-in-out infinite;
+}
+
+/* 마지막 챕터: 중앙 아래 화살표만 — 상하 보링 */
+.hourglass-interlude-home-hint--last-chapter {
+  gap: 0;
+}
+
+.hourglass-interlude-home-hint__down {
+  display: block;
+  flex-shrink: 0;
+  color: rgb(255 255 255 / 0.92);
+  animation: hourglass-interlude-home-hint-bob-y 1.75s ease-in-out infinite;
+}
+
+@keyframes hourglass-interlude-home-hint-fade-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes hourglass-interlude-home-hint-sway {
+  0%,
+  100% {
+    transform: translateX(-9px);
+  }
+
+  50% {
+    transform: translateX(9px);
+  }
+}
+
+@keyframes hourglass-interlude-home-hint-bob-y {
+  0%,
+  100% {
+    transform: translateY(-7px);
+  }
+
+  50% {
+    transform: translateY(7px);
+  }
+}
+
 /* 사진: 셸 안 세로·가로 정중앙 고정 / 웨이브: 그 아래 별도 띠 */
-.hourglass-flash-overlay__interlude-stack {
+/* hg = hourglass 인터루드 콘텐츠 스택 (일러·포토·웨이브) */
+.hg-stack {
   position: relative;
   flex: 1 1 auto;
+  align-self: stretch;
   width: 100%;
+  min-width: 0;
   min-height: min(52dvh, 560px);
   /* 셸 컬럼 안에서의 공통 콘텐츠 최대 폭(좌우 패딩 없이 100%까지 사용) */
   --interlude-content-w: min(100%, 92vw, 22rem);
-  /* 웨이브 세로 위치(대본은 .hourglass-interlude-script에서 추가로 위로 올림) */
-  --interlude-wave-top: calc(50% + min(20.5vh, 122px) + 6px);
+  /* 웨이브 세로: `50%`는 wave/script/name 각 `top`에서 + `--interlude-wave-top-shift` */
+  --interlude-wave-top-shift: calc(min(20.5vh, 122px) + 6px);
+  --interlude-wave-top: calc(50% + var(--interlude-wave-top-shift));
+  /* 비인터루드 `.hg-stack`용 기본(인터루드는 위쪽 `--interlude-page .hg-stack`이 덮음) */
+  --interlude-name-y-offset: 0px;
+  /* 백 사진(InterludePhotoFilm) — 가로: 콘텐츠 폭, 세로: --ipf-back-max-h 박스 + cover */
+  --ipf-black: #000;
+  --ipf-back-max-h: min(48dvh, 520px);
 }
 
 /* 인터루드: 일러스트 → 포토 → 웨이브 순 페이드(전환 대신 animation으로 첫 프레임부터 보간) */
-.hourglass-flash-overlay__interlude-stack .hourglass-flash-overlay__interlude-bg,
-.hourglass-flash-overlay__interlude-stack .hourglass-flash-overlay__interlude-art,
-.hourglass-flash-overlay__interlude-stack .hourglass-flash-overlay__wave-wrap {
+/* 백 사진·비네트·필름·그레인은 부모 한 덩어리(`back_photo_layer`)로만 페이드 — 타이밍 일치 */
+.hg-stack .back_photo_layer,
+.hg-stack .hourglass-flash-overlay__interlude-art,
+.hg-stack .hourglass-flash-overlay__wave-wrap {
   opacity: 0;
   animation: none;
 }
 
-.hourglass-flash-overlay__interlude-stack--reveal-art .hourglass-flash-overlay__interlude-art {
+.hg-stack--art .hourglass-flash-overlay__interlude-art {
   animation: hourglass-interlude-art-fade-in 1.5s ease forwards;
 }
 
-.hourglass-flash-overlay__interlude-stack--reveal-photo .hourglass-flash-overlay__interlude-bg {
+.hg-stack--photo .back_photo_layer {
   animation: hourglass-interlude-layer-fade-in 1.5s ease forwards;
 }
 
-.hourglass-flash-overlay__interlude-stack--reveal-wave .hourglass-flash-overlay__wave-wrap {
+.hg-stack--wave .hourglass-flash-overlay__wave-wrap {
   animation: hourglass-interlude-layer-fade-in 1.5s ease forwards;
 }
 
@@ -1328,34 +1750,66 @@ body.overflow-lock {
   }
 }
 
-/* 실사 포토: 가로를 콘텐츠 폭과 동일한 박스에 맞춤, 위쪽에 배치 */
-.hourglass-flash-overlay__interlude-bg {
+/* 백+플래시: 웨이브·대본과 동일 `--interlude-content-w` 가로, 중앙 정렬 — 그레인·비네트는 `.flash`가 박스 전체 덮음 */
+.back_photo_layer {
   position: absolute;
   left: 50%;
+  right: auto;
   top: 21%;
+  z-index: 0;
   width: var(--interlude-content-w);
   max-width: 100%;
+  max-height: var(--ipf-back-max-h, min(48dvh, 520px));
   box-sizing: border-box;
-  max-height: min(48dvh, 520px);
+  margin: 0;
+  padding: 0;
   transform: translate(-50%, -50%);
-  z-index: 0;
   pointer-events: none;
-  overflow: hidden;
+  overflow: visible;
+  display: block;
+}
+
+/* 사진 콘텐츠: 가로 100% (콘텐츠 열) */
+.back_img {
+  position: relative;
+  z-index: 0;
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  pointer-events: none;
+  overflow: visible;
+}
+
+/* 필름·그레인·비네트 — `back_photo_layer`와 동일한 직사각형 */
+.back_photo_layer .flash {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  transform: none;
+  pointer-events: none;
+  overflow: visible;
   display: flex;
   align-items: center;
   justify-content: center;
+  isolation: isolate;
 }
 
-.hourglass-flash-overlay__interlude-bg-img {
-  display: block;
-  box-sizing: border-box;
+.back_img .back_img_inner {
   width: 100%;
-  min-width: 100%;
   max-width: 100%;
-  height: auto;
-  max-height: min(48dvh, 520px);
-  object-fit: contain;
-  object-position: center center;
+}
+
+/* 비네트(flash)·이미지 위로 — InterludePhotoFilm.css */
+.back_img .back_img__img {
+  position: relative;
+  z-index: 1;
+  box-sizing: border-box;
 }
 
 .hourglass-flash-overlay__interlude-art {
@@ -1368,7 +1822,7 @@ body.overflow-lock {
   pointer-events: none;
   padding: 0;
   box-sizing: border-box;
-  transform: scale(0.7);
+  transform: scale(0.96);
   transform-origin: center center;
 }
 
@@ -1381,23 +1835,95 @@ body.overflow-lock {
   object-fit: contain;
   pointer-events: none;
   user-select: none;
-  /* 밝은 실사 위에도 모래 선이 읽히도록 */
   filter: drop-shadow(0 0 1.5px rgb(0 0 0 / 0.75)) drop-shadow(0 0 18px rgb(0 0 0 / 0.45));
 }
 
-/* 일러스트 frame 더블버퍼 — 겹쳐 두고 z-index만 교체 */
-.hourglass-interlude-frame-stack {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  min-height: min(38dvh, 300px);
+/*
+ * 일러스트 mp4: 밝기만 불규칙하게 흔들기 — 키프레임 간격을 넓히고 linear 보간으로 부드럽게 연속.
+ * transform 미사용(플립·인터루드 오버라이드와 충돌 없음)
+ */
+@keyframes hourglass-interlude-illustration-flicker {
+  0%,
+  100% {
+    filter: brightness(1);
+  }
+
+  11% {
+    filter: brightness(0.81);
+  }
+
+  18% {
+    filter: brightness(0.93);
+  }
+
+  26% {
+    filter: brightness(0.77);
+  }
+
+  34% {
+    filter: brightness(1.05);
+  }
+
+  43% {
+    filter: brightness(0.86);
+  }
+
+  51% {
+    filter: brightness(0.78);
+  }
+
+  58% {
+    filter: brightness(1.04);
+  }
+
+  67% {
+    filter: brightness(0.84);
+  }
+
+  74% {
+    filter: brightness(0.73);
+  }
+
+  82% {
+    filter: brightness(0.97);
+  }
+
+  89% {
+    filter: brightness(0.83);
+  }
 }
 
-.hourglass-interlude-frame-stack__img {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
+/* 일러스트 mp4 2레이어 크로스페이드 — 격자 한 칸에 겹침 */
+.hourglass-flash-overlay__interlude-art__video-stack {
+  display: grid;
+  grid-template: 1fr / 1fr;
+  justify-items: center;
+  width: max-content;
+  max-width: min(100%, var(--interlude-content-w));
+  pointer-events: none;
+  transform: translateY(clamp(22px, 5vh, 56px));
+  animation: hourglass-interlude-illustration-flicker 5.27s linear infinite;
+  will-change: filter;
+}
+
+/* `animation_flip.mp4` 사용 시 좌우 반전(스택 전체에 scaleX) */
+.hourglass-flash-overlay__interlude-art__video-stack--flip {
+  transform: translateY(clamp(22px, 5vh, 56px)) scaleX(-1);
+}
+
+.hourglass-flash-overlay__interlude-art__video-stack .hourglass-flash-overlay__interlude-art__video {
+  grid-area: 1 / 1;
+  display: block;
+  width: auto;
+  max-width: min(100%, var(--interlude-content-w));
+  height: auto;
+  max-height: min(64dvh, 580px);
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+  filter: drop-shadow(0 0 1.5px rgb(0 0 0 / 0.75)) drop-shadow(0 0 18px rgb(0 0 0 / 0.45));
+  /* `InterludeIllustrationFrames.tsx` 의 LOOP_CROSSFADE_SEC(1) 과 맞출 것 */
+  transition: opacity 1s ease;
 }
 
 .hourglass-flash-overlay__wave-wrap {
@@ -1408,7 +1934,7 @@ body.overflow-lock {
   transform: translateX(-50%);
   z-index: 1;
   background: transparent;
-  top: var(--interlude-wave-top);
+  top: calc(50% + var(--interlude-wave-top-shift));
   height: clamp(180px, 34dvh, 380px);
   border-radius: 0;
   overflow: visible;
@@ -1447,11 +1973,15 @@ body.overflow-lock {
 
 .hourglass-flash-overlay__back--icon {
   position: absolute;
-  top: 10px;
-  right: 10px;
+  left: 50%;
+  right: auto;
+  top: auto;
+  bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  transform: translateX(-50%);
   z-index: 4;
-  width: 44px;
-  height: 44px;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
   display: grid;
   place-items: center;
   font-size: 0;
@@ -1476,8 +2006,8 @@ body.overflow-lock {
 
 .hourglass-flash-overlay__back-home-icon {
   display: block;
-  width: 22px;
-  height: 22px;
+  width: 17px;
+  height: 17px;
   color: rgb(255 255 255 / 0.96);
 }
 
@@ -1491,9 +2021,87 @@ body.overflow-lock {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .hourglass-flash-overlay__interlude-art__video-stack {
+    animation: none;
+    filter: none;
+    opacity: 1;
+    will-change: auto;
+  }
+
   .hourglass-flash-overlay__back--interlude-fade-in {
     animation: none;
     opacity: 1;
+  }
+
+  .hourglass-interlude-home-hint {
+    animation: none;
+    opacity: 1;
+  }
+
+  .hourglass-flash-overlay--interlude-page.hourglass-flash-overlay--interlude-under-exit .hourglass-interlude-home-hint {
+    opacity: 0;
+    visibility: hidden;
+    transition: none;
+  }
+
+  .hourglass-interlude-home-hint__tap {
+    animation: none;
+    transform: none;
+  }
+
+  .hourglass-interlude-home-hint__down {
+    animation: none;
+    transform: none;
+  }
+
+  .hourglass-flash-overlay--interlude-page .hourglass-interlude-firefly-slot {
+    animation: none;
+    opacity: 1;
+  }
+
+  .hourglass-flash-overlay--interlude-page .hourglass-interlude-firefly-slot--fade-out {
+    animation: none;
+    opacity: 0;
+  }
+
+  .hourglass-flash-overlay__panel--interlude {
+    perspective: none;
+  }
+
+  /* 챕터 커튼: 방향별 닦기 — reduced-motion에서도 1s 유지 */
+  .our-story-chapter-curtain__sheet--next {
+    animation: our-story-chapter-curtain-wipe-next-in 1s cubic-bezier(0.33, 0, 0.2, 1) forwards;
+  }
+
+  .our-story-chapter-curtain__sheet--prev {
+    animation: our-story-chapter-curtain-wipe-prev-in 1s cubic-bezier(0.33, 0, 0.2, 1) forwards;
+  }
+
+  .hg-stack {
+    transform: none;
+    transform-style: flat;
+  }
+
+  .hg-stack::before {
+    box-shadow: 0 0 0 1px rgb(255 255 255 / 0.04);
+  }
+
+  .hg-stack::after {
+    background: radial-gradient(
+      ellipse 92% 78% at 50% 44%,
+      rgb(0 0 0 / 0) 0%,
+      rgb(0 0 0 / 0) 42%,
+      rgb(0 0 0 / 0.18) 78%,
+      rgb(0 0 0 / 0.5) 100%
+    );
+  }
+
+  .hourglass-flash-overlay__screen-glow-host {
+    display: none;
+  }
+
+  .flash {
+    box-shadow: none;
   }
 }
 

@@ -2,9 +2,9 @@ import { useEffect, useRef, type MutableRefObject } from "react";
 import { createNoise2D } from "simplex-noise";
 
 type InterludeSoundWaveCanvasProps = {
-  /** 대본 .wav 재생 시 `getByteTimeDomainData`로 진폭 연동 */
+  /** 대본 mp3 재생 시 `getByteTimeDomainData`로 진폭 연동 */
   waveAnalyserRef?: MutableRefObject<AnalyserNode | null>;
-  /** true: 대본 wav 라우트 중. false: 재생 없음·대기 — 아주 낮은 진동만 */
+  /** true: 대본 오디오 라우트 중. false: 재생 없음·대기 — 아주 낮은 진동만 */
   wavActiveRef?: MutableRefObject<boolean>;
 };
 
@@ -58,7 +58,7 @@ export function InterludeSoundWaveCanvas({
     const LAYER_WEIGHT = 0.26;
     /** 재생 없음·Analyser 무음: 세로 스케일(기본 1 대비) */
     const IDLE_MICRO_SCALE = 0.1;
-    /** wav 라우트는 아닐 때 위상 속도 비율 */
+    /** 대본 오디오 라우트는 아닐 때 위상 속도 비율 */
     const IDLE_PHASE_RATE = 0.22;
     /** 재생 중이나 RMS 무음일 때 위상 속도(너무 빠르면 미세 진동이 번짐) */
     const SILENT_PLAYBACK_PHASE_RATE = 0.38;

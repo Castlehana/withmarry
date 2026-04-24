@@ -1,0 +1,94 @@
+{
+  "pages": [
+    {
+      "folder": "01_boy",
+      "page": "1",
+      "lines": [
+        { "text": "1995년 매미 소리 가득했던 한여름,", "audio": "01.mp3", "speaker": "groom" },
+        { "text": "우렁찬 울음소리로 세상을 반겼던 김도현!", "audio": "02.mp3", "speaker": "groom" },
+        { "text": "흙투성이가 되도록 모래 놀이를 좋아했어요.", "audio": "03.mp3", "speaker": "groom" },
+        { "text": "종이접기에 푹 빠진 씩씩한 아이로 자랐죠.", "audio": "04.mp3", "speaker": "groom" }
+      ]
+    },
+    {
+      "folder": "01_girl",
+      "page": "2",
+      "lines": [
+        { "text": "1997년 첫눈이 내릴 무렵 초겨울,", "audio": "01.mp3", "speaker": "bride" },
+        { "text": "예쁜 미소로 세상을 반겼던 아기 최지수!", "audio": "02.mp3", "speaker": "bride" },
+        { "text": "고사리 같은 손으로 그림 그리는 걸 좋아했어요.", "audio": "03.mp3", "speaker": "bride" },
+        { "text": "인형 놀이를 좋아하는 사랑스러운 순둥이였죠.", "audio": "04.mp3", "speaker": "bride" }
+      ]
+    },
+    {
+      "folder": "02_boy",
+      "page": "3",
+      "lines": [
+        { "text": "친구들과 땀 흘리며 태권도 하기를 좋아했어요.", "audio": "01.mp3", "speaker": "groom" },
+        { "text": "노래 부르기도 즐기던 해맑은 소년이었답니다.", "audio": "02.mp3", "speaker": "groom" },
+        { "text": "어느덧 멋진 개발자가 되겠다는 꿈을 꿨어요.", "audio": "03.mp3", "speaker": "groom" },
+        { "text": "꿈을 향해 씩씩하게 미래를 그려 나갔습니다.", "audio": "04.mp3", "speaker": "groom" }
+      ]
+    },
+    {
+      "folder": "02_girl",
+      "page": "4",
+      "lines": [
+        { "text": "학교 앞 떡볶이를 세상에서 제일 좋아했어요.", "audio": "01.mp3", "speaker": "bride" },
+        { "text": "배드민턴을 즐기던 명랑한 소녀였답니다.", "audio": "02.mp3", "speaker": "bride" },
+        { "text": "매일매일 멋진 디자이너라는 목표를 꿈꿨어요.", "audio": "03.mp3", "speaker": "bride" },
+        { "text": "꿈을 향해 조금씩 당찬 발걸음을 내딛었어요.", "audio": "04.mp3", "speaker": "bride" }
+      ]
+    },
+    {
+      "folder": "03_firstmeet",
+      "page": "5",
+      "lines": [
+        { "text": "대학교 교양 강의실에서 우연히 옆에 앉게 됐어요.", "audio": "01.mp3", "speaker": "groom" },
+        { "text": "수많은 사람들 속에서 첫 만남이 시작되었죠.", "audio": "02.mp3", "speaker": "groom" },
+        { "text": "전혀 다른 학과였지만 대화가 참 잘 통했어요.", "audio": "03.mp3", "speaker": "bride" },
+        { "text": "서로에게 이끌려 어느새 풋풋한 연인이 되었죠.", "audio": "04.mp3", "speaker": "bride" }
+      ]
+    },
+    {
+      "folder": "04_date",
+      "page": "6",
+      "lines": [
+        { "text": "함께하는 시간들은 매 시트콤처럼 유쾌했어요.", "audio": "01.mp3", "speaker": "bride" },
+        { "text": "눈만 마주쳐도 웃음이 터는 행복한 나날이었죠.", "audio": "02.mp3", "speaker": "bride" },
+        { "text": "주말마다 숨은 맛집을 찾고 풍경을 눈에 담았어요.", "audio": "03.mp3", "speaker": "groom" },
+        { "text": "우리만의 특별한 여행 기록을 차곡차곡 쌓았답니다.", "audio": "04.mp3", "speaker": "groom" }
+      ]
+    },
+    {
+      "folder": "05_work",
+      "page": "7",
+      "lines": [
+        { "text": "디자이너로 바쁘게 일하며 지칠 때도 있었습니다..", "audio": "01.mp3", "speaker": "bride" },
+        { "text": "그럴 때마다 곁에서 따뜻한 위로가 되어주었죠.", "audio": "02.mp3", "speaker": "bride" },
+        { "text": "개발자로 일하며 정신없는 하루를 보냈습니다.", "audio": "03.mp3", "speaker": "groom" },
+        { "text": "하지만 하루의 끝엔 서로가 있어 참 든든했죠.", "audio": "04.mp3", "speaker": "groom" }
+      ]
+    },
+    {
+      "folder": "06_propose",
+      "page": "8",
+      "lines": [
+        { "text": "이제 서로가 없는 내일은 상상할 수 없어요.", "audio": "01.mp3", "speaker": "groom" },
+        { "text": "가장 소중한 일상이 되어 결혼을 결심했습니다.", "audio": "02.mp3", "speaker": "groom" },
+        { "text": "저를 가장 나답게 해주는 따뜻한 사람입니다.", "audio": "03.mp3", "speaker": "bride" },
+        { "text": "함께라면 뭐든 잘 해낼 거란 확신이 들었어요.", "audio": "04.mp3", "speaker": "bride" }
+      ]
+    },
+    {
+      "folder": "07_marry",
+      "page": "9",
+      "lines": [
+        { "text": "마침내 부부로 하나 된 저희 두 사람.", "audio": "01.mp3", "speaker": "groom" },
+        { "text": "진짜 아름다운 이야기는 바로 지금부터입니다!", "audio": "02.mp3", "speaker": "groom" },
+        { "text": "6월 27일, 평생의 짝꿍으로 내딛는 첫걸음.", "audio": "03.mp3", "speaker": "bride" },
+        { "text": "함께 자리하시어 따뜻하게 축복해 주세요!", "audio": "04.mp3", "speaker": "bride" }
+      ]
+    }
+  ]
+}
