@@ -26,6 +26,16 @@ export type ParentsContactBlock = {
   brideParents: ParentContactRow[];
 };
 
+/** 혼주 연락 아래「참석 여부 전달하기」— 인트로 편지 버튼·모달 (`RsvpAttendanceSection.tsx`) */
+export type RsvpAttendanceBlock = {
+  /** 예비용 — 현재 모달 상단 안내 문구에는 사용하지 않습니다. */
+  message?: string;
+  /** 외부 폼·카카오 등 — 있으면 모달에 버튼으로 표시 */
+  formUrl?: string;
+  /** `formUrl` 버튼 문구 — 없으면 `참석 여부 입력하기` */
+  formLabel?: string;
+};
+
 /** `wedding.heartAccounts` — 한 사람(신랑·아버지·어머니 등) */
 export type HeartAccountEntry = {
   label: string;
@@ -41,6 +51,22 @@ export type HeartAccountsSide = {
   mother?: HeartAccountEntry;
 };
 
+/** `wedding.directionsTransport` — 한 교통수단(버스, 지하철, 자차 등) */
+export type DirectionsTransportSection = {
+  id: string;
+  title: string;
+  /** 본문 불릿(노선 그룹·노선 안내 등) */
+  bullets?: string[];
+  /** 불릿 아래 부가 안내(한 문단) */
+  note?: string;
+  /** true면 각 bullet을 네이버지도 `검색` 링크로 표시(자차 등) */
+  mapSearchBullets?: boolean;
+};
+
+export type DirectionsTransportBlock = {
+  sections: DirectionsTransportSection[];
+};
+
 export interface WeddingData {
   meta: {
     documentTitle: string;
@@ -52,6 +78,8 @@ export interface WeddingData {
     groom: {
       성이름: string;
       이름: string;
+      /** 하이픈 포함 가능 — `tel:` 링크에는 숫자만 사용. 없으면 히어로 통화 아이콘 숨김 */
+      phone?: string;
       mbtiLine: string;
       tagAccent: string;
       description: string;
@@ -59,6 +87,8 @@ export interface WeddingData {
     bride: {
       성이름: string;
       이름: string;
+      /** 하이픈 포함 가능 — `tel:` 링크에는 숫자만 사용. 없으면 히어로 통화 아이콘 숨김 */
+      phone?: string;
       mbtiLine: string;
       tagAccent: string;
       description: string;
@@ -74,6 +104,8 @@ export interface WeddingData {
     brideFamilyChildLine: string;
     /** 없으면 해당 UI 블록을 렌더하지 않습니다. */
     parentsContact?: ParentsContactBlock;
+    /** 없으면 기본 문구만 사용합니다. */
+    rsvpAttendance?: RsvpAttendanceBlock;
   };
   wedding: {
     /** `wedding-data.txt`에만 기입(년/월/일) — `dateTimeISO`·`saveTheDateNums`·캘린더는 `wedding-data.ts`에서 자동 생성 */
@@ -91,6 +123,11 @@ export interface WeddingData {
     mapUrl?: string;
     /** 주차·셔틀 등 안내 (줄바꿈 `\n` 가능) */
     directionsNote?: string;
+    /**
+     * 지도·길찾기 버튼 아래 — 교통수단별 안내(접기/펼치기).
+     * `details[name]`으로 한 번에 한 섹션만 펼침(브라우저 지원 시).
+     */
+    directionsTransport?: DirectionsTransportBlock;
     /** 오시는 길 위 `마음 전하실 곳` — 신랑/신부·혼주 계좌(토글). `kakaoPayUrl` 있을 때만 버튼 표시. */
     heartAccounts?: {
       title?: string;

@@ -1,3 +1,7 @@
+# - wedding.directionsTransport — 지도·길찾기 아래 교통 토글(sections: id, title, bullets[], note?, mapSearchBullets?).
+# - 오시는 길 지도 아래 티맵·카카오·네이버 버튼: venueAddress 있으면 그 문자열로 검색, 없으면 venueName+venueHall.
+# - couple.groom.phone / couple.bride.phone — 히어로 신랑·신부 옆 전화 아이콘(tel:). 생략 시 아이콘 숨김.
+# - couple.rsvpAttendance — 혼주 연락 아래「참석 여부 전달하기」(formUrl?, formLabel? 등).
 # - wedding.heartAccounts — 오시는 길 위 '마음 전하실 곳'. 토글 제목: 신랑측/신부측 + label. groom/bride: self, father, mother.
 #   kakaoPayUrl 생략 시 '카카오페이 송금' 숨김. holder에 {{groom.성이름}} {{groomFatherName}} 등 토큰 가능.
 # =============================================================================
@@ -10,6 +14,7 @@
     "groom": {
       "성이름": "김도현",
       "이름": "도현",
+      "phone": "010-9000-1001",
       "mbtiLine": "논리적인 설계자 INTJ",
       "tagAccent": "코드 짜는 남자",
       "description": "분석적, 꼼꼼함, 듬직함"
@@ -17,6 +22,7 @@
     "bride": {
       "성이름": "최지수",
       "이름": "지수",
+      "phone": "010-9000-2002",
       "mbtiLine": "감각적인 예술가 ISFP",
       "tagAccent": "색을 입히는 여자",
       "description": "창의적, 섬세함, 다정함"
@@ -39,7 +45,8 @@
         { "role": "아버지", "name": "최영철", "phone": "010-3000-2001" },
         { "role": "어머니", "name": "박경희", "phone": "010-3000-2002" }
       ]
-    }
+    },
+    "rsvpAttendance": {}
   },
   "wedding": {
     "date": { "year": 2026, "month": 6, "day": 27 },
@@ -47,6 +54,38 @@
     "venueName": "더살롱드웨딩홀",
     "venueHall": "1층 레터홀",
     "venueAddress": "제주특별자치도 서귀포시 중앙로 105",
+    "directionsTransport": {
+      "sections": [
+        {
+          "id": "bus",
+          "title": "버스",
+          "bullets": [
+            "1110, 1114, 1500",
+            "380, 370, 360",
+            "3311, 3322, 3333"
+          ],
+          "note": "살롱드레터 정류소 하차 후 도보 3분"
+        },
+        {
+          "id": "subway",
+          "title": "지하철",
+          "bullets": [
+            "1호선 살롱드레터 역 1번 출구 하차",
+            "2호선 살롱드레터 역 2번 출구 하차"
+          ],
+          "note": "출구 나와서 우측 신호등 건너 셔틀버스 탑승 또는 도보 5분"
+        },
+        {
+          "id": "car",
+          "title": "자차",
+          "mapSearchBullets": true,
+          "bullets": [
+            "살롱드레터 주차장 검색",
+            "살롱드레터 웨딩홀 검색"
+          ]
+        }
+      ]
+    },
     "heartAccounts": {
       "groom": {
         "self": {

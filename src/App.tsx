@@ -2,27 +2,19 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import { useScrollRevealRoot } from "./useScrollRevealRoot";
 import { HeadsetSineWaves } from "./HeadsetSineWaves";
 import { HourglassInteractive, type HourglassInterludeShellMode } from "./HourglassInteractive";
-import { GuestbookSection } from "./GuestbookSection";
 import { weddingData } from "./wedding-data";
+import { copyTextToClipboard } from "./clipboardUtils";
+import { CopyFeedbackToast } from "./CopyFeedbackToast";
+import { useCopyFeedbackToast } from "./useCopyFeedbackToast";
 import { HeartAccountsSection } from "./HeartAccountsSection";
 import { HeroParentsContact } from "./HeroParentsContact";
+import { RsvpAttendanceSection } from "./RsvpAttendanceSection";
 import { WeddingCalendar } from "./WeddingCalendar";
+import { WeddingFlipCountdown } from "./WeddingFlipCountdown";
+import { DirectionsNavLinks } from "./DirectionsNavLinks";
+import { DirectionsTransportToggles } from "./DirectionsTransportToggles";
 import { IntroEnvelopeGate, type IntroGatePhase } from "./IntroEnvelopeGate";
 import "./audio-hint-waves";
-
-const NAV: { id: string; label: string }[] = [
-  { id: "main", label: "메인" },
-  { id: "our-stroy", label: "Our Stroy" },
-  { id: "gallery", label: "Gallery" },
-  { id: "guestbook", label: "방명록" },
-  { id: "accounts", label: "마음 전하실 곳" },
-  { id: "directions", label: "오시는 길" },
-];
-
-function scrollToId(id: string) {
-  const el = document.getElementById(id);
-  el?.scrollIntoView({ behavior: "smooth", block: "start" });
-}
 
 /** `directionsNote` 한 줄에서 이모지·픽토그램만 제거 (본문은 유지) */
 function stripDirectionNoteEmojis(line: string): string {
@@ -53,6 +45,10 @@ function splitMbtiLine(line: string): { lead: string; code: string | null } {
   return { lead: t, code: null };
 }
 
+function heroCoupleTelDigits(phone: string | undefined): string {
+  return (phone ?? "").replace(/\D/g, "");
+}
+
 function HeroCoupleTelIcon() {
   return (
     <svg
@@ -75,6 +71,16 @@ function HeroCoupleTelIcon() {
   );
 }
 
+function HeroCoupleTelLink({ phone, ariaLabel }: { phone: string | undefined; ariaLabel: string }) {
+  const digits = heroCoupleTelDigits(phone);
+  if (!digits) return null;
+  return (
+    <a className="hero-couple-intro__tel-link" href={`tel:${digits}`} aria-label={ariaLabel}>
+      <HeroCoupleTelIcon />
+    </a>
+  );
+}
+
 export default function App() {
   const { meta, couple, wedding } = weddingData;
 
@@ -87,13 +93,12 @@ export default function App() {
   const heroAudioWaveTrackRef = useRef<HTMLSpanElement>(null);
   const mainContentRef = useRef<HTMLElement>(null);
   const phoneShellRef = useRef<HTMLDivElement>(null);
-  const [menuOpen, setMenuOpen] = useState(false);
   const [hourglassScrollLock, setHourglassScrollLock] = useState(false);
   const [hourglassShellMode, setHourglassShellMode] = useState<HourglassInterludeShellMode>("normal");
   /** 인트로: 검은 화면 → 봉투(흔들림·클릭) → 열림 애니메이션 → 본문 — UI는 `IntroEnvelopeGate` */
   const [introPhase, setIntroPhase] = useState<IntroGatePhase>(() => (reduceIntroMotion ? "idle" : "black"));
-
-  const closeMenu = useCallback(() => setMenuOpen(false), []);
+  const { open: copyToastOpen, closing: copyToastClosing, notify: notifyCopied, close: closeCopyToast } =
+    useCopyFeedbackToast();
 
   useScrollRevealRoot(mainContentRef, [introPhase, hourglassShellMode]);
 
@@ -133,15 +138,18 @@ export default function App() {
   }, [introPhase, reduceIntroMotion]);
 
   useEffect(() => {
-    document.body.classList.toggle(
-      "overflow-lock",
-      menuOpen || introPhase !== "done" || hourglassScrollLock
-    );
-  }, [menuOpen, introPhase, hourglassScrollLock]);
+    document.body.classList.toggle("overflow-lock", introPhase !== "done" || hourglassScrollLock);
+  }, [introPhase, hourglassScrollLock]);
 
   const heroVenueLine = `${wedding.venueName} ${wedding.venueHall}`;
   const groomMbti = splitMbtiLine(couple.groom.mbtiLine);
   const brideMbti = splitMbtiLine(couple.bride.mbtiLine);
+
+  const copyDirectionsStreetAddress = useCallback(() => {
+    const t = wedding.venueAddress?.trim();
+    if (!t) return;
+    void copyTextToClipboard(t).then(() => notifyCopied());
+  }, [notifyCopied, wedding.venueAddress]);
 
   return (
     <div className="desktop-stage">
@@ -159,53 +167,12 @@ export default function App() {
         data-hourglass-interlude-exit-reveal={hourglassShellMode === "exit-reveal" ? "" : undefined}
         {...(hourglassShellMode !== "normal" ? { inert: true } : {})}
       >
-        <div className="sticky-head">
-          <header className="top-bar">
-            <button type="button" className="icon-btn" onClick={() => setMenuOpen(true)} aria-label="메뉴">
-              <span className="hamburger" />
-            </button>
-            <span className="top-title">
-              {couple.topBarTitle ?? `${couple.groom.이름} · ${couple.bride.이름}`}
-            </span>
-            <button type="button" className="icon-btn ghost" aria-label="음악(데모)">
-              ♪
-            </button>
-          </header>
-        </div>
-
-        {menuOpen ? (
-          <div className="menu-overlay" onClick={closeMenu}>
-            <nav className="menu-panel" onClick={(e) => e.stopPropagation()}>
-              <div className="menu-head">
-                <span>메뉴</span>
-                <button type="button" className="menu-close" onClick={closeMenu} aria-label="메뉴 닫기">
-                  ×
-                </button>
-              </div>
-              <ul className="menu-list">
-                {NAV.map((item) => (
-                  <li key={item.id}>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        scrollToId(item.id);
-                        closeMenu();
-                      }}
-                    >
-                      {item.label}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </nav>
-          </div>
-        ) : null}
-
         <main
           ref={mainContentRef}
           className="content"
           aria-hidden={hourglassShellMode === "interlude" ? true : undefined}
         >
+          <CopyFeedbackToast open={copyToastOpen} closing={copyToastClosing} onClose={closeCopyToast} />
           <section id="main" className="hero">
             <div className="hero-inner">
               <p className="hero-kicker">
@@ -227,7 +194,20 @@ export default function App() {
                 <span className="ampersand">&</span>
                 <span>{couple.bride.성이름}</span>
               </h1>
-              <p className="hero-venue">{heroVenueLine}</p>
+              <div className="hero-venue-block">
+                <p className="hero-venue">{heroVenueLine}</p>
+                {wedding.venueAddress?.trim() ? (
+                  <button
+                    type="button"
+                    className="hero-venue hero-venue--copy hero-venue--address"
+                    onClick={copyDirectionsStreetAddress}
+                    aria-label={`주소 복사: ${wedding.venueAddress.trim()}`}
+                    title="눌러서 복사"
+                  >
+                    {wedding.venueAddress.trim()}
+                  </button>
+                ) : null}
+              </div>
               <div data-scroll-reveal="" data-scroll-reveal-delay-ms="90">
                 <section className="hero-couple-intro" aria-label="신랑·신부 소개">
                   <div className="hero-couple-intro__grid">
@@ -235,7 +215,10 @@ export default function App() {
                       <p className="hero-couple-intro__head">
                         <span className="hero-couple-intro__role">신랑</span>
                         <span className="hero-couple-intro__name">{couple.groom.성이름}</span>
-                        <HeroCoupleTelIcon />
+                        <HeroCoupleTelLink
+                          phone={couple.groom.phone}
+                          ariaLabel={`신랑 ${couple.groom.성이름}에게 전화`}
+                        />
                       </p>
                       <p className="hero-couple-intro__mbti">
                         {groomMbti.lead}
@@ -253,7 +236,10 @@ export default function App() {
                       <p className="hero-couple-intro__head">
                         <span className="hero-couple-intro__role">신부</span>
                         <span className="hero-couple-intro__name">{couple.bride.성이름}</span>
-                        <HeroCoupleTelIcon />
+                        <HeroCoupleTelLink
+                          phone={couple.bride.phone}
+                          ariaLabel={`신부 ${couple.bride.성이름}에게 전화`}
+                        />
                       </p>
                       <p className="hero-couple-intro__mbti">
                         {brideMbti.lead}
@@ -275,8 +261,22 @@ export default function App() {
                   <HeroParentsContact block={couple.parentsContact} />
                 </div>
               ) : null}
-              <div className="wedding-calendar-wrap" data-scroll-reveal="" data-scroll-reveal-delay-ms="150">
-                <WeddingCalendar weddingDate={WEDDING} />
+              <div data-scroll-reveal="" data-scroll-reveal-delay-ms="128">
+                <RsvpAttendanceSection
+                  groomName={couple.groom.이름}
+                  brideName={couple.bride.이름}
+                  block={couple.rsvpAttendance}
+                />
+              </div>
+              <div className="wedding-calendar-wrap">
+                <div data-scroll-reveal="" data-scroll-reveal-delay-ms="150">
+                  <WeddingCalendar weddingDate={WEDDING} />
+                </div>
+                <WeddingFlipCountdown
+                  targetDate={WEDDING}
+                  groomName={couple.groom.이름}
+                  brideName={couple.bride.이름}
+                />
               </div>
             </div>
           </section>
@@ -341,8 +341,6 @@ export default function App() {
             </div>
           </section>
 
-          <GuestbookSection flockReady={introPhase === "done"} />
-
           {wedding.heartAccounts ? <HeartAccountsSection block={wedding.heartAccounts} /> : null}
 
           <section id="directions" className="section directions" aria-labelledby="directions-heading">
@@ -351,7 +349,17 @@ export default function App() {
               <p className="directions__venue">
                 {wedding.venueName} {wedding.venueHall}
               </p>
-              {wedding.venueAddress ? <p className="directions__address">{wedding.venueAddress}</p> : null}
+              {wedding.venueAddress ? (
+                <button
+                  type="button"
+                  className="directions__address directions__address--copy"
+                  onClick={copyDirectionsStreetAddress}
+                  aria-label={`주소 복사: ${wedding.venueAddress}`}
+                  title="눌러서 복사"
+                >
+                  {wedding.venueAddress}
+                </button>
+              ) : null}
               {wedding.directionsNote ? (
                 <div className="directions__note">
                   {wedding.directionsNote
@@ -373,11 +381,15 @@ export default function App() {
               <img
                 className="directions__mapimage"
                 src={`${import.meta.env.BASE_URL}directions-map.png`}
-                alt="스팩스페이스 오피스 위치 안내 지도(서울 강서구 마곡 일대)"
+                alt={`${wedding.venueName} ${wedding.venueHall} 위치 안내 지도`}
                 loading="lazy"
                 decoding="async"
               />
             </figure>
+            <DirectionsNavLinks wedding={wedding} />
+            {wedding.directionsTransport ? (
+              <DirectionsTransportToggles block={wedding.directionsTransport} />
+            ) : null}
           </section>
 
           <footer className="site-credit" role="contentinfo">

@@ -38,8 +38,15 @@ const INTERLUDE_EXIT_FROM_BLACK_MS = 2000;
 const INTERLUDE_BGM_FADE_MS = 2000;
 /** BGM 안정 시 `HTMLMediaElement.volume`(0~1), 1 = 풀 레벨 */
 const INTERLUDE_BGM_STEADY_LINEAR = 1;
-/** 대본 mp3: 홈·커튼 시 검은 페이드(toBlack)와 비슷한 길이로 서서히 — 언마운트 직전에 끝나도록 exit보다 약간 짧게 */
+/** 대본 mp3: 챕터 커튼 등 — exit보다 약간 짧게 */
 const INTERLUDE_SCRIPT_FADE_OUT_MS = Math.max(1400, INTERLUDE_EXIT_TO_BLACK_MS - 300);
+/** 홈 버튼: 대본 오디오를 toBlack과 같은 길이로 서서히 끔(포털은 그보다 살짝 늦게 닫아 램프·disconnect 경합 방지) */
+const INTERLUDE_SCRIPT_FADE_ON_HOME_MS = INTERLUDE_EXIT_TO_BLACK_MS;
+const INTERLUDE_HOME_PORTAL_CLOSE_GRACE_MS = 380;
+const INTERLUDE_HOME_EXIT_CLOSE_MS = Math.max(
+  INTERLUDE_EXIT_TO_BLACK_MS,
+  INTERLUDE_SCRIPT_FADE_ON_HOME_MS + INTERLUDE_HOME_PORTAL_CLOSE_GRACE_MS
+);
 /** 인터루드: 본문 숨김 | 닫기: 검은 레이어 페이드아웃과 함께 본문 페이드인 */
 export type HourglassInterludeShellMode = "normal" | "interlude" | "exit-reveal";
 
@@ -88,10 +95,6 @@ function easeOutCubic(t: number): number {
   return 1 - u * u * u;
 }
 
-const SAND_DRAIN_FLIP = "translate(50,50) scale(1,-1) translate(-50,-50)";
-const HOURGLASS_CONTENT_SCALE = 0.988;
-
-const ROTATE_HINT_IMG = `${import.meta.env.BASE_URL}static/arrow.svg`;
 /** `Our Story` 하위 폴더별 페이지 — `_chapters.json`은 빌드/개발 시 스크립트로 생성 */
 const OUR_STORY_ROOT = `${import.meta.env.BASE_URL}static/${encodeURIComponent("Our Story")}`;
 const OUR_STORY_PAGES_URL = `${OUR_STORY_ROOT}/our-story-pages.txt`;
@@ -100,16 +103,11 @@ const INTERLUDE_BGM_URL = `${OUR_STORY_ROOT}/backgroundbgm.mp3`;
 /** 대본 종료 후 홈 버튼 위 탭 힌트(정적 PNG) */
 const INTERLUDE_HOME_TAP_HINT_SVG = `${import.meta.env.BASE_URL}static/interlude-home-tap-hint.svg`;
 
-const SAND_TOP_REST = "M50,50,50,50,50,50,50,50,50,50Z";
-const SAND_FALL_REST = "M49,50,49,78,51,78,51,50Z";
-const SAND_BOTTOM_REST = "M66,68,66,78,34,78,34,68,50,50Z";
-
 export function HourglassInteractive({
   onScrollLockChange,
   onInterludePageChange,
 }: HourglassInteractiveProps = {}) {
   const uid = useId().replace(/:/g, "");
-  const filterId = `granular-${uid}`;
 
   const [ourStoryPages, setOurStoryPages] = useState<OurStoryPage[]>([]);
   const [ourStoryChapterIndex, setOurStoryChapterIndex] = useState(0);
@@ -189,8 +187,6 @@ export function HourglassInteractive({
   const transitionFlashTimeoutsRef = useRef<number[]>([]);
   const interludeRevealTimeoutsRef = useRef<number[]>([]);
   const interludeExitTimeoutsRef = useRef<number[]>([]);
-
-  const svgRef = useRef<SVGSVGElement>(null);
 
   /** 전환 플래시·인터루드·닫기·모래 구간 — 모래시계 드래그 불가 */
   const interactionFrozen = useMemo(
@@ -272,22 +268,6 @@ export function HourglassInteractive({
     };
     storyBgmFadeRafRef.current = requestAnimationFrame(tick);
   }, []);
-
-  useLayoutEffect(() => {
-    if (!sandDrainPlaying) return;
-    const svg = svgRef.current;
-    if (!svg) return;
-    const id = requestAnimationFrame(() => {
-      svg.querySelectorAll("animate").forEach((el) => {
-        try {
-          (el as SVGAnimateElement).beginElement();
-        } catch {
-          /* noop */
-        }
-      });
-    });
-    return () => cancelAnimationFrame(id);
-  }, [sandDrainPlaying, sandKey]);
 
   const clientAngle = useCallback((clientX: number, clientY: number) => {
     const el = wrapRef.current;
@@ -393,7 +373,7 @@ export function HourglassInteractive({
   const dismissInterlude = useCallback(() => {
     if (interludeExitPhase !== "off" || !interludeOpen) return;
     setInterludeFireflyFadeOut(true);
-    bumpScriptAudioFade(INTERLUDE_SCRIPT_FADE_OUT_MS);
+    bumpScriptAudioFade(INTERLUDE_SCRIPT_FADE_ON_HOME_MS);
     clearTransitionFlashTimeouts();
     clearInterludeRevealTimeouts();
     clearInterludeExitTimeouts();
@@ -402,11 +382,11 @@ export function HourglassInteractive({
     const tClose = window.setTimeout(() => {
       setInterludeOpen(false);
       setInterludeExitPhase("fromBlack");
-    }, INTERLUDE_EXIT_TO_BLACK_MS);
+    }, INTERLUDE_HOME_EXIT_CLOSE_MS);
     const tDone = window.setTimeout(() => {
       setInterludeExitPhase("off");
       interludeExitTimeoutsRef.current = [];
-    }, INTERLUDE_EXIT_TO_BLACK_MS + INTERLUDE_EXIT_FROM_BLACK_MS);
+    }, INTERLUDE_HOME_EXIT_CLOSE_MS + INTERLUDE_EXIT_FROM_BLACK_MS);
     interludeExitTimeoutsRef.current = [tClose, tDone];
   }, [
     bumpScriptAudioFade,
@@ -938,142 +918,43 @@ export function HourglassInteractive({
       onPointerUp={endDrag}
       onPointerCancel={endDrag}
     >
-      {showRotateHint ? (
-        <>
-          <div className="our-stroy__hourglass-rotate-hint our-stroy__hourglass-rotate-hint--left" aria-hidden>
-            <img className="our-stroy__hourglass-rotate-hint__img" src={ROTATE_HINT_IMG} alt="" width="573" height="963" decoding="async" />
+      <div className="our-stroy__hourglass-column">
+        <div className="our-stroy__hourglass-visual" aria-hidden>
+          <div className="our-stroy__hourglass-rotate" style={{ transform: `rotate(${rotation}deg)` }}>
+            <div key={sandDrainPlaying ? `drain-${sandKey}` : "rest"} className="our-stroy__hourglass-dial">
+              <div className="our-stroy__hourglass-shape">
+                <div
+                  className={`our-stroy__hourglass-sand-pack${
+                    sandDrainPlaying ? " our-stroy__hourglass-sand-pack--flip" : ""
+                  }`}
+                >
+                  <div className="our-stroy__hourglass-pl-a">
+                    <div
+                      className={`our-stroy__hourglass-sand-a${
+                        sandDrainPlaying ? " our-stroy__hourglass-sand-a--animate" : " our-stroy__hourglass-sand-a--rest"
+                      }`}
+                    />
+                  </div>
+                  <div className="our-stroy__hourglass-pl-b">
+                    <div
+                      className={`our-stroy__hourglass-sand-b${
+                        sandDrainPlaying ? " our-stroy__hourglass-sand-b--animate" : " our-stroy__hourglass-sand-b--rest"
+                      }`}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
-          <div className="our-stroy__hourglass-rotate-hint our-stroy__hourglass-rotate-hint--right" aria-hidden>
-            <img className="our-stroy__hourglass-rotate-hint__img" src={ROTATE_HINT_IMG} alt="" width="573" height="963" decoding="async" />
-          </div>
-        </>
-      ) : null}
-      <svg
-        ref={svgRef}
-        width="100"
-        height="100"
-        viewBox="0 0 100 100"
-        xmlns="http://www.w3.org/2000/svg"
-        className="our-stroy__hourglass-svg"
-        aria-hidden
-      >
-        <filter id={filterId}>
-          <feGaussianBlur in="SourceGraphic" result="blur_init" stdDeviation="0.05" />
-          <feTurbulence
-            type="turbulence"
-            result="granular_turbulance_out"
-            numOctaves="1"
-            baseFrequency="20"
-          >
-            {sandDrainPlaying ? (
-              <animate
-                attributeName="baseFrequency"
-                dur="5s"
-                repeatCount="1"
-                fill="freeze"
-                begin="indefinite"
-                values="20; 21"
-                keyTimes="0; 1"
-              />
-            ) : null}
-          </feTurbulence>
-          <feDisplacementMap
-            in="blur_init"
-            in2="granular_turbulance_out"
-            scale="1"
-            xChannelSelector="R"
-            yChannelSelector="G"
-            result="displacement_map_out"
-          />
-          <feGaussianBlur in="displacement_map_out" stdDeviation="0.05" />
-        </filter>
-        <g className="hourglass" transform={`rotate(${rotation} 50 50)`}>
-          <g transform={`translate(50 50) scale(${HOURGLASS_CONTENT_SCALE}) translate(-50 -50)`}>
-          {sandDrainPlaying ? (
-            <g key={sandKey} transform={SAND_DRAIN_FLIP}>
-              <path
-                className="hourglass__sand hourglass__sand--top"
-                d="M34,32,34,22,66,22,66,32,50,50Z"
-                fill="#ea8ba8"
-                filter={`url(#${filterId})`}
-              >
-                <animate
-                  attributeName="d"
-                  attributeType="XML"
-                  dur="5s"
-                  repeatCount="1"
-                  fill="freeze"
-                  begin="indefinite"
-                  values="M34,32,34,22,66,22,66,32,50,50Z;M34,32,34,32,66,32,66,32,50,50Z;M50,50,50,50,50,50,50,50,50,50Z;M50,50,50,50,50,50,50,50,50,50Z"
-                  keyTimes="0; 0.4; 0.8; 1"
-                />
-              </path>
-              <path
-                className="hourglass__sand hourglass__sand--falling"
-                d="M49.75,50,49.75,78,50.25,78,50.25,50Z"
-                fill="#ea8ba8"
-                filter={`url(#${filterId})`}
-              >
-                <animate
-                  attributeName="d"
-                  attributeType="XML"
-                  dur="5s"
-                  repeatCount="1"
-                  fill="freeze"
-                  begin="indefinite"
-                  values="M49,50,49,50,51,50,51,50Z;M49,50,49,78,51,78,51,50Z;M49,50,49,78,51,78,51,50Z"
-                  keyTimes="0; 0.05; 1"
-                />
-              </path>
-              <path
-                className="hourglass__sand hourglass__sand--bottom"
-                d="M66,78,66,78,34,78,34,78,50,78Z"
-                fill="#ea8ba8"
-                filter={`url(#${filterId})`}
-              >
-                <animate
-                  attributeName="d"
-                  attributeType="XML"
-                  dur="5s"
-                  repeatCount="1"
-                  fill="freeze"
-                  begin="indefinite"
-                  values="M66,78,66,78,34,78,34,78,50,78Z;M66,78,66,78,34,78,34,78,50,60Z;M66,68,66,78,34,78,34,68,50,50Z;M66,68,66,78,34,78,34,68,50,50Z"
-                  keyTimes="0; 0.4; 0.8; 1"
-                />
-              </path>
-            </g>
-          ) : (
-            <g>
-              <path
-                className="hourglass__sand hourglass__sand--top"
-                d={SAND_TOP_REST}
-                fill="#ea8ba8"
-                filter={`url(#${filterId})`}
-              />
-              <path
-                className="hourglass__sand hourglass__sand--falling"
-                d={SAND_FALL_REST}
-                fill="#ea8ba8"
-                filter={`url(#${filterId})`}
-              />
-              <path
-                className="hourglass__sand hourglass__sand--bottom"
-                d={SAND_BOTTOM_REST}
-                fill="#ea8ba8"
-                filter={`url(#${filterId})`}
-              />
-            </g>
-          )}
-          <path
-            className="hourglass__body"
-            fillRule="evenodd"
-            d="M30.313,20c-1.561,0 -2.813,1.254 -2.813,2.813c-0,1.56 1.252,2.812 2.812,2.812l0.938,0l-0,2.227c-0,4.724 1.875,9.257 5.215,12.597l9.562,9.551l-9.562,9.551c-3.34,3.34 -5.215,7.875 -5.215,12.597l-0,2.227l-0.938,0c-1.56,0 -2.812,1.254 -2.812,2.813c-0,1.56 1.252,2.812 2.812,2.812l39.375,0c1.559,0 2.813,-1.252 2.813,-2.813c-0,-1.558 -1.254,-2.812 -2.813,-2.812l-0.937,0l-0,-2.227c-0,-4.722 -1.875,-9.257 -5.215,-12.597l-9.563,-9.551l9.55,-9.551c3.353,-3.34 5.228,-7.873 5.228,-12.597l0,-2.227l0.938,0c1.558,0 2.812,-1.252 2.812,-2.812c0,-1.559 -1.254,-2.813 -2.813,-2.813l-39.375,0Zm19.688,33.973l9.551,9.551c2.285,2.296 3.574,5.391 3.574,8.624l0,2.227l-26.25,0l0,-2.227c0,-3.233 1.289,-6.328 3.574,-8.613l9.551,-9.562Zm0,-7.957l-9.551,-9.551c-2.285,-2.285 -3.574,-5.378 -3.574,-8.613l0,-2.227l26.25,0l0,2.227c0,3.235 -1.289,6.328 -3.574,8.613l-9.551,9.563l0,-0.012Z"
-            fill="#dcc9b6"
-          />
-          </g>
-        </g>
-      </svg>
+        </div>
+        <div
+          className="our-stroy__hourglass-hint-wrap"
+          data-visible={showRotateHint ? "true" : "false"}
+          aria-hidden
+        >
+          <p className="our-stroy__hourglass-hint-text">모래시계를 돌려 주세요</p>
+        </div>
+      </div>
       {flashPortal ? createPortal(flashPortal, document.body) : null}
       {exitFlashPortal ? createPortal(exitFlashPortal, document.body) : null}
       {interludePortal ? createPortal(interludePortal, document.body) : null}

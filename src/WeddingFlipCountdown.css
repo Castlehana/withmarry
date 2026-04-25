@@ -1,0 +1,186 @@
+/* `WeddingFlipCountdown.tsx` — 플립 D-DAY (정답 로직 기반) */
+
+.wfc-root {
+  position: relative;
+  margin-top: clamp(28px, 7vw, 40px);
+  padding: clamp(20px, 5vw, 28px) clamp(8px, 3vw, 16px) clamp(24px, 6vw, 40px);
+  text-align: center;
+  overflow: visible;
+}
+
+.wfc-root *,
+.wfc-root *::before,
+.wfc-root *::after {
+  box-sizing: border-box;
+}
+
+.wfc-title {
+  margin: 0 0 clamp(22px, 5vw, 32px);
+  font-family: var(--serif);
+  font-size: clamp(0.95rem, 3.2vw, 1.05rem);
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: var(--ink);
+  line-height: 1.45;
+}
+
+.wfc-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.wfc-flip-clock {
+  text-align: center;
+  perspective: 400px;
+  margin: 12px auto 0;
+}
+
+.wfc-piece {
+  display: inline-block;
+  margin: 0 clamp(3px, 1.2vw, 8px);
+  vertical-align: top;
+}
+
+.wfc-slot {
+  display: block;
+  margin-top: 0.55em;
+  font-family: var(--serif);
+  font-size: clamp(0.65rem, 2vw, 0.78rem);
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  text-transform: capitalize;
+}
+
+/* === 카드 본체: 정답 로직 그대로 === */
+.wfc-card {
+  display: block;
+  position: relative;
+  padding-bottom: 0.72em; /* halfHeight */
+  font-size: clamp(1.5rem, 7vw, 2.4rem);
+  line-height: 0.95;
+}
+
+.wfc-card__top,
+.wfc-card__bottom,
+.wfc-card__back::before,
+.wfc-card__back::after {
+  display: block;
+  height: 0.72em;
+  color: #d97a95; /* 핑크 글자 */
+  background: #f5ecdf; /* 아이보리 윗면 */
+  padding: 0.25em 0.25em;
+  border-radius: 0.15em 0.15em 0 0;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transform-style: preserve-3d;
+  width: 1.8em;
+  transform: translateZ(0);
+  font-family: var(--serif);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.wfc-card__bottom {
+  color: #cf6b88; /* 아랫면은 살짝 더 진한 핑크 */
+  position: absolute;
+  top: 50%;
+  left: 0;
+  border-top: solid 1px rgba(42, 38, 34, 0.12);
+  background: #fffaf2; /* 아랫면은 좀 더 밝은 아이보리 */
+  border-radius: 0 0 0.15em 0.15em;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.wfc-card__bottom::after {
+  display: block;
+  margin-top: -0.72em;
+}
+
+.wfc-card__back::before,
+.wfc-card__bottom::after {
+  content: attr(data-value);
+}
+
+.wfc-card__back {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  left: 0;
+  pointer-events: none;
+}
+
+.wfc-card__back::before {
+  position: relative;
+  z-index: -1;
+  overflow: hidden;
+}
+
+/* === Days 칸은 3자리 대비 더 넓게 === */
+.wfc-card--days .wfc-card__top,
+.wfc-card--days .wfc-card__bottom,
+.wfc-card--days .wfc-card__back::before,
+.wfc-card--days .wfc-card__back::after {
+  width: 2.3em;
+}
+
+/* === 플립 애니메이션 === */
+.wfc-piece--flip .wfc-card__back::before {
+  animation: wfc-flip-top 0.3s cubic-bezier(0.37, 0.01, 0.94, 0.35);
+  animation-fill-mode: both;
+  transform-origin: center bottom;
+}
+
+.wfc-piece--flip .wfc-card__back .wfc-card__bottom {
+  transform-origin: center top;
+  animation-fill-mode: both;
+  animation: wfc-flip-bottom 0.6s cubic-bezier(0.15, 0.45, 0.28, 1);
+}
+
+@keyframes wfc-flip-top {
+  0% {
+    transform: rotateX(0deg);
+    z-index: 2;
+  }
+  0%,
+  99% {
+    opacity: 0.99;
+  }
+  100% {
+    transform: rotateX(-90deg);
+    opacity: 0;
+  }
+}
+
+@keyframes wfc-flip-bottom {
+  0%,
+  50% {
+    z-index: -1;
+    transform: rotateX(90deg);
+    opacity: 0;
+  }
+  51% {
+    opacity: 0.99;
+  }
+  100% {
+    opacity: 0.99;
+    transform: rotateX(0deg);
+    z-index: 5;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wfc-piece--flip .wfc-card__back::before,
+  .wfc-piece--flip .wfc-card__back .wfc-card__bottom {
+    animation: none;
+  }
+}

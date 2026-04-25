@@ -1,5 +1,7 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { createPortal } from "react-dom";
+import { useCallback, useMemo, useState } from "react";
+import { CopyFeedbackToast, CopyIconButton } from "./CopyFeedbackToast";
+import { copyTextToClipboard } from "./clipboardUtils";
+import { useCopyFeedbackToast } from "./useCopyFeedbackToast";
 import type { HeartAccountEntry, HeartAccountsSide, WeddingData } from "./wedding-data.types";
 
 type HeartBlock = NonNullable<WeddingData["wedding"]["heartAccounts"]>;
@@ -19,24 +21,9 @@ function sideToEntries(side: HeartAccountsSide | undefined): HeartAccountEntry[]
   return [side.self, side.father, side.mother].filter(hasAccountNumber);
 }
 
-async function copyLine(text: string) {
-  try {
-    await navigator.clipboard.writeText(text);
-  } catch {
-    const ta = document.createElement("textarea");
-    ta.value = text;
-    ta.style.position = "fixed";
-    ta.style.left = "-9999px";
-    document.body.appendChild(ta);
-    ta.select();
-    document.execCommand("copy");
-    document.body.removeChild(ta);
-  }
-}
-
 function AccountCard({ entry, onCopyFeedback }: { entry: HeartAccountEntry; onCopyFeedback: () => void }) {
   const onCopy = useCallback(() => {
-    void copyLine(entry.number.trim()).then(() => {
+    void copyTextToClipboard(entry.number.trim()).then(() => {
       onCopyFeedback();
     });
   }, [entry.number, onCopyFeedback]);
@@ -52,18 +39,11 @@ function AccountCard({ entry, onCopyFeedback }: { entry: HeartAccountEntry; onCo
         </p>
         <p className="heart-accounts__field">
           <span className="heart-accounts__v heart-accounts__v--number">{entry.number}</span>
-          <button
-            type="button"
-            className="heart-accounts__copy-inline"
+          <CopyIconButton
             onClick={onCopy}
-            aria-label={`${entry.label} 계좌번호 복사`}
+            ariaLabel={`${entry.label} 계좌번호 복사`}
             title="계좌번호 복사"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
-              <rect x="9" y="9" width="11" height="11" rx="2.2" stroke="currentColor" strokeWidth="1.35" />
-              <path d="M6.8 14.5H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h6.5a2 2 0 0 1 2 2v0.8" stroke="currentColor" strokeWidth="1.35" strokeLinecap="round" />
-            </svg>
-          </button>
+          />
         </p>
         <p className="heart-accounts__field">
           <span className="heart-accounts__v">{entry.holder}</span>
@@ -90,43 +70,6 @@ function SideContent({ entries, onCopyAny }: { entries: HeartAccountEntry[]; onC
         <AccountCard key={`${entry.label}-${entry.number}-${i}`} entry={entry} onCopyFeedback={onCopyAny} />
       ))}
     </div>
-  );
-}
-
-function CopyDonePopup({
-  open,
-  closing,
-  onClose,
-}: {
-  open: boolean;
-  closing: boolean;
-  onClose: () => void;
-}) {
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, [open, onClose]);
-
-  if (!open) return null;
-
-  return createPortal(
-    <div className={`heart-accounts__toast${closing ? " heart-accounts__toast--closing" : ""}`} role="status">
-      <div className="heart-accounts__toast-ic" aria-hidden>
-        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none">
-          <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="1.25" />
-          <path d="M8 12l2.5 2.5L16 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      </div>
-      <p className="heart-accounts__toast-title">계좌번호를 복사했어요</p>
-      <button type="button" className="heart-accounts__toast-close" onClick={onClose} aria-label="알림 닫기">
-        닫기
-      </button>
-    </div>,
-    document.body
   );
 }
 
@@ -189,51 +132,14 @@ export function HeartAccountsSection({ block }: Props) {
 
   const [openGroom, setOpenGroom] = useState(false);
   const [openBride, setOpenBride] = useState(false);
-  const [copyPopupOpen, setCopyPopupOpen] = useState(false);
-  const [copyPopupClosing, setCopyPopupClosing] = useState(false);
-  const fadeTimerRef = useRef<number | null>(null);
-  const hideTimerRef = useRef<number | null>(null);
-
-  const clearPopupTimers = useCallback(() => {
-    if (fadeTimerRef.current != null) {
-      window.clearTimeout(fadeTimerRef.current);
-      fadeTimerRef.current = null;
-    }
-    if (hideTimerRef.current != null) {
-      window.clearTimeout(hideTimerRef.current);
-      hideTimerRef.current = null;
-    }
-  }, []);
-
-  const onCopyAny = useCallback(() => {
-    clearPopupTimers();
-    setCopyPopupOpen(true);
-    setCopyPopupClosing(false);
-    fadeTimerRef.current = window.setTimeout(() => setCopyPopupClosing(true), 1500);
-    hideTimerRef.current = window.setTimeout(() => {
-      setCopyPopupOpen(false);
-      setCopyPopupClosing(false);
-    }, 2400);
-  }, [clearPopupTimers]);
-
-  const closeCopyPopup = useCallback(() => {
-    clearPopupTimers();
-    setCopyPopupClosing(true);
-    hideTimerRef.current = window.setTimeout(() => {
-      setCopyPopupOpen(false);
-      setCopyPopupClosing(false);
-    }, 700);
-  }, [clearPopupTimers]);
-
-  useEffect(() => {
-    return () => clearPopupTimers();
-  }, [clearPopupTimers]);
+  const { open: copyPopupOpen, closing: copyPopupClosing, notify: onCopyAny, close: closeCopyPopup } =
+    useCopyFeedbackToast();
 
   const title = block.title?.trim() || "마음 전하실 곳";
 
   return (
     <section id="accounts" className="section heart-accounts" aria-labelledby="heart-accounts-heading" lang="ko">
-      <CopyDonePopup open={copyPopupOpen} closing={copyPopupClosing} onClose={closeCopyPopup} />
+      <CopyFeedbackToast open={copyPopupOpen} closing={copyPopupClosing} onClose={closeCopyPopup} />
       <h2 id="heart-accounts-heading" className="heart-accounts__h2">
         {title}
       </h2>

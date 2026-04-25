@@ -496,3 +496,18 @@
     animation-delay: 1.65s;
   }
 }
+
+/* 히어로「참석 여부」— 인트로와 동일 봉투 마크업, 닫힌 모습만·애니·트랜지션 없음 */
+.intro-env.intro-env--static-visual.intro-env--close .intro-env__flap {
+  transition: none !important;
+}
+
+.intro-env.intro-env--static-visual.intro-env--close .intro-env__letter {
+  transition: none !important;
+  transform: none !important;
+}
+
+.intro-env.intro-env--static-visual .intro-env__heart {
+  animation: none !important;
+  opacity: 0 !important;
+}
