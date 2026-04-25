@@ -91,14 +91,14 @@ function easeOutCubic(t: number): number {
 const SAND_DRAIN_FLIP = "translate(50,50) scale(1,-1) translate(-50,-50)";
 const HOURGLASS_CONTENT_SCALE = 0.988;
 
-const ROTATE_HINT_IMG = `${import.meta.env.BASE_URL}static/그림1.svg`;
+const ROTATE_HINT_IMG = `${import.meta.env.BASE_URL}static/arrow.svg`;
 /** `Our Story` 하위 폴더별 페이지 — `_chapters.json`은 빌드/개발 시 스크립트로 생성 */
 const OUR_STORY_ROOT = `${import.meta.env.BASE_URL}static/${encodeURIComponent("Our Story")}`;
 const OUR_STORY_PAGES_URL = `${OUR_STORY_ROOT}/our-story-pages.txt`;
 const CHAPTERS_MANIFEST_URL = `${OUR_STORY_ROOT}/_chapters.json`;
 const INTERLUDE_BGM_URL = `${OUR_STORY_ROOT}/backgroundbgm.mp3`;
 /** 대본 종료 후 홈 버튼 위 탭 힌트(정적 PNG) */
-const INTERLUDE_HOME_TAP_HINT_SVG = `${import.meta.env.BASE_URL}static/our-story/interlude-home-tap-hint.svg`;
+const INTERLUDE_HOME_TAP_HINT_SVG = `${import.meta.env.BASE_URL}static/interlude-home-tap-hint.svg`;
 
 const SAND_TOP_REST = "M50,50,50,50,50,50,50,50,50,50Z";
 const SAND_FALL_REST = "M49,50,49,78,51,78,51,50Z";

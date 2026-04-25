@@ -7,6 +7,8 @@
   --gold: #b08d57;
   --gold-soft: #d4bc91;
   --blush: #f3ebe3;
+  --hero-groom: #6a9ec9;
+  --hero-bride: #d98a9a;
   --serif: "Noto Serif KR", "Apple SD Gothic Neo", serif;
   --display: "Cormorant Garamond", "Noto Serif KR", serif;
   --shell-max: 430px;
@@ -38,376 +40,7 @@ body.overflow-lock {
   overflow: hidden;
 }
 
-/* ========== 인트로: 검은 화면 → 봉투(살짝 흔들림·클릭) → 열림 → 본문 ========== */
-.intro-gate {
-  position: fixed;
-  inset: 0;
-  z-index: 999;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 24px 20px 40px;
-  background: #000;
-  overflow: hidden;
-}
-
-.intro-gate__vignette {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: radial-gradient(ellipse 85% 70% at 50% 45%, transparent 30%, rgba(0, 0, 0, 0.55) 100%);
-}
-
-.intro-gate__stage {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  max-width: 100%;
-}
-
-.intro-gate[data-phase="idle"] .intro-gate__stage {
-  animation: introGateStageIn 2.2s ease forwards;
-}
-
-.intro-gate[data-phase="opening"] .intro-gate__stage {
-  opacity: 1;
-  transform: translateY(0);
-  animation: none;
-}
-
-/* 클릭 영역: 탭 멘트·별도 버튼 없이 봉투 전체 */
-.intro-gate__envelope-wrap {
-  display: block;
-  margin: 0;
-  padding: 0;
-  border: none;
-  background: none;
-  cursor: pointer;
-  font: inherit;
-  color: inherit;
-  appearance: none;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.intro-gate__envelope-wrap:disabled {
-  cursor: default;
-}
-
-.intro-gate__envelope-wrap--shake {
-  animation: introEnvShake 2.6s ease-in-out infinite;
-  transform-origin: 50% 55%;
-}
-
-/* CodePen식 삼각형 봉투 — 아이보리·크림 톤 */
-.intro-env {
-  --intro-w: min(280px, 88vw);
-  --intro-h: calc(var(--intro-w) * 180 / 280);
-  --intro-heart-w: 22px;
-  /* 옆면·밑면·뚜껑 삼각 — 미묘한 단차로 입체 */
-  --intro-env: #f2ebe1;
-  --intro-env2: #dcd4c8;
-  --intro-flap: #e8e0d4;
-  position: relative;
-  width: var(--intro-w);
-  height: var(--intro-h);
-  margin: 0 auto;
-  border-bottom-left-radius: 6px;
-  border-bottom-right-radius: 6px;
-  background-color: var(--intro-flap);
-  box-shadow:
-    0 10px 32px rgba(58, 48, 40, 0.14),
-    0 2px 0 rgba(255, 255, 255, 0.35) inset;
-  perspective: 880px;
-  transform-style: preserve-3d;
-}
-
-.intro-env__front {
-  position: absolute;
-  left: 50%;
-  width: 0;
-  height: 0;
-  translate: -50% 0;
-  pointer-events: none;
-}
-
-.intro-env__pocket {
-  bottom: 0;
-  z-index: 3;
-  border-left: calc(var(--intro-w) / 2) solid var(--intro-env);
-  border-right: calc(var(--intro-w) / 2) solid var(--intro-env);
-  border-bottom: calc(var(--intro-h) / 2) solid var(--intro-env2);
-  border-top: calc(var(--intro-h) / 2) solid transparent;
-  border-bottom-left-radius: 6px;
-  border-bottom-right-radius: 6px;
-}
-
-.intro-env__flap {
-  top: 0;
-  z-index: 4;
-  transform: rotateX(0deg);
-  transform-origin: top center;
-  border-left: calc(var(--intro-w) / 2) solid transparent;
-  border-right: calc(var(--intro-w) / 2) solid transparent;
-  border-bottom: calc(var(--intro-h) / 2 - 8px) solid transparent;
-  border-top: calc(var(--intro-h) / 2 + 8px) solid var(--intro-flap);
-  transition: transform 0.48s ease;
-}
-
-.intro-env--open .intro-env__flap {
-  transform: rotateX(180deg);
-  z-index: 0;
-}
-
-.intro-env__letter {
-  position: absolute;
-  left: 5%;
-  right: 5%;
-  top: 10%;
-  width: 90%;
-  height: 82%;
-  margin: 0 auto;
-  padding: 0;
-  border-radius: 6px;
-  background: linear-gradient(165deg, #fffefa 0%, #f7f1e8 45%, #ede6dc 100%);
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.75) inset,
-    0 12px 26px rgba(58, 48, 40, 0.12);
-  border: 1px solid rgba(88, 76, 64, 0.12);
-  z-index: 1;
-  overflow: hidden;
-}
-
-.intro-env__letter::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: 6px;
-  pointer-events: none;
-  background-image: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0) 22%,
-    rgba(236, 228, 216, 0.55) 52%,
-    rgba(214, 204, 188, 0.45) 100%
-  );
-}
-
-.intro-env--close .intro-env__letter {
-  transform: translateY(0);
-  z-index: 1;
-  transition: transform 0.45s ease;
-}
-
-.intro-env--open .intro-env__letter {
-  transform: translateY(calc(-1 * var(--intro-h) / 3));
-  z-index: 1;
-  transition: transform 0.5s ease 0.18s;
-}
-
-/* CodePen식: 열릴 때 하트가 위로 떠오르며 좌우로 흔들림 */
-.intro-env__hearts {
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 48%;
-  z-index: 2;
-  height: 0;
-  pointer-events: none;
-}
-
-.intro-env__heart {
-  position: absolute;
-  bottom: 0;
-  width: 0;
-  height: 0;
-  opacity: 0;
-  pointer-events: none;
-}
-
-.intro-env__heart::before,
-.intro-env__heart::after {
-  content: "";
-  position: absolute;
-  left: var(--intro-heart-w);
-  top: 0;
-  width: var(--intro-heart-w);
-  height: calc(var(--intro-heart-w) * 1.6);
-  background: #b86b76;
-  border-radius: var(--intro-heart-w) var(--intro-heart-w) 0 0;
-  transform: rotate(-45deg);
-  transform-origin: 0 100%;
-  pointer-events: none;
-  box-shadow: 0 1px 2px rgb(0 0 0 / 0.12);
-}
-
-.intro-env__heart::after {
-  left: 0;
-  transform: rotate(45deg);
-  transform-origin: 100% 100%;
-}
-
-.intro-env--close .intro-env__heart {
-  opacity: 0;
-  animation: none;
-}
-
-.intro-env--open .intro-env__heart--a1 {
-  left: 18%;
-  opacity: 1;
-  animation:
-    introHeartRise1 3.2s linear forwards,
-    introHeartSideSway 2s ease-in-out 4 alternate;
-  animation-delay: 0.22s;
-}
-
-.intro-env--open .intro-env__heart--a2 {
-  left: 52%;
-  opacity: 1;
-  animation:
-    introHeartRise2 3.8s linear forwards,
-    introHeartSideSway 2.4s ease-in-out 3 alternate;
-  animation-delay: 0.28s;
-}
-
-.intro-env--open .intro-env__heart--a3 {
-  left: 8%;
-  opacity: 1;
-  animation:
-    introHeartRise3 4.4s linear forwards,
-    introHeartSideSway 2s ease-in-out 5 alternate;
-  animation-delay: 0.18s;
-}
-
-@keyframes introHeartRise1 {
-  from {
-    transform: translateY(0) scale(0.65);
-  }
-  to {
-    transform: translateY(min(-260px, -40vh)) scale(0.65);
-  }
-}
-
-@keyframes introHeartRise2 {
-  from {
-    transform: translateY(0) scale(1);
-  }
-  to {
-    transform: translateY(min(-300px, -46vh)) scale(1);
-  }
-}
-
-@keyframes introHeartRise3 {
-  from {
-    transform: translateY(0) scale(0.82);
-  }
-  to {
-    transform: translateY(min(-280px, -44vh)) scale(0.82);
-  }
-}
-
-@keyframes introHeartSideSway {
-  from {
-    margin-inline-start: 0;
-  }
-  to {
-    margin-inline-start: 22px;
-  }
-}
-
-.intro-gate--opening .intro-gate__envelope-wrap {
-  animation: introGateEnvelopeOut 0.45s cubic-bezier(0.33, 0, 0.2, 1) forwards;
-  animation-delay: 2s;
-}
-
-.intro-gate--opening {
-  pointer-events: none;
-  animation: introGateCurtainFade 0.45s ease forwards;
-  animation-delay: 2s;
-}
-
-@keyframes introGateStageIn {
-  from {
-    opacity: 0;
-    transform: translateY(22px) scale(0.97);
-    filter: blur(5px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-    filter: blur(0);
-  }
-}
-
-@keyframes introEnvShake {
-  0%,
-  100% {
-    transform: rotate(-1.4deg);
-  }
-  50% {
-    transform: rotate(1.4deg);
-  }
-}
-
-@keyframes introGateEnvelopeOut {
-  0% {
-    transform: scale(1) translateY(0);
-    opacity: 1;
-  }
-  55% {
-    transform: scale(1.03) translateY(-10px);
-    opacity: 1;
-  }
-  100% {
-    transform: scale(0.7) translateY(42vh);
-    opacity: 0;
-  }
-}
-
-@keyframes introGateCurtainFade {
-  from {
-    opacity: 1;
-  }
-  to {
-    opacity: 0;
-    visibility: hidden;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .intro-gate[data-phase="idle"] .intro-gate__stage {
-    animation: none;
-    opacity: 1;
-    transform: none;
-    filter: none;
-  }
-
-  .intro-gate__envelope-wrap--shake {
-    animation: none;
-  }
-
-  .intro-env__flap,
-  .intro-env__letter {
-    transition-duration: 0.2s;
-    transition-delay: 0s !important;
-  }
-
-  .intro-env--open .intro-env__heart {
-    animation: none !important;
-    opacity: 0;
-  }
-
-  .intro-gate--opening .intro-gate__envelope-wrap {
-    animation-duration: 0.28s;
-    animation-delay: 1.65s;
-  }
-
-  .intro-gate--opening {
-    animation-duration: 0.28s;
-    animation-delay: 1.65s;
-  }
-}
+/* 인트로 봉투: `IntroEnvelopeGate.tsx` + `IntroEnvelopeGate.css` */
 
 #root {
   min-height: 100vh;
@@ -642,17 +275,19 @@ body.overflow-lock {
 }
 
 .content {
-  padding-bottom: 48px;
+  padding: 0 0 120px;
 }
 
 .hero {
-  --hero-pad-x: 22px;
+  --hero-pad-x: 0px;
+  /* 큰 블록 사이(장소↔이어폰↔신랑·신부)만 넓게 — 블록 내부 패딩은 각 요소에서 따로 */
+  --hero-block-gap: clamp(72px, 20vw, 112px);
   min-height: 72vh;
   display: flex;
   align-items: center;
   justify-content: center;
   text-align: center;
-  padding: 32px var(--hero-pad-x) 48px;
+  padding: 120px 0;
   background:
     linear-gradient(180deg, rgba(255, 253, 249, 0.2) 0%, var(--paper) 100%),
     radial-gradient(80% 50% at 50% 0%, #f0e6dc 0%, transparent 70%);
@@ -670,7 +305,7 @@ body.overflow-lock {
   letter-spacing: 0.35em;
   text-transform: uppercase;
   color: var(--gold);
-  margin: 0 0 20px;
+  margin: 0 0 26px;
 }
 
 .hero-kicker .the-italic {
@@ -685,15 +320,15 @@ body.overflow-lock {
   font-size: clamp(2.2rem, 9vw, 2.8rem);
   font-weight: 400;
   letter-spacing: 0.25em;
-  margin: 0 0 12px;
+  margin: 0 0 18px;
   color: var(--ink);
 }
 
 .hero-date-line {
   font-size: 14px;
   color: var(--muted);
-  margin: 0 0 18px;
-  line-height: 1.6;
+  margin: 0 0 28px;
+  line-height: 1.65;
 }
 
 .hero-title-photo {
@@ -702,7 +337,7 @@ body.overflow-lock {
   max-width: none;
   height: auto;
   margin-top: 0;
-  margin-bottom: 28px;
+  margin-bottom: 36px;
   margin-left: calc(-1 * var(--hero-pad-x));
   margin-right: calc(-1 * var(--hero-pad-x));
   border-radius: 0;
@@ -715,8 +350,8 @@ body.overflow-lock {
   font-family: var(--serif);
   font-weight: 400;
   font-size: clamp(1.75rem, 7vw, 2.1rem);
-  margin: 0 0 20px;
-  line-height: 1.5;
+  margin: 0 0 28px;
+  line-height: 1.55;
 }
 
 .hero-names span {
@@ -727,22 +362,373 @@ body.overflow-lock {
   font-family: var(--display);
   font-size: 1.5rem;
   color: var(--gold);
-  margin: 4px 0;
+  margin: 8px 0;
 }
 
 .hero-venue {
   font-size: 14px;
   color: var(--muted);
   margin: 0;
-  line-height: 1.7;
+  line-height: 1.75;
+}
+
+.hero-couple-intro {
+  margin: var(--hero-block-gap) 0 0;
+  padding: 0;
+  text-align: center;
+  background: transparent;
+  box-shadow: none;
+  border-radius: 0;
+}
+
+.hero-couple-intro__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 28px 22px;
+  align-items: start;
+  max-width: 100%;
+}
+
+@media (max-width: 340px) {
+  .hero-couple-intro__grid {
+    grid-template-columns: 1fr;
+    gap: 36px;
+  }
+}
+
+.hero-couple-intro__col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.hero-couple-intro__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px 10px;
+  margin: 0 0 2px;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.hero-couple-intro__col--groom .hero-couple-intro__role {
+  color: var(--hero-groom);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.hero-couple-intro__col--bride .hero-couple-intro__role {
+  color: var(--hero-bride);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.hero-couple-intro__name {
+  font-weight: 600;
+  color: var(--ink);
+  letter-spacing: -0.02em;
+}
+
+.hero-couple-intro__tel {
+  flex-shrink: 0;
+  color: #7a654e;
+  margin-inline-start: 2px;
+  translate: 0 1px;
+}
+
+.hero-couple-intro__mbti {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--ink);
+}
+
+.hero-couple-intro__mbti-code {
+  color: var(--gold);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.hero-couple-intro__accent {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--ink);
+}
+
+.hero-couple-intro__desc {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.65;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+}
+
+.hero-couple-intro__parents {
+  margin: 14px 0 0;
+  font-size: 13px;
+  line-height: 1.65;
+  color: var(--ink);
+  letter-spacing: -0.02em;
+}
+
+.hero-couple-intro__parents strong {
+  font-weight: 600;
+}
+
+/* 혼주 연락 — `HeroParentsContact.tsx` + `couple.parentsContact` (신랑·신부 소개와 동일하게 무테·무그림자) */
+.hero-parents-contact {
+  margin: clamp(40px, 11vw, 88px) 0 0;
+  padding: 0;
+  border-radius: 0;
+  text-align: center;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+.hero-parents-contact__title {
+  margin: 0 0 22px;
+  font-family: var(--serif);
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--ink);
+}
+
+.hero-parents-contact__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 28px 22px;
+  align-items: start;
+  max-width: 100%;
+}
+
+@media (max-width: 340px) {
+  .hero-parents-contact__grid {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+}
+
+.hero-parents-contact__col {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.hero-parents-contact__side-label {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+}
+
+.hero-parents-contact__side-label--groom {
+  color: color-mix(in srgb, var(--hero-groom) 88%, var(--muted));
+}
+
+.hero-parents-contact__side-label--bride {
+  color: color-mix(in srgb, var(--hero-bride) 88%, var(--muted));
+}
+
+.hero-parents-contact__person-list {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 22px;
+  width: 100%;
+}
+
+.hero-parents-contact__person {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+
+.hero-parents-contact__name-line {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--ink);
+}
+
+.hero-parents-contact__role {
+  font-weight: 600;
+}
+
+.hero-parents-contact__role--groom {
+  color: color-mix(in srgb, var(--hero-groom) 92%, var(--ink));
+}
+
+.hero-parents-contact__role--bride {
+  color: color-mix(in srgb, var(--hero-bride) 92%, var(--ink));
+}
+
+.hero-parents-contact__name {
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.hero-parents-contact__actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+}
+
+.hero-parents-contact__actions--groom {
+  color: var(--hero-groom);
+}
+
+.hero-parents-contact__actions--bride {
+  color: var(--hero-bride);
+}
+
+.hero-parents-contact__icon-btn {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  text-decoration: none;
+  opacity: 0.92;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.hero-parents-contact__icon-btn:hover {
+  opacity: 1;
+}
+
+.hero-parents-contact__icon-btn:active {
+  transform: scale(0.96);
+}
+
+/* Our Story 직전 단독 블록(`.audio-hint-block`) — 히어로 하단 120px 패딩과 Our Story 120px 패딩이 간격담당 */
+.audio-hint-block {
+  text-align: center;
+}
+
+/* 히어로 — 혼주 연락 다음, `WeddingCalendar.tsx` (Unsplash·body 배경 없음) */
+.wedding-calendar-wrap {
+  width: 100%;
+  max-width: min(475px, 100%);
+  margin: var(--hero-block-gap) auto 0;
+}
+
+.wedding-calendar {
+  /* 기본(봄) — `wedding-calendar--*`가 헤더·강조일 색 덮어씀 */
+  --wcal-head-tint: #fff5f6;
+  --wcal-highlight: #da89a2;
+  width: 100%;
+  background: #fdfdfd;
+  border-radius: 10px;
+  box-shadow: 0 4px 18px rgb(42 38 34 / 0.07);
+  overflow: hidden;
+}
+
+/* 12~2: 하늘색 */
+.wedding-calendar--winter {
+  --wcal-head-tint: #e8f4fd;
+  --wcal-highlight: #4a8fd1;
+}
+
+/* 3~5: 분홍 */
+.wedding-calendar--spring {
+  --wcal-head-tint: #fff2f4;
+  --wcal-highlight: #da89a2;
+}
+
+/* 6~8: 초록 */
+.wedding-calendar--summer {
+  --wcal-head-tint: #e8f5ee;
+  --wcal-highlight: #3d9a6e;
+}
+
+/* 9~11: 가을색 */
+.wedding-calendar--autumn {
+  --wcal-head-tint: #f7ede3;
+  --wcal-highlight: #b8773d;
+}
+
+.wedding-calendar__head {
+  padding: 1.1em 1em 0.9em;
+  text-align: center;
+  background: linear-gradient(180deg, var(--wcal-head-tint) 0%, #fdfdfd 100%);
+  border-bottom: 1px solid rgba(42, 38, 34, 0.06);
+}
+
+.wedding-calendar__month {
+  margin: 0;
+  font-family: var(--display);
+  font-size: 1.35em;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  color: #333;
+}
+
+.wedding-calendar__body {
+  padding: 30px 24px 32px;
+}
+
+.wedding-calendar__table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: center;
+  table-layout: fixed;
+}
+
+.wedding-calendar__weekname {
+  font-size: 0.8em;
+  font-weight: 600;
+  color: #b8b0a8;
+  padding: 0 0 0.5em;
+  letter-spacing: 0.05em;
+}
+
+.wedding-calendar__td {
+  padding: 0.2em 0 0.45em;
+  vertical-align: middle;
+}
+
+.wedding-calendar__day {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  line-height: 30px;
+  border-radius: 50%;
+  font-size: 0.95em;
+  color: #333;
+  border: 1px solid transparent;
+  box-sizing: border-box;
+  margin: 0 auto;
+}
+
+.wedding-calendar__day--wedding {
+  background: var(--wcal-highlight);
+  color: #fff;
+  font-weight: 600;
 }
 
 .hero-audio-hint {
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin: 44px 0 0;
-  padding: 0;
+  margin: 0;
+  padding: 10px 0 12px;
   text-align: center;
 }
 
@@ -750,9 +736,43 @@ body.overflow-lock {
 
 .hero-audio-hint__text {
   font-size: 13px;
-  line-height: 1.55;
+  line-height: 1.65;
   color: var(--muted);
   letter-spacing: 0.02em;
+  margin-top: 4px;
+}
+
+/* 스크롤 인뷰 시 등장 — `useScrollRevealRoot.ts` + (선택) `data-scroll-reveal-delay-ms` */
+.scroll-reveal {
+  width: 100%;
+  opacity: 0;
+  transform: translate3d(0, 26px, 0);
+  filter: blur(5px);
+  transition:
+    opacity 0.72s cubic-bezier(0.22, 1, 0.32, 1),
+    transform 0.72s cubic-bezier(0.22, 1, 0.32, 1),
+    filter 0.55s ease;
+  will-change: opacity, transform;
+}
+
+.scroll-reveal.scroll-reveal--visible {
+  transition-delay: var(--scroll-reveal-delay, 0ms);
+}
+
+.scroll-reveal--visible {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+  filter: blur(0);
+  will-change: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scroll-reveal {
+    opacity: 1;
+    transform: none;
+    filter: none;
+    transition: none;
+  }
 }
 
 .scroll-hint {
@@ -786,7 +806,7 @@ body.overflow-lock {
 }
 
 .section {
-  padding: 48px 22px;
+  padding: 120px 0;
 }
 
 .section h2 {
@@ -825,8 +845,7 @@ body.overflow-lock {
   color: var(--muted);
 }
 
-.directions__inner,
-.accounts__inner {
+.directions__inner {
   max-width: min(22rem, 100%);
   margin: 0 auto;
 }
@@ -893,62 +912,343 @@ body.overflow-lock {
   box-shadow: 0 8px 24px rgb(0 0 0 / 0.08);
 }
 
-.accounts__list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
+/* 오시는 길 위 `HeartAccountsSection.tsx` */
+.section.heart-accounts h2#heart-accounts-heading,
+.heart-accounts__h2 {
+  text-align: center;
+  margin: 0 0 20px;
+  letter-spacing: 0.08em;
+  color: var(--ink);
+}
+
+.heart-accounts__box {
+  max-width: min(22rem, 100%);
+  margin: 0 auto;
   display: flex;
   flex-direction: column;
   gap: 14px;
 }
 
-.accounts__card {
+/* `createPortal` — 복사 완료 하단 고정 토스트 (스크롤과 무관) */
+.heart-accounts__toast {
+  position: fixed;
+  left: 50%;
+  bottom: max(20px, env(safe-area-inset-bottom));
+  z-index: 220;
+  transform: translateX(-50%);
+  width: min(340px, calc(100vw - 28px));
+  display: flex;
+  align-items: center;
+  gap: 10px;
   margin: 0;
-  padding: 16px 18px;
-  border-radius: 14px;
+  padding: 11px 12px;
+  border-radius: 12px;
   border: 1px solid var(--line);
-  background: rgb(255 255 255 / 0.55);
-  box-shadow: 0 6px 18px rgb(0 0 0 / 0.06);
+  background: rgb(255 253 249 / 0.96);
+  color: var(--ink);
+  box-shadow: 0 14px 34px rgb(0 0 0 / 0.16);
+  backdrop-filter: blur(6px);
+  animation: heart-acc-toast-in 0.34s ease-out forwards;
 }
 
-.accounts__label {
-  margin: 0 0 10px;
+.heart-accounts__toast--closing {
+  animation: heart-acc-toast-out 0.68s ease-in forwards;
+}
+
+@keyframes heart-acc-toast-in {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(14px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+@keyframes heart-acc-toast-out {
+  from {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  to {
+    opacity: 0;
+    transform: translateX(-50%) translateY(18px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .heart-accounts__toast,
+  .heart-accounts__toast--closing {
+    animation: none;
+  }
+}
+
+.heart-accounts__toast-ic {
+  flex-shrink: 0;
+  color: var(--gold);
+  line-height: 0;
+}
+
+.heart-accounts__toast-title {
+  flex: 1;
+  margin: 0;
   font-size: 13px;
   font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.heart-accounts__toast-close {
+  flex-shrink: 0;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 4px 6px;
+  cursor: pointer;
+}
+
+/* `HeartAccountsSection` — `heart-accounts__box`는 gap만, 측마다 별도 블록(카드) */
+.heart-accounts__side {
+  width: 100%;
+  min-width: 0;
+  padding: 0 16px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: #fdfdf9;
+  box-shadow: 0 4px 20px rgb(42 38 34 / 0.06);
+}
+
+.heart-accounts__side:first-of-type {
+  padding-top: 0;
+}
+
+.heart-accounts__side:last-of-type {
+  padding-bottom: 0;
+}
+
+.heart-accounts__side--empty {
+  padding: 0 16px;
+}
+
+.heart-accounts__item:last-of-type .heart-accounts__acc-body {
+  padding-bottom: 0;
+}
+
+.heart-accounts__acc-panel {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.45s cubic-bezier(0.22, 1, 0.32, 1);
+}
+
+.heart-accounts__item--open .heart-accounts__acc-panel {
+  grid-template-rows: 1fr;
+}
+
+.heart-accounts__item:not(.heart-accounts__item--open) .heart-accounts__acc-panel {
+  pointer-events: none;
+}
+
+.heart-accounts__acc-inner {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.heart-accounts__acc-body {
+  padding: 0 0 16px 4px;
+  opacity: 0;
+  transform: translateY(-6px);
+  transition: opacity 0.32s ease, transform 0.4s cubic-bezier(0.22, 1, 0.32, 1);
+}
+
+.heart-accounts__item--open .heart-accounts__acc-body {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.heart-accounts__side-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-top: 2px;
+}
+
+.heart-accounts__side:first-of-type .heart-accounts__side-body {
+  padding-top: 0;
+}
+
+.heart-accounts__side:last-of-type .heart-accounts__side-body > .heart-accounts__card:last-child {
+  padding-bottom: 0;
+}
+
+.heart-accounts__trigger {
+  width: 100%;
+  min-height: 3.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 1.1rem 4px 1.1rem;
+  box-sizing: border-box;
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  text-align: left;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.heart-accounts__trigger-text {
+  flex: 1;
+  min-width: 0;
+  letter-spacing: 0.02em;
+}
+
+.heart-accounts__chev {
+  flex-shrink: 0;
+  font-size: 10px;
+  color: var(--muted);
+  transition: transform 0.2s ease;
+  display: inline-block;
+}
+
+.heart-accounts__chev--open {
+  transform: rotate(-180deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .heart-accounts__acc-panel,
+  .heart-accounts__acc-body {
+    transition: none;
+  }
+
+  .heart-accounts__item--open .heart-accounts__acc-body {
+    opacity: 1;
+    transform: none;
+  }
+
+  .heart-accounts__item:not(.heart-accounts__item--open) .heart-accounts__acc-body {
+    opacity: 0;
+  }
+}
+
+.heart-accounts__card {
+  padding: 14px 12px 16px;
+  border-radius: 10px;
+  background: rgba(255, 255, 253, 0.9);
+  border: 1px solid rgba(42, 38, 34, 0.08);
+}
+
+.heart-accounts__sublabel {
+  margin: 0 0 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--gold);
   letter-spacing: 0.04em;
+}
+
+.heart-accounts__fields {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0 0 12px;
+}
+
+.heart-accounts__field {
+  display: flex;
+  align-items: center;
+  gap: 4px 10px;
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
   color: var(--ink);
 }
 
-.accounts__bank {
-  margin: 0 0 4px;
-  font-size: 13px;
-  color: var(--muted);
+.heart-accounts__v {
+  flex: 1 1 12em;
+  min-width: 0;
 }
 
-.accounts__number {
-  margin: 0 0 8px;
-  font-size: 16px;
+.heart-accounts__v--number {
   font-weight: 600;
-  letter-spacing: 0.06em;
   font-variant-numeric: tabular-nums;
-  color: var(--ink);
+  letter-spacing: 0.04em;
 }
 
-.accounts__holder {
-  margin: 0;
-  font-size: 13px;
+.heart-accounts__copy-inline {
+  margin-left: auto;
+  width: 30px;
+  height: 30px;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
   color: var(--muted);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
 }
 
-.accounts__empty {
+.heart-accounts__copy-inline:hover {
+  color: var(--ink);
+  background: rgb(42 38 34 / 0.06);
+}
+
+.heart-accounts__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.heart-accounts__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 0 14px;
+  border-radius: 9px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  border: 1px solid var(--line);
+  background: var(--paper);
+  color: var(--ink);
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.heart-accounts__btn:hover {
+  background: var(--blush);
+  border-color: rgba(42, 38, 34, 0.12);
+}
+
+.heart-accounts__btn--kakao {
+  background: #fee500;
+  border-color: #f0d000;
+  color: #000;
+}
+
+.heart-accounts__btn--kakao:hover {
+  background: #ffe100;
+  border-color: #e6c200;
+}
+
+.heart-accounts__empty {
   margin: 0;
-  text-align: center;
   font-size: 14px;
   color: var(--muted);
+  text-align: center;
+  padding: 0;
 }
 
 .site-credit {
-  padding: 28px 22px 40px;
+  padding: 120px 0;
   text-align: center;
 }
 
@@ -2423,14 +2723,6 @@ body.overflow-lock {
   border: 1px solid var(--gold-soft);
   box-shadow: none;
   margin-top: 12px;
-}
-
-.accounts > p {
-  text-align: center;
-  font-size: 14px;
-  color: var(--muted);
-  line-height: 1.8;
-  margin: 0 0 24px;
 }
 
 .acc-group h3 {

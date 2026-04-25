@@ -1,5 +1,46 @@
 /** wedding-data.txt(JSON) 파싱 결과 타입 — 필요한 필드만 유지하고, 섹션 추가 시 여기와 JSON을 함께 늘리면 됩니다. */
 
+/** `wedding-data.txt`의 `wedding.date` — 로드 시 `dateTimeISO`·`saveTheDateNums`가 이 값에서 파생됩니다. */
+export type WeddingDateInput = {
+  year: number;
+  /** 1–12 */
+  month: number;
+  /** 1–31 */
+  day: number;
+};
+
+/** 혼주 연락 한 줄 — `phone` 없으면 전화·문자 아이콘은 표시되지 않습니다. */
+export type ParentContactRow = {
+  role: string;
+  name: string;
+  /** 하이픈 포함 가능 — 링크에는 숫자만 사용됩니다. */
+  phone?: string;
+};
+
+/** 히어로「신랑·신부 소개」아래 — `couple.parentsContact` */
+export type ParentsContactBlock = {
+  title: string;
+  groomSideLabel: string;
+  brideSideLabel: string;
+  groomParents: ParentContactRow[];
+  brideParents: ParentContactRow[];
+};
+
+/** `wedding.heartAccounts` — 한 사람(신랑·아버지·어머니 등) */
+export type HeartAccountEntry = {
+  label: string;
+  bank: string;
+  number: string;
+  holder: string;
+  kakaoPayUrl?: string;
+};
+
+export type HeartAccountsSide = {
+  self?: HeartAccountEntry;
+  father?: HeartAccountEntry;
+  mother?: HeartAccountEntry;
+};
+
 export interface WeddingData {
   meta: {
     documentTitle: string;
@@ -22,12 +63,25 @@ export interface WeddingData {
       tagAccent: string;
       description: string;
     };
-    groomParentsLine: string;
-    brideParentsLine: string;
+    /** 메인 히어로 신랑 열 하단 — `아버지·어머니 의 장남` 형태로 합쳐 표시 */
+    groomFatherName: string;
+    groomMotherName: string;
+    /** 장남·장녀·차남 등 */
+    groomFamilyChildLine: string;
+    /** 메인 히어로 신부 열 하단 */
+    brideFatherName: string;
+    brideMotherName: string;
+    brideFamilyChildLine: string;
+    /** 없으면 해당 UI 블록을 렌더하지 않습니다. */
+    parentsContact?: ParentsContactBlock;
   };
   wedding: {
-    saveTheDateNums: string;
+    /** `wedding-data.txt`에만 기입(년/월/일) — `dateTimeISO`·`saveTheDateNums`·캘린더는 `wedding-data.ts`에서 자동 생성 */
+    date: WeddingDateInput;
+    /** KST, 식 시각은 내부적으로 오후 1시(13:00) 고정. `wedding.ceremonyTimeLabel`과 맞출 것 */
     dateTimeISO: string;
+    /** `date`로부터 (예: `26 · 6 · 27`) */
+    saveTheDateNums: string;
     ceremonyTimeLabel: string;
     venueName: string;
     venueHall: string;
@@ -37,12 +91,15 @@ export interface WeddingData {
     mapUrl?: string;
     /** 주차·셔틀 등 안내 (줄바꿈 `\n` 가능) */
     directionsNote?: string;
-    /** 마음 전하실 곳 — 계좌 행 */
-    accounts?: {
-      label: string;
-      bank: string;
-      number: string;
-      holder: string;
-    }[];
+    /** 오시는 길 위 `마음 전하실 곳` — 신랑/신부·혼주 계좌(토글). `kakaoPayUrl` 있을 때만 버튼 표시. */
+    heartAccounts?: {
+      title?: string;
+      /** 상단 토글 버튼 문구 (없으면 `신랑측`) */
+      groomToggleLabel?: string;
+      /** 상단 토글 버튼 문구 (없으면 `신부측`) */
+      brideToggleLabel?: string;
+      groom: HeartAccountsSide;
+      bride: HeartAccountsSide;
+    };
   };
 }

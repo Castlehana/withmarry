@@ -1,11 +1,5 @@
-# =============================================================================
-# 청첩장에 들어가는 정보 (UTF-8)
-# - # 으로 시작하는 줄은 무시됩니다.
-# - 아래는 JSON 입니다.
-# - 이름은 couple.groom / couple.bride 의 성이름·이름만 적고, 다른 문구에는
-#   {{groom.성이름}} {{groom.이름}} {{bride.성이름}} {{bride.이름}} 토큰을 쓰면 자동 치환됩니다.
-# - 아래 섹션·필드는 현재 메인(히어로)에 쓰이는 최소값입니다. 글귀·달력 등은 App.tsx 와
-#   wedding-data.types.ts 에 맞춰 JSON을 다시 추가하면 됩니다.
+# - wedding.heartAccounts — 오시는 길 위 '마음 전하실 곳'. 토글 제목: 신랑측/신부측 + label. groom/bride: self, father, mother.
+#   kakaoPayUrl 생략 시 '카카오페이 송금' 숨김. holder에 {{groom.성이름}} {{groomFatherName}} 등 토큰 가능.
 # =============================================================================
 {
   "meta": {
@@ -16,40 +10,84 @@
     "groom": {
       "성이름": "김도현",
       "이름": "도현",
-      "mbtiLine": "다정한 사랑꾼 ESFJ",
-      "tagAccent": "빵 굽는 남자",
-      "description": "사교적, 열정적, 적응력"
+      "mbtiLine": "논리적인 설계자 INTJ",
+      "tagAccent": "코드 짜는 남자",
+      "description": "분석적, 꼼꼼함, 듬직함"
     },
     "bride": {
       "성이름": "최지수",
       "이름": "지수",
-      "mbtiLine": "세상의 소금형 ISTJ",
-      "tagAccent": "붓질하는 여자",
-      "description": "책임감, 논리적, 헌신"
+      "mbtiLine": "감각적인 예술가 ISFP",
+      "tagAccent": "색을 입히는 여자",
+      "description": "창의적, 섬세함, 다정함"
     },
-    "groomParentsLine": "김종혁 · 최은혜의 장남",
-    "brideParentsLine": "이주영 · 강지은의 장녀"
+    "groomFatherName": "김성호",
+    "groomMotherName": "이미숙",
+    "groomFamilyChildLine": "장남",
+    "brideFatherName": "최영철",
+    "brideMotherName": "박경희",
+    "brideFamilyChildLine": "장녀",
+    "parentsContact": {
+      "title": "혼주에게 연락하기",
+      "groomSideLabel": "신랑측",
+      "brideSideLabel": "신부측",
+      "groomParents": [
+        { "role": "아버지", "name": "김성호", "phone": "010-2000-1001" },
+        { "role": "어머니", "name": "이미숙", "phone": "010-2000-1002" }
+      ],
+      "brideParents": [
+        { "role": "아버지", "name": "최영철", "phone": "010-3000-2001" },
+        { "role": "어머니", "name": "박경희", "phone": "010-3000-2002" }
+      ]
+    }
   },
   "wedding": {
-    "saveTheDateNums": "26 · 11 · 21",
-    "dateTimeISO": "2026-11-21T13:00:00+09:00",
+    "date": { "year": 2026, "month": 6, "day": 27 },
     "ceremonyTimeLabel": "오후 1시",
     "venueName": "더살롱드웨딩홀",
     "venueHall": "1층 레터홀",
     "venueAddress": "제주특별자치도 서귀포시 중앙로 105",
-    "accounts": [
-      {
-        "label": "신랑 {{groom.성이름}} 측",
-        "bank": "국민은행",
-        "number": "123456-78-901234",
-        "holder": "{{groom.성이름}}"
+    "heartAccounts": {
+      "groom": {
+        "self": {
+          "label": "신랑",
+          "bank": "국민은행",
+          "number": "123456-78-901234",
+          "holder": "{{groom.성이름}}"
+        },
+        "father": {
+          "label": "아버지",
+          "bank": "국민은행",
+          "number": "200300-12-000111",
+          "holder": "{{groomFatherName}}"
+        },
+        "mother": {
+          "label": "어머니",
+          "bank": "국민은행",
+          "number": "200300-12-000222",
+          "holder": "{{groomMotherName}}"
+        }
       },
-      {
-        "label": "신부 {{bride.성이름}} 측",
-        "bank": "신한은행",
-        "number": "110-334-556677",
-        "holder": "{{bride.성이름}}"
+      "bride": {
+        "self": {
+          "label": "신부",
+          "bank": "신한은행",
+          "number": "110-334-556677",
+          "holder": "{{bride.성이름}}"
+        },
+        "father": {
+          "label": "아버지",
+          "bank": "하나은행",
+          "number": "357-000000-00-000",
+          "holder": "{{brideFatherName}}"
+        },
+        "mother": {
+          "label": "어머니",
+          "bank": "농협",
+          "number": "301-0000-1111-22",
+          "holder": "{{brideMotherName}}"
+        }
       }
-    ]
+    }
   }
 }

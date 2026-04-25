@@ -1,0 +1,498 @@
+/* ========== 인트로: 검은 화면 → 봉투(살짝 흔들림·클릭) → 열림 → 본문 ========== */
+.intro-gate {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 20px 40px;
+  background: #000;
+  overflow: hidden;
+}
+
+.intro-gate__vignette {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(ellipse 85% 70% at 50% 45%, transparent 30%, rgba(0, 0, 0, 0.55) 100%);
+}
+
+.intro-gate__stage {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  max-width: 100%;
+  /* idle→opening 전환 시 animation: none 으로 끊기지 않도록 phase 분기 없이 한 규칙만 사용 */
+  animation: introGateStageIn 2.2s ease forwards;
+}
+
+/* 봉투 + 손가락 힌트 세로 스택 */
+.intro-gate__intro-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: max-content;
+  max-width: 100%;
+}
+
+/* 표시 시점은 TS(`performance.timeOrigin` 기준 3초) — 열기 시 서서히 사라짐 */
+.intro-gate__finger-hint {
+  margin-top: clamp(22px, 6vw, 48px);
+  pointer-events: none;
+  user-select: none;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+  transition-delay: 0s;
+}
+
+.intro-gate__finger-hint--visible {
+  opacity: 0.8; /* 기본 대비 투명도 +20% */
+}
+
+.intro-gate[data-phase="opening"] .intro-gate__finger-hint {
+  opacity: 0;
+  transition-delay: 0s;
+  transition-duration: 0.65s;
+}
+
+/* 회전은 안쪽, bob은 바깥 — 화면 기준 수직만 움직임(대각선 보정) */
+.intro-gate__finger-hint__bob {
+  display: block;
+  width: fit-content;
+  margin-inline: auto;
+}
+
+.intro-gate__finger-hint__bob--playing {
+  animation: introFingerBob 1.15s ease-in-out infinite;
+  animation-delay: 0.08s;
+}
+
+.intro-gate__finger-hint__img {
+  display: block;
+  width: clamp(calc(44px * 0.7), calc(15vw * 0.7), calc(60px * 0.7));
+  height: auto;
+  transform: rotate(45deg);
+  transform-origin: center center;
+  filter: drop-shadow(0 3px 10px rgb(0 0 0 / 0.45));
+}
+
+@keyframes introFingerBob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+/* 봉투 박스 + 투명 클릭 레이어(자식 button — 유효 HTML) */
+.intro-gate__envelope-wrap {
+  position: relative;
+  display: block;
+  width: max-content;
+  max-width: 100%;
+  margin: 0 auto;
+  padding: 0;
+}
+
+.intro-gate__envelope-hit {
+  position: absolute;
+  inset: 0;
+  z-index: 10; /* .intro-env 내부 모든 z 위 — 탭·포커스 영역 */
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  appearance: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.intro-gate__envelope-hit:disabled {
+  cursor: default;
+  pointer-events: none;
+}
+
+.intro-gate__envelope-hit:focus-visible {
+  outline: 2px solid rgb(255 255 255 / 0.9);
+  outline-offset: 4px;
+}
+
+.intro-gate__envelope-wrap--shake {
+  animation: introEnvShake 2.6s ease-in-out infinite;
+  transform-origin: 50% 55%;
+}
+
+/* CodePen식 삼각형 봉투 — 아이보리·크림 톤 */
+.intro-env {
+  --intro-w: min(calc(252px * 0.7), calc(84vw * 0.7));
+  --intro-h: calc(var(--intro-w) * 180 / 280);
+  --intro-heart-w: calc(20px * 0.7);
+  /* 옆면·밑면·뚜껑 삼각 — 미묘한 단차로 입체 */
+  --intro-env: #f2ebe1;
+  --intro-env2: #dcd4c8;
+  --intro-flap: #e8e0d4;
+  /*
+   * z-index 위계
+   * DOM 순서: pocket → flap → letter → hearts
+   *
+   * [닫힘] flap(3) > pocket(2) > letter(1) = hearts(1, DOM뒤로 letter 위)
+   *   - 정면에서 본 봉투의 물리적 깊이: 뚜껑이 맨 앞
+   *   - 편지·하트는 같은 "내용물" 레이어 (둘 다 주머니 뒤에 숨음)
+   *
+   * [열림] pocket(2) > letter(1) = hearts(1) > flap(0)
+   *   - 뚜껑은 뒤로 젖혀져 맨 뒤
+   *   - 주머니가 편지·하트보다 앞 → 둘 다 봉투 안에서 빠져나오는 느낌
+   *   - 편지는 위로 슬라이드, 하트는 위로 떠오름 — 둘 다 윗부분이 봉투 윗선 위로 올라와야 보임
+   */
+  isolation: isolate;
+  position: relative;
+  width: var(--intro-w);
+  height: var(--intro-h);
+  margin: 0 auto;
+  border-bottom-left-radius: 4px;
+  border-bottom-right-radius: 4px;
+  background-color: var(--intro-flap);
+  box-shadow:
+    0 10px 32px rgba(58, 48, 40, 0.14),
+    0 2px 0 rgba(255, 255, 255, 0.35) inset;
+  perspective: calc(880px * 0.7);
+  transform-style: preserve-3d;
+}
+
+.intro-env__front {
+  position: absolute;
+  left: 50%;
+  width: 0;
+  height: 0;
+  translate: -50% 0;
+  pointer-events: none;
+}
+
+.intro-env__pocket {
+  bottom: 0;
+  z-index: 2; /* 닫힘·열림 공통: 내용물(편지·하트)보다 앞 → 봉투 안에서 나오는 느낌 */
+  border-left: calc(var(--intro-w) / 2) solid var(--intro-env);
+  border-right: calc(var(--intro-w) / 2) solid var(--intro-env);
+  border-bottom: calc(var(--intro-h) / 2) solid var(--intro-env2);
+  border-top: calc(var(--intro-h) / 2) solid transparent;
+  border-bottom-left-radius: 4px;
+  border-bottom-right-radius: 4px;
+}
+
+.intro-env__flap {
+  top: 0;
+  z-index: 3; /* 닫힘: 맨 앞 뚜껑 */
+  transform: rotateX(0deg);
+  transform-origin: top center;
+  border-left: calc(var(--intro-w) / 2) solid transparent;
+  border-right: calc(var(--intro-w) / 2) solid transparent;
+  border-bottom: calc(var(--intro-h) / 2 - (8px * 0.7)) solid transparent;
+  border-top: calc(var(--intro-h) / 2 + (8px * 0.7)) solid var(--intro-flap);
+  transition: transform 0.48s ease;
+}
+
+.intro-env--open .intro-env__flap {
+  transform: rotateX(180deg);
+  z-index: 0; /* 열림: 젖힌 뚜껑은 맨 뒤 */
+}
+
+.intro-env__letter {
+  position: absolute;
+  left: 5%;
+  right: 5%;
+  top: 10%;
+  width: 90%;
+  height: 82%;
+  z-index: 1; /* 닫힘·열림 공통: 주머니(2)보다 뒤 → 봉투 안에서 빼꼼 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
+  padding: clamp(4px, 2.5vw, 10px) clamp(6px, 3vw, 12px);
+  border-radius: 6px;
+  background: linear-gradient(165deg, #fffefa 0%, #f7f1e8 45%, #ede6dc 100%);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.75) inset,
+    0 12px 26px rgba(58, 48, 40, 0.12);
+  border: 1px solid rgba(88, 76, 64, 0.12);
+  overflow: hidden;
+}
+
+.intro-env__letter-line {
+  position: relative;
+  z-index: 1; /* ::after 그라데이션 위 */
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.2em 0.35em;
+  max-width: 100%;
+  font-family: "Apple SD Gothic Neo", "Malgun Gothic", "Segoe UI", system-ui, sans-serif;
+  font-size: clamp(11px, calc(var(--intro-w) * 0.065), 17px);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+  text-align: center;
+  color: #4a3d34;
+}
+
+.intro-env__letter-groom,
+.intro-env__letter-bride {
+  white-space: nowrap;
+}
+
+.intro-env__letter-heart {
+  flex-shrink: 0;
+  color: #a85a68;
+  font-size: 0.88em;
+  font-weight: 500;
+  line-height: 1;
+  translate: 0 0.06em;
+}
+
+.intro-env__letter::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 6px;
+  pointer-events: none;
+  background-image: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0) 22%,
+    rgba(236, 228, 216, 0.55) 52%,
+    rgba(214, 204, 188, 0.45) 100%
+  );
+}
+
+.intro-env--close .intro-env__letter {
+  transform: translateY(0);
+  transition: transform 0.45s ease;
+}
+
+.intro-env--open .intro-env__letter {
+  /* 봉투 절반 정도까지 위로 슬라이드 — 윗부분이 봉투 윗선 위로 빼꼼 */
+  transform: translateY(calc(-1 * var(--intro-h) / 2));
+  transition: transform 0.5s ease 0.18s;
+}
+
+/* CodePen식: 열릴 때 하트가 위로 떠오르며 좌우로 흔들림 */
+.intro-env__hearts {
+  position: absolute;
+  left: 0;
+  right: 0;
+  /* 봉투 바닥 근처에서 출발 — 떠오르는 동안 주머니에 가려졌다가 윗선 넘으면 보임 */
+  top: 70%;
+  z-index: 1; /* 닫힘·열림 공통: 편지와 같은 "내용물" 레이어, 주머니(2) 뒤 */
+  height: 0;
+  pointer-events: none;
+}
+
+.intro-env__heart {
+  position: absolute;
+  bottom: 0;
+  width: 0;
+  height: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.intro-env__heart::before,
+.intro-env__heart::after {
+  content: "";
+  position: absolute;
+  left: var(--intro-heart-w);
+  top: 0;
+  width: var(--intro-heart-w);
+  height: calc(var(--intro-heart-w) * 1.6);
+  background: #b86b76;
+  border-radius: var(--intro-heart-w) var(--intro-heart-w) 0 0;
+  transform: rotate(-45deg);
+  transform-origin: 0 100%;
+  pointer-events: none;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.12);
+}
+
+.intro-env__heart::after {
+  left: 0;
+  transform: rotate(45deg);
+  transform-origin: 100% 100%;
+}
+
+.intro-env--close .intro-env__heart {
+  opacity: 0;
+  animation: none;
+}
+
+.intro-env--open .intro-env__heart--a1 {
+  left: 18%;
+  opacity: 1;
+  animation:
+    introHeartRise1 3.2s linear forwards,
+    introHeartSideSway 2s ease-in-out 4 alternate;
+  animation-delay: 0.22s;
+}
+
+.intro-env--open .intro-env__heart--a2 {
+  left: 52%;
+  opacity: 1;
+  animation:
+    introHeartRise2 3.8s linear forwards,
+    introHeartSideSway 2.4s ease-in-out 3 alternate;
+  animation-delay: 0.28s;
+}
+
+.intro-env--open .intro-env__heart--a3 {
+  left: 8%;
+  opacity: 1;
+  animation:
+    introHeartRise3 4.4s linear forwards,
+    introHeartSideSway 2s ease-in-out 5 alternate;
+  animation-delay: 0.18s;
+}
+
+@keyframes introHeartRise1 {
+  from {
+    transform: translateY(0) scale(0.65);
+  }
+  to {
+    transform: translateY(min(calc(-260px * 0.7), calc(-40vh * 0.7))) scale(0.65);
+  }
+}
+
+@keyframes introHeartRise2 {
+  from {
+    transform: translateY(0) scale(1);
+  }
+  to {
+    transform: translateY(min(calc(-300px * 0.7), calc(-46vh * 0.7))) scale(1);
+  }
+}
+
+@keyframes introHeartRise3 {
+  from {
+    transform: translateY(0) scale(0.82);
+  }
+  to {
+    transform: translateY(min(calc(-280px * 0.7), calc(-44vh * 0.7))) scale(0.82);
+  }
+}
+
+@keyframes introHeartSideSway {
+  from {
+    margin-inline-start: 0;
+  }
+  to {
+    margin-inline-start: calc(22px * 0.7);
+  }
+}
+
+.intro-gate--opening .intro-gate__envelope-wrap {
+  animation: introGateEnvelopeOut 0.45s cubic-bezier(0.33, 0, 0.2, 1) forwards;
+  animation-delay: 2s;
+}
+
+.intro-gate--opening {
+  pointer-events: none;
+  animation: introGateCurtainFade 0.45s ease forwards;
+  animation-delay: 2s;
+}
+
+@keyframes introGateStageIn {
+  from {
+    opacity: 0;
+    transform: translateY(22px) scale(0.97);
+    filter: blur(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+@keyframes introEnvShake {
+  0%,
+  100% {
+    transform: rotate(-1.4deg);
+  }
+  50% {
+    transform: rotate(1.4deg);
+  }
+}
+
+@keyframes introGateEnvelopeOut {
+  0% {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
+  55% {
+    transform: scale(1.03) translateY(-10px);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(0.7) translateY(42vh);
+    opacity: 0;
+  }
+}
+
+@keyframes introGateCurtainFade {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .intro-gate__stage {
+    animation: none;
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+
+  .intro-gate__finger-hint__bob--playing {
+    animation: none;
+  }
+
+  .intro-gate[data-phase="opening"] .intro-gate__finger-hint {
+    transition-duration: 0.22s;
+  }
+
+  .intro-gate__envelope-wrap--shake {
+    animation: none;
+  }
+
+  .intro-env__flap,
+  .intro-env__letter {
+    transition-duration: 0.2s;
+    transition-delay: 0s !important;
+  }
+
+  .intro-env--open .intro-env__heart {
+    animation: none !important;
+    opacity: 0;
+  }
+
+  .intro-gate--opening .intro-gate__envelope-wrap {
+    animation-duration: 0.28s;
+    animation-delay: 1.65s;
+  }
+
+  .intro-gate--opening {
+    animation-duration: 0.28s;
+    animation-delay: 1.65s;
+  }
+}

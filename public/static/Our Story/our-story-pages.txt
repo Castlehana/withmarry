@@ -86,7 +86,7 @@
       "lines": [
         { "text": "마침내 부부로 하나 된 저희 두 사람.", "audio": "01.mp3", "speaker": "groom" },
         { "text": "진짜 아름다운 이야기는 바로 지금부터입니다!", "audio": "02.mp3", "speaker": "groom" },
-        { "text": "6월 27일, 평생의 짝꿍으로 내딛는 첫걸음.", "audio": "03.mp3", "speaker": "bride" },
+        { "text": "2026년 6월 27일, 평생의 짝꿍으로 내딛는 첫걸음.", "audio": "03.mp3", "speaker": "bride" },
         { "text": "함께 자리하시어 따뜻하게 축복해 주세요!", "audio": "04.mp3", "speaker": "bride" }
       ]
     }
