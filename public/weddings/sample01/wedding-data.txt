@@ -38,12 +38,12 @@
       "groomSideLabel": "신랑측",
       "brideSideLabel": "신부측",
       "groomParents": [
-        { "role": "아버지", "name": "김성호", "phone": "010-2000-1001" },
-        { "role": "어머니", "name": "이미숙", "phone": "010-2000-1002" }
+        { "role": "父", "name": "김성호", "phone": "010-2000-1001" },
+        { "role": "母", "name": "이미숙", "phone": "010-2000-1002" }
       ],
       "brideParents": [
-        { "role": "아버지", "name": "최영철", "phone": "010-3000-2001" },
-        { "role": "어머니", "name": "박경희", "phone": "010-3000-2002" }
+        { "role": "父", "name": "최영철", "phone": "010-3000-2001" },
+        { "role": "母", "name": "박경희", "phone": "010-3000-2002" }
       ]
     },
     "rsvpAttendance": {}
@@ -95,13 +95,13 @@
           "holder": "{{groom.성이름}}"
         },
         "father": {
-          "label": "아버지",
+          "label": "父",
           "bank": "국민은행",
           "number": "200300-12-000111",
           "holder": "{{groomFatherName}}"
         },
         "mother": {
-          "label": "어머니",
+          "label": "母",
           "bank": "국민은행",
           "number": "200300-12-000222",
           "holder": "{{groomMotherName}}"
@@ -115,13 +115,13 @@
           "holder": "{{bride.성이름}}"
         },
         "father": {
-          "label": "아버지",
+          "label": "父",
           "bank": "하나은행",
           "number": "357-000000-00-000",
           "holder": "{{brideFatherName}}"
         },
         "mother": {
-          "label": "어머니",
+          "label": "母",
           "bank": "농협",
           "number": "301-0000-1111-22",
           "holder": "{{brideMotherName}}"

@@ -1,7 +1,6 @@
 import { Fragment, useEffect, useRef, useState, type MutableRefObject, type ReactNode } from "react";
 import type { OurStoryScriptLine } from "./ourStoryPages";
 import type { WeddingData } from "./wedding-data.types";
-import { weddingData } from "./wedding-data";
 
 const TEXT_FADE_IN_MS = 450;
 const TEXT_FADE_OUT_MS = 450;
@@ -54,6 +53,7 @@ type InterludeScriptSequenceProps = {
   baseUrl: string;
   /** `our-story-pages.txt` 에서 현재 페이지에 해당하는 대사 목록 */
   scriptLines: OurStoryScriptLine[];
+  couple: WeddingData["couple"];
   /** 웨이브 캔버스와 공유 — 재생 중 AnalyserNode 연결 */
   waveAnalyserRef?: MutableRefObject<AnalyserNode | null>;
   /** 대사 오디오가 실제로 재생·라우팅 중일 때만 true(웨이브 위상·RMS 연동) */
@@ -74,6 +74,7 @@ export function InterludeScriptSequence({
   scriptGateOpen,
   baseUrl,
   scriptLines,
+  couple,
   waveAnalyserRef,
   wavActiveRef,
   scriptAudioFadeRequest,
@@ -311,7 +312,6 @@ export function InterludeScriptSequence({
     };
 
     (async () => {
-      const couple = weddingData.couple;
       for (let i = 0; i < lines.length; i++) {
         if (signal.cancelled || runIdRef.current !== runId) break;
         const line = lines[i];
@@ -379,7 +379,7 @@ export function InterludeScriptSequence({
       timeoutIds.forEach((id) => window.clearTimeout(id));
       stopAudio();
     };
-  }, [interludeOpen, scriptGateOpen, lines, assetBase, waveAnalyserRef, wavActiveRef]);
+  }, [interludeOpen, scriptGateOpen, lines, assetBase, couple, waveAnalyserRef, wavActiveRef]);
 
   if (!interludeOpen || !scriptGateOpen) return null;
   if (lines.length === 0 && !displayText && !scriptFinished) return null;

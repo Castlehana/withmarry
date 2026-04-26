@@ -1,14 +1,23 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { Navigate, useParams } from "react-router-dom";
+import type { WeddingLoadErrorState } from "./WeddingLoadErrorPage";
 import { useScrollRevealRoot } from "./useScrollRevealRoot";
 import { HeadsetSineWaves } from "./HeadsetSineWaves";
 import { HourglassInteractive, type HourglassInterludeShellMode } from "./HourglassInteractive";
-import { weddingData } from "./wedding-data";
+import {
+  DEFAULT_WEDDING_ID,
+  fetchWeddingData,
+  isValidWeddingId,
+  weddingBundleBaseUrl,
+} from "./wedding-data";
+import type { WeddingData } from "./wedding-data.types";
 import { copyTextToClipboard } from "./clipboardUtils";
 import { CopyFeedbackToast } from "./CopyFeedbackToast";
 import { useCopyFeedbackToast } from "./useCopyFeedbackToast";
 import { HeartAccountsSection } from "./HeartAccountsSection";
 import { HeroParentsContact } from "./HeroParentsContact";
 import { RsvpAttendanceSection } from "./RsvpAttendanceSection";
+import { GuestbookSection } from "./GuestbookSection";
 import { WeddingCalendar } from "./WeddingCalendar";
 import { WeddingFlipCountdown } from "./WeddingFlipCountdown";
 import { DirectionsNavLinks } from "./DirectionsNavLinks";
@@ -82,7 +91,61 @@ function HeroCoupleTelLink({ phone, ariaLabel }: { phone: string | undefined; ar
 }
 
 export default function App() {
-  const { meta, couple, wedding } = weddingData;
+  const { weddingId: rid } = useParams();
+  /** 주소에 id 세그먼트가 없으면(예: `/` 또는 basename만) 기본 샘플로 */
+  if (!rid?.trim()) {
+    return <Navigate to={`/${DEFAULT_WEDDING_ID}`} replace />;
+  }
+  const id = rid.trim();
+  if (!isValidWeddingId(id)) {
+    return <Navigate to={`/${DEFAULT_WEDDING_ID}`} replace />;
+  }
+  return <WeddingApp weddingId={id} />;
+}
+
+type WeddingAppProps = { weddingId: string };
+
+function WeddingApp({ weddingId }: WeddingAppProps) {
+  const [bundle, setBundle] = useState<WeddingData | null>(null);
+  const [loadErr, setLoadErr] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    setBundle(null);
+    setLoadErr(null);
+    void fetchWeddingData(weddingId)
+      .then((d) => {
+        if (!cancelled) setBundle(d);
+      })
+      .catch((e: unknown) => {
+        if (!cancelled) setLoadErr(e instanceof Error ? e.message : String(e));
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [weddingId]);
+
+  if (loadErr) {
+    const errState: WeddingLoadErrorState = { weddingId, message: loadErr };
+    return <Navigate to="/wedding-load-error" replace state={errState} />;
+  }
+
+  if (!bundle) {
+    return (
+      <div className="wedding-load-screen" aria-busy="true" aria-live="polite">
+        <p className="wedding-load-screen__title">청첩장 불러오는 중…</p>
+      </div>
+    );
+  }
+
+  return <WeddingAppContent weddingId={weddingId} data={bundle} />;
+}
+
+type WeddingAppContentProps = { weddingId: string; data: WeddingData };
+
+function WeddingAppContent({ weddingId, data }: WeddingAppContentProps) {
+  const { meta, couple, wedding } = data;
+  const weddingAssetBase = weddingBundleBaseUrl(weddingId);
 
   const WEDDING = useMemo(() => new Date(wedding.dateTimeISO), [wedding.dateTimeISO]);
   const reduceIntroMotion = useMemo(
@@ -116,7 +179,7 @@ export default function App() {
     resetScroll();
     const raf = requestAnimationFrame(resetScroll);
     return () => cancelAnimationFrame(raf);
-  }, []);
+  }, [weddingId, data]);
 
   useEffect(() => {
     document.title = meta.documentTitle;
@@ -184,7 +247,7 @@ export default function App() {
               </p>
               <img
                 className="hero-title-photo"
-                src={`${import.meta.env.BASE_URL}static/title-couple.png`}
+                src={`${weddingAssetBase}title-couple.png`}
                 alt={`${couple.groom.성이름}, ${couple.bride.성이름}`}
                 loading="eager"
                 decoding="async"
@@ -263,6 +326,7 @@ export default function App() {
               ) : null}
               <div data-scroll-reveal="" data-scroll-reveal-delay-ms="128">
                 <RsvpAttendanceSection
+                  weddingId={weddingId}
                   groomName={couple.groom.이름}
                   brideName={couple.bride.이름}
                   block={couple.rsvpAttendance}
@@ -320,6 +384,9 @@ export default function App() {
             <h2>Our Stroy</h2>
             <div className="our-stroy__body">
               <HourglassInteractive
+                key={weddingId}
+                weddingId={weddingId}
+                couple={couple}
                 onScrollLockChange={setHourglassScrollLock}
                 onInterludePageChange={setHourglassShellMode}
               />
@@ -332,13 +399,18 @@ export default function App() {
               <figure className="gallery__figure">
                 <img
                   className="gallery__image"
-                  src={`${import.meta.env.BASE_URL}gallery-thumbnail.png`}
+                  src={`${weddingAssetBase}gallery-thumbnail.png`}
                   alt="Bride and groom in silhouette, foreheads touching at sunset on a terrace overlooking hills and the sea"
                   loading="lazy"
                   decoding="async"
                 />
               </figure>
             </div>
+          </section>
+
+          <section id="guestbook" className="section guestbook" aria-labelledby="guestbook-heading" lang="ko">
+            <h2 id="guestbook-heading">방명록</h2>
+            <GuestbookSection weddingId={weddingId} />
           </section>
 
           {wedding.heartAccounts ? <HeartAccountsSection block={wedding.heartAccounts} /> : null}
@@ -380,7 +452,7 @@ export default function App() {
             <figure className="directions__mapfigure">
               <img
                 className="directions__mapimage"
-                src={`${import.meta.env.BASE_URL}directions-map.png`}
+                src={`${weddingAssetBase}directions-map.png`}
                 alt={`${wedding.venueName} ${wedding.venueHall} 위치 안내 지도`}
                 loading="lazy"
                 decoding="async"

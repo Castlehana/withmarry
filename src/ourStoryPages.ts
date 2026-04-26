@@ -1,5 +1,5 @@
 /**
- * `public/static/Our Story/our-story-pages.txt` — JSON 한 덩어리.
+ * `public/weddings/{id}/static/Our Story/our-story-pages.txt` — JSON 한 덩어리.
  * 페이지 순서 = 스토리 스와이프 순서.
  */
 export type OurStoryScriptLine = {

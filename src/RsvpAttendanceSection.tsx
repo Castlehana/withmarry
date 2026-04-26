@@ -2,9 +2,11 @@ import { type TransitionEvent, useEffect, useId, useRef, useState } from "react"
 import { createPortal } from "react-dom";
 import { IntroEnvelopeLetterVisual } from "./IntroEnvelopeLetterVisual";
 import { RsvpModalEnvelopeAnimated } from "./RsvpModalEnvelopeAnimated";
+import { submitRsvpSubmission } from "./rsvp-storage";
 import type { RsvpAttendanceBlock } from "./wedding-data.types";
 
 type Props = {
+  weddingId: string;
   groomName: string;
   brideName: string;
   block?: RsvpAttendanceBlock;
@@ -51,6 +53,7 @@ function RsvpDialog({
   onBackdropTransitionEnd,
   formUrl,
   formLabel,
+  weddingId,
   groomName,
   brideName,
 }: {
@@ -62,6 +65,7 @@ function RsvpDialog({
   onBackdropTransitionEnd: (e: TransitionEvent<HTMLDivElement>) => void;
   formUrl?: string;
   formLabel: string;
+  weddingId: string;
   groomName: string;
   brideName: string;
 }) {
@@ -69,6 +73,8 @@ function RsvpDialog({
   const [step, setStep] = useState<"form" | "success">("form");
   const [quizIndex, setQuizIndex] = useState(0);
   const [privacyOpen, setPrivacyOpen] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const [side, setSide] = useState<GuestSide>("");
   const [attend, setAttend] = useState<Attend>("");
@@ -86,6 +92,8 @@ function RsvpDialog({
       setMeal("");
       setName("");
       setPrivacyOk(false);
+      setSubmitting(false);
+      setSubmitError(null);
     }
   }, [mounted]);
 
@@ -170,8 +178,30 @@ function RsvpDialog({
   };
 
   const finishSubmit = () => {
-    if (!privacyOk) return;
-    setStep("success");
+    void (async () => {
+      if (!privacyOk) return;
+      if (side !== "groom" && side !== "bride") return;
+      if (attend !== "yes" && attend !== "no") return;
+      setSubmitError(null);
+      setSubmitting(true);
+      const mealVal =
+        attend === "no" ? ("" as const) : meal === "yes" || meal === "no" || meal === "undecided" ? meal : ("undecided" as const);
+      try {
+        const saved = await submitRsvpSubmission(weddingId, {
+          side,
+          name: name.trim(),
+          attend,
+          meal: mealVal,
+        });
+        if (!saved) {
+          setSubmitError("전달에 실패했습니다. 잠시 후 다시 시도해 주세요.");
+          return;
+        }
+        setStep("success");
+      } finally {
+        setSubmitting(false);
+      }
+    })();
   };
 
   return createPortal(
@@ -313,7 +343,9 @@ function RsvpDialog({
                     개인정보 수집 및 활용에 동의해 주세요
                   </h4>
                   <p className="rsvp-quiz-privacy-lead">
-                    자세한 내용은 아래에서 확인하신 뒤, 동의를 눌러 주세요.
+                    자세한 내용은 아래에서 확인하신 뒤,
+                    <br />
+                    동의를 눌러 주세요.
                   </p>
                   <div className="rsvp-privacy-detail-trigger">
                     <button
@@ -362,6 +394,11 @@ function RsvpDialog({
                     </ul>
                   </div>
                   <p className="rsvp-quiz-summary-lead">내용이 맞으면 전달해 주세요.</p>
+                  {submitError ? (
+                    <p className="rsvp-form__error" role="alert">
+                      {submitError}
+                    </p>
+                  ) : null}
                   {formUrl ? (
                     <a className="rsvp-form__external" href={formUrl} target="_blank" rel="noopener noreferrer">
                       {formLabel}
@@ -370,11 +407,11 @@ function RsvpDialog({
                   <button
                     type="button"
                     className="rsvp-form__submit"
-                    disabled={!privacyOk}
+                    disabled={!privacyOk || submitting}
                     title={privacyOk ? undefined : "이전 단계에서 개인정보 동의를 눌러 주세요"}
                     onClick={finishSubmit}
                   >
-                    전달
+                    {submitting ? "전달 중…" : "전달"}
                   </button>
                 </section>
               </div>
@@ -450,7 +487,7 @@ function RsvpDialog({
   );
 }
 
-export function RsvpAttendanceSection({ groomName, brideName, block }: Props) {
+export function RsvpAttendanceSection({ weddingId, groomName, brideName, block }: Props) {
   const [dlgMounted, setDlgMounted] = useState(false);
   const [dlgRevealed, setDlgRevealed] = useState(false);
   const dlgRevealedRef = useRef(dlgRevealed);
@@ -507,6 +544,7 @@ export function RsvpAttendanceSection({ groomName, brideName, block }: Props) {
         onBackdropTransitionEnd={onBackdropTransitionEnd}
         formUrl={formUrl}
         formLabel={formLabel}
+        weddingId={weddingId}
         groomName={groomName}
         brideName={brideName}
       />

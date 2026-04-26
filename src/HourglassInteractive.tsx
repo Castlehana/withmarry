@@ -18,6 +18,7 @@ import { InterludeFlash } from "./InterludeFlash";
 import { InterludeScriptSequence } from "./InterludeScriptSequence";
 import { InterludeSoundWaveCanvas } from "./InterludeSoundWaveCanvas";
 import { parseOurStoryPagesManifest, type OurStoryPage } from "./ourStoryPages";
+import type { WeddingData } from "./wedding-data.types";
 
 const SAND_CYCLE_MS = 5000;
 const SNAP_MS = 700;
@@ -51,6 +52,9 @@ const INTERLUDE_HOME_EXIT_CLOSE_MS = Math.max(
 export type HourglassInterludeShellMode = "normal" | "interlude" | "exit-reveal";
 
 export type HourglassInteractiveProps = {
+  /** `public/weddings/{id}/` — Our Story·BGM 경로 */
+  weddingId: string;
+  couple: WeddingData["couple"];
   /** 모래 흐름·인터루드 동안 스크롤 잠금 */
   onScrollLockChange?: (locked: boolean) => void;
   /** Our Story 셸: `exit-reveal`일 때 본문·헤더를 레이어와 동시에 서서히 표시 */
@@ -95,19 +99,25 @@ function easeOutCubic(t: number): number {
   return 1 - u * u * u;
 }
 
-/** `Our Story` 하위 폴더별 페이지 — `_chapters.json`은 빌드/개발 시 스크립트로 생성 */
-const OUR_STORY_ROOT = `${import.meta.env.BASE_URL}static/${encodeURIComponent("Our Story")}`;
-const OUR_STORY_PAGES_URL = `${OUR_STORY_ROOT}/our-story-pages.txt`;
-const CHAPTERS_MANIFEST_URL = `${OUR_STORY_ROOT}/_chapters.json`;
-const INTERLUDE_BGM_URL = `${OUR_STORY_ROOT}/backgroundbgm.mp3`;
-/** 대본 종료 후 홈 버튼 위 탭 힌트(정적 PNG) */
+/** 대본 종료 후 홈 버튼 위 탭 힌트 — 웨딩 공용 `public/static/` */
 const INTERLUDE_HOME_TAP_HINT_SVG = `${import.meta.env.BASE_URL}static/interlude-home-tap-hint.svg`;
 
 export function HourglassInteractive({
+  weddingId,
+  couple,
   onScrollLockChange,
   onInterludePageChange,
-}: HourglassInteractiveProps = {}) {
+}: HourglassInteractiveProps) {
   const uid = useId().replace(/:/g, "");
+
+  const ourStoryRoot = useMemo(
+    () =>
+      `${import.meta.env.BASE_URL}weddings/${encodeURIComponent(weddingId)}/static/${encodeURIComponent("Our Story")}`,
+    [weddingId]
+  );
+  const ourStoryPagesUrl = useMemo(() => `${ourStoryRoot}/our-story-pages.txt`, [ourStoryRoot]);
+  const chaptersManifestUrl = useMemo(() => `${ourStoryRoot}/_chapters.json`, [ourStoryRoot]);
+  const interludeBgmUrl = useMemo(() => `${ourStoryRoot}/backgroundbgm.mp3`, [ourStoryRoot]);
 
   const [ourStoryPages, setOurStoryPages] = useState<OurStoryPage[]>([]);
   const [ourStoryChapterIndex, setOurStoryChapterIndex] = useState(0);
@@ -152,15 +162,23 @@ export function HourglassInteractive({
   const interludeWavActiveRef = useRef(false);
   const storyBgmAudioRef = useRef<HTMLAudioElement | null>(null);
   const storyBgmFadeRafRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    const el = storyBgmAudioRef.current;
+    if (el) {
+      el.pause();
+      storyBgmAudioRef.current = null;
+    }
+  }, [interludeBgmUrl]);
   const storyBgmFadeTokenRef = useRef(0);
 
   const storyPageBase = useMemo(() => {
     if (!ourStoryPages.length) {
-      return `${OUR_STORY_ROOT}/${encodeURIComponent("main_page")}`.replace(/\/$/, "");
+      return `${ourStoryRoot}/${encodeURIComponent("main_page")}`.replace(/\/$/, "");
     }
     const idx = Math.min(Math.max(0, ourStoryChapterIndex), ourStoryPages.length - 1);
-    return `${OUR_STORY_ROOT}/${encodeURIComponent(ourStoryPages[idx]!.folder)}`.replace(/\/$/, "");
-  }, [ourStoryPages, ourStoryChapterIndex]);
+    return `${ourStoryRoot}/${encodeURIComponent(ourStoryPages[idx]!.folder)}`.replace(/\/$/, "");
+  }, [ourStoryPages, ourStoryChapterIndex, ourStoryRoot]);
 
   const interludeScriptLines = useMemo(() => {
     if (!ourStoryPages.length) return [];
@@ -350,7 +368,7 @@ export function HourglassInteractive({
     }
     let el = storyBgmAudioRef.current;
     if (!el) {
-      el = new Audio(INTERLUDE_BGM_URL);
+      el = new Audio(interludeBgmUrl);
       el.loop = true;
       el.preload = "auto";
       storyBgmAudioRef.current = el;
@@ -359,7 +377,7 @@ export function HourglassInteractive({
     el.volume = 0;
     void el.play().catch(() => {});
     fadeStoryBgmVolume(0, INTERLUDE_BGM_STEADY_LINEAR, INTERLUDE_BGM_FADE_MS);
-  }, [interludeOpen, interludeExitPhase, cancelStoryBgmFade, fadeStoryBgmVolume]);
+  }, [interludeOpen, interludeExitPhase, cancelStoryBgmFade, fadeStoryBgmVolume, interludeBgmUrl]);
 
   useEffect(
     () => () => {
@@ -401,7 +419,7 @@ export function HourglassInteractive({
     let cancelled = false;
     const load = async () => {
       try {
-        const mRes = await fetch(OUR_STORY_PAGES_URL);
+        const mRes = await fetch(ourStoryPagesUrl);
         if (cancelled) return;
         if (mRes.ok) {
           const raw = await mRes.text();
@@ -411,7 +429,7 @@ export function HourglassInteractive({
             return;
           }
         }
-        const r = await fetch(CHAPTERS_MANIFEST_URL);
+        const r = await fetch(chaptersManifestUrl);
         const data: unknown = r.ok ? await r.json() : null;
         if (cancelled) return;
         const raw =
@@ -431,7 +449,7 @@ export function HourglassInteractive({
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [ourStoryPagesUrl, chaptersManifestUrl]);
 
   useEffect(() => {
     if (ourStoryPages.length === 0) return;
@@ -889,6 +907,7 @@ export function HourglassInteractive({
                       scriptGateOpen={interludeScriptGateOpen}
                       baseUrl={storyPageBase}
                       scriptLines={interludeScriptLines}
+                      couple={couple}
                       waveAnalyserRef={interludeWaveAnalyserRef}
                       wavActiveRef={interludeWavActiveRef}
                       scriptAudioFadeRequest={scriptAudioFadeRequest}

@@ -1,5 +1,7 @@
 import type { WeddingData, WeddingDateInput } from "./wedding-data.types";
-import raw from "./wedding-data.txt?raw";
+
+/** 기본 청첩장 데이터 폴더 (`public/weddings/{id}/`) */
+export const DEFAULT_WEDDING_ID = "sample01";
 
 function pad2(n: number) {
   return String(n).padStart(2, "0");
@@ -51,7 +53,20 @@ function stripLeadingHashComments(source: string) {
     .trim();
 }
 
-function loadWeddingData(): WeddingData {
+/** URL 세그먼트용 웨딩 ID (경로 침입 방지) */
+export function isValidWeddingId(id: string): boolean {
+  return /^[a-zA-Z0-9_-]{1,64}$/.test(id);
+}
+
+/** `public/weddings/{id}/` 기준 fetch URL 접두 — 끝에 `/` 포함 */
+export function weddingBundleBaseUrl(weddingId: string): string {
+  const base = import.meta.env.BASE_URL || "/";
+  const enc = encodeURIComponent(weddingId);
+  return `${base}weddings/${enc}/`;
+}
+
+/** `#` 주석 제거 후 JSON 파싱·날짜 필드 보강 */
+export function parseWeddingDataFromRaw(raw: string): WeddingData {
   const json = stripLeadingHashComments(raw);
   try {
     const data = JSON.parse(json) as WeddingData;
@@ -64,7 +79,7 @@ function loadWeddingData(): WeddingData {
 }
 
 /** `wedding-data.txt` 안 문자열에 넣은 `{{groom.성이름}}` 등을 실제 이름으로 치환 */
-function expandNamePlaceholders(data: WeddingData): WeddingData {
+export function expandNamePlaceholders(data: WeddingData): WeddingData {
   const { groom, bride } = data.couple;
   const rep: Record<string, string> = {
     "{{groom.성이름}}": groom.성이름,
@@ -103,4 +118,46 @@ function expandNamePlaceholders(data: WeddingData): WeddingData {
   return expanded;
 }
 
-export const weddingData: WeddingData = expandNamePlaceholders(loadWeddingData());
+/** `public/weddings/{weddingId}/wedding-data.txt` 로드 */
+export async function fetchWeddingData(weddingId: string): Promise<WeddingData> {
+  const url = `${weddingBundleBaseUrl(weddingId)}wedding-data.txt`;
+  const res = await fetch(url);
+  if (!res.ok) {
+    throw new Error(`wedding-data 로드 실패 (${res.status}): ${url}`);
+  }
+  const raw = await res.text();
+  return expandNamePlaceholders(parseWeddingDataFromRaw(raw));
+}
+
+/** 해당 웨딩 폴더에 `wedding-data.txt`가 있는지 (관리자 로그인 전 번들 확인) */
+export async function weddingDataBundleExists(weddingId: string): Promise<boolean> {
+  if (!isValidWeddingId(weddingId)) return false;
+  const url = `${weddingBundleBaseUrl(weddingId)}wedding-data.txt`;
+  try {
+    const res = await fetch(url, { method: "GET", cache: "no-store" });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * `public/weddings/{id}/admin-password.txt` 첫 줄(또는 전체 trim).
+ * 파일 없음·빈 내용이면 기본값 `0000`. `#` 시작 줄은 무시.
+ */
+export async function fetchAdminExpectedPassword(weddingId: string): Promise<string> {
+  if (!isValidWeddingId(weddingId)) return "0000";
+  const url = `${weddingBundleBaseUrl(weddingId)}admin-password.txt`;
+  let res: Response;
+  try {
+    res = await fetch(url, { method: "GET", cache: "no-store" });
+  } catch {
+    return "0000";
+  }
+  if (!res.ok) return "0000";
+  const raw = await res.text();
+  const stripped = stripLeadingHashComments(raw).trim();
+  if (!stripped) return "0000";
+  const firstLine = stripped.split(/\r?\n/)[0]?.trim() ?? "";
+  return firstLine.length > 0 ? firstLine : "0000";
+}

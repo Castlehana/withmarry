@@ -1,0 +1,16 @@
+# Cloudflare Pages + Functions + D1
+# D1 블록은 `npx wrangler d1 create withmarry-rsvp --update-config` 후 자동 채워지거나, 대시보드에서 받은 database_id를 넣습니다.
+name = "withmarry"
+compatibility_date = "2025-01-01"
+pages_build_output_dir = "dist"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "withmarry-rsvp"
+database_id = "37525172-dbaf-4ee9-a7d4-36f303ff5dd3"
+
+[vars]
+# GitHub Pages 등 서브경로 배포 시 예: "/withmarry/" (앞뒤 슬래시 포함 가능, Worker에서 정규화)
+PUBLIC_SITE_BASE = ""
+# 방명록 4자리 PIN 해시용(운영에서는 Secret 권장). 로컬/스테이징과 운영이 다르면 해시가 달라져 기존 글 PIN 검증이 실패합니다.
+GUESTBOOK_PEPPER = "withmarry-guestbook-pepper-change-in-production"

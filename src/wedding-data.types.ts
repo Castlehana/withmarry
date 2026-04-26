@@ -1,4 +1,4 @@
-/** wedding-data.txt(JSON) 파싱 결과 타입 — 필요한 필드만 유지하고, 섹션 추가 시 여기와 JSON을 함께 늘리면 됩니다. */
+/** `public/weddings/{id}/wedding-data.txt`(JSON) 파싱 결과 타입 — 섹션 추가 시 타입·각 id 폴더 JSON을 함께 늘리면 됩니다. */
 
 /** `wedding-data.txt`의 `wedding.date` — 로드 시 `dateTimeISO`·`saveTheDateNums`가 이 값에서 파생됩니다. */
 export type WeddingDateInput = {
@@ -36,7 +36,7 @@ export type RsvpAttendanceBlock = {
   formLabel?: string;
 };
 
-/** `wedding.heartAccounts` — 한 사람(신랑·아버지·어머니 등) */
+/** `wedding.heartAccounts` — 한 사람(신랑·父·母 등, 표기는 데이터 `label`에 따름) */
 export type HeartAccountEntry = {
   label: string;
   bank: string;
@@ -93,7 +93,7 @@ export interface WeddingData {
       tagAccent: string;
       description: string;
     };
-    /** 메인 히어로 신랑 열 하단 — `아버지·어머니 의 장남` 형태로 합쳐 표시 */
+    /** 메인 히어로 신랑 열 하단 — 성함·성함 의 장남 형태(한글 이름만, 父/母 문구 없음) */
     groomFatherName: string;
     groomMotherName: string;
     /** 장남·장녀·차남 등 */
