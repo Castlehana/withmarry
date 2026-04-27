@@ -5,6 +5,8 @@ import "./IntroLetterGate.css";
 export type IntroLetterGateProps = {
   /** 인트로가 끝나고 본문으로 넘어갈 때 한 번 호출 */
   onComplete: () => void;
+  /** 봉투 확정 직후 베일이 완전 흰색이 된 시점(퇴장 페이드 전) — 히어로 컨페티 등 */
+  onVeilFull?: () => void;
 };
 
 /** 이 거리(px)만큼 위로 끌면 `--peel` 이 1에 도달 — 값↑일수록 더 천천히 차함 */
@@ -19,7 +21,7 @@ const HOLD_FULL_WHITE_MS = 1000;
 /** 게이트 전체 페이드아웃(본문 노출) */
 const EXIT_FADE_MS = 900;
 
-export function IntroLetterGate({ onComplete }: IntroLetterGateProps) {
+export function IntroLetterGate({ onComplete, onVeilFull }: IntroLetterGateProps) {
   const reduceMotion = useMemo(
     () => typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches,
     []
@@ -77,6 +79,7 @@ export function IntroLetterGate({ onComplete }: IntroLetterGateProps) {
         committedRef.current = true;
         setPeel(1);
         setVeilFull(true);
+        onVeilFull?.();
         if (exitSequenceTimerRef.current != null) {
           window.clearTimeout(exitSequenceTimerRef.current);
           exitSequenceTimerRef.current = null;
@@ -89,7 +92,7 @@ export function IntroLetterGate({ onComplete }: IntroLetterGateProps) {
         setPeel(0);
       }
     },
-    [exiting]
+    [exiting, onVeilFull]
   );
 
   const onWaxPointerDown = useCallback(

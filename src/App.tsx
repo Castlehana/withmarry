@@ -23,6 +23,7 @@ import { WeddingFlipCountdown } from "./WeddingFlipCountdown";
 import { DirectionsNavLinks } from "./DirectionsNavLinks";
 import { DirectionsTransportToggles } from "./DirectionsTransportToggles";
 import { IntroLetterGate } from "./IntroLetterGate";
+import { HeroConfettiOverlay } from "./HeroConfettiOverlay";
 import "./audio-hint-waves";
 
 /** `directionsNote` 한 줄에서 이모지·픽토그램만 제거 (본문은 유지) */
@@ -38,10 +39,14 @@ function stripDirectionNoteEmojis(line: string): string {
 function WeddingHeroScrollInner({
   active,
   heroSrc,
+  confettiPlay,
+  reduceMotion,
   children,
 }: {
   active: boolean;
   heroSrc: string;
+  confettiPlay: boolean;
+  reduceMotion: boolean;
   children: ReactNode;
 }) {
   if (!active) {
@@ -57,6 +62,7 @@ function WeddingHeroScrollInner({
           decoding="async"
           fetchPriority="high"
         />
+        {confettiPlay && !reduceMotion ? <HeroConfettiOverlay active /> : null}
       </div>
       {children}
     </div>
@@ -175,6 +181,8 @@ type WeddingAppContentProps = { weddingId: string; data: WeddingData };
 function WeddingAppContent({ weddingId, data }: WeddingAppContentProps) {
   const { meta, couple, wedding } = data;
   const weddingAssetBase = weddingBundleBaseUrl(weddingId);
+  const heroImageFile = wedding.heroImage?.trim();
+  const heroImageUrl = heroImageFile ? `${weddingAssetBase}${heroImageFile}` : null;
 
   const WEDDING = useMemo(() => new Date(wedding.dateTimeISO), [wedding.dateTimeISO]);
   const reduceIntroMotion = useMemo(
@@ -182,6 +190,7 @@ function WeddingAppContent({ weddingId, data }: WeddingAppContentProps) {
     []
   );
   const [introComplete, setIntroComplete] = useState(() => reduceIntroMotion);
+  const [heroConfettiPlay, setHeroConfettiPlay] = useState(false);
   const heroAudioWaveTrackRef = useRef<HTMLSpanElement>(null);
   const mainContentRef = useRef<HTMLElement>(null);
   const phoneShellRef = useRef<HTMLDivElement>(null);
@@ -190,7 +199,7 @@ function WeddingAppContent({ weddingId, data }: WeddingAppContentProps) {
   const { open: copyToastOpen, closing: copyToastClosing, notify: notifyCopied, close: closeCopyToast } =
     useCopyFeedbackToast();
 
-  useScrollRevealRoot(mainContentRef, [hourglassShellMode, introComplete]);
+  useScrollRevealRoot(mainContentRef, [hourglassShellMode, introComplete, heroImageUrl], heroImageUrl ? phoneShellRef : undefined);
 
   useLayoutEffect(() => {
     if ("scrollRestoration" in history) {
@@ -217,8 +226,6 @@ function WeddingAppContent({ weddingId, data }: WeddingAppContentProps) {
   }, [introComplete, hourglassScrollLock]);
 
   const heroVenueLine = `${wedding.venueName} ${wedding.venueHall}`;
-  const heroImageFile = wedding.heroImage?.trim();
-  const heroImageUrl = heroImageFile ? `${weddingAssetBase}${heroImageFile}` : null;
   const groomMbti = splitMbtiLine(couple.groom.mbtiLine);
   const brideMbti = splitMbtiLine(couple.bride.mbtiLine);
 
@@ -231,7 +238,14 @@ function WeddingAppContent({ weddingId, data }: WeddingAppContentProps) {
   return (
     <div className="desktop-stage">
       {!introComplete && (
-        <IntroLetterGate onComplete={() => setIntroComplete(true)} />
+        <IntroLetterGate
+          onComplete={() => setIntroComplete(true)}
+          onVeilFull={() => {
+            if (heroImageUrl && !reduceIntroMotion) {
+              setHeroConfettiPlay(true);
+            }
+          }}
+        />
       )}
       <div
         ref={phoneShellRef}
@@ -240,7 +254,12 @@ function WeddingAppContent({ weddingId, data }: WeddingAppContentProps) {
         data-hourglass-interlude-exit-reveal={hourglassShellMode === "exit-reveal" ? "" : undefined}
         {...(hourglassShellMode !== "normal" || !introComplete ? { inert: true } : {})}
       >
-        <WeddingHeroScrollInner active={Boolean(heroImageUrl)} heroSrc={heroImageUrl ?? ""}>
+        <WeddingHeroScrollInner
+          active={Boolean(heroImageUrl)}
+          heroSrc={heroImageUrl ?? ""}
+          confettiPlay={heroConfettiPlay}
+          reduceMotion={reduceIntroMotion}
+        >
           <main
             ref={mainContentRef}
             className={`content${heroImageUrl ? " content--wedding-hero" : ""}`}

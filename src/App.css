@@ -158,6 +158,24 @@ body.overflow-lock {
   object-fit: cover;
   object-position: center top;
   background: var(--paper);
+  position: relative;
+  z-index: 0;
+}
+
+/* 인트로 흰 베일 직후 — 이미지 위·본문(z-index) 아래 */
+.phone-shell.phone-shell--wedding-hero .wedding-hero-confetti-wrap {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.phone-shell.phone-shell--wedding-hero .wedding-hero-confetti-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  vertical-align: top;
 }
 
 main.content.content--wedding-hero {
