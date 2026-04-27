@@ -1,4 +1,4 @@
-import "./IntroEnvelopeGate.css";
+import "./IntroEnvEnvelope.css";
 
 type Props = {
   groomName: string;
@@ -6,7 +6,7 @@ type Props = {
 };
 
 /**
- * 인트로(`IntroEnvelopeGate`)와 동일한 봉투·편지 DOM.
+ * 미니 봉투·편지 DOM (`IntroEnvEnvelope.css`).
  * `intro-env--static-visual`로 애니·트랜지션 없이 닫힌 상태만 표시합니다.
  */
 export function IntroEnvelopeLetterVisual({ groomName, brideName }: Props) {

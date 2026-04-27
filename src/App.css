@@ -86,8 +86,6 @@ body.overflow-lock {
   overflow: hidden;
 }
 
-/* 인트로 봉투: `IntroEnvelopeGate.tsx` + `IntroEnvelopeGate.css` */
-
 #root {
   min-height: 100vh;
   min-height: 100dvh;
@@ -227,6 +225,16 @@ body.overflow-lock {
   border-radius: 0;
   border: none;
   box-shadow: none;
+}
+
+/* 커플 사진 — Powered(`site-credit`) 바로 위 */
+.hero-title-photo.hero-title-photo--pre-footer {
+  width: 100%;
+  max-width: none;
+  margin-left: 0;
+  margin-right: 0;
+  margin-top: clamp(40px, 10vw, 72px);
+  margin-bottom: 20px;
 }
 
 .hero-names {
@@ -2226,7 +2234,7 @@ button.directions-transport__mapsearch:focus-visible {
 }
 
 .site-credit {
-  padding: 120px 0 10px;
+  padding: 0 0 10px;
   text-align: center;
 }
 

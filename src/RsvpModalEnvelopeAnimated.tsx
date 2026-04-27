@@ -1,5 +1,5 @@
 import { useLayoutEffect, useState, useSyncExternalStore } from "react";
-import "./IntroEnvelopeGate.css";
+import "./IntroEnvEnvelope.css";
 
 type Props = {
   groomName: string;

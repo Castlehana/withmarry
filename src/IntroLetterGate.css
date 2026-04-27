@@ -1,0 +1,99 @@
+/* 인트로: 콘텐츠 폭(`--shell-max`) 안에만 봉투, 좌우·상하 여백은 무대색 검정 */
+
+.intro-letter-gate {
+  /* 콘텐츠 열 너비 — 자기 자신 width와 %를 섞지 않음(0px 순환 방지) */
+  --intro-col-w: min(100vw, var(--shell-max, 430px));
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  padding-top: env(safe-area-inset-top);
+  padding-right: env(safe-area-inset-right);
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+  box-sizing: border-box;
+  background: var(--stage, #000);
+  pointer-events: none;
+  transition:
+    opacity 0.42s ease,
+    visibility 0.42s ease;
+}
+
+.intro-letter-gate--exiting {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* `phone-shell`과 동일한 가로 한도 — 세로는 무대(패딩 안) 전체 높이 */
+.intro-letter-gate__content {
+  align-self: center;
+  width: min(var(--intro-col-w), 100%);
+  max-width: 100%;
+  height: 100%;
+  max-height: 100%;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.intro-letter-gate__inner {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+/*
+ * 인트로 봉투: 세로는 가용 높이 전체(`--ile-h`), 가로는 열 한도·세로에 맞는 비율 상한.
+ * `IntroLetterEnvelope.css` 기본 `--ile-h: ile_w*180/280` 을 여기서 덮어씀.
+ */
+.intro-letter-gate .intro-letter-skin.intro-letter-skin--gate-scale {
+  /* 무대 패딩이 세이프 에어를 담당 — 여기서는 뷰포트 높이만 소폭 여백 */
+  --avail-h: calc(100vh - 20px);
+  --ile-w: max(
+    160px,
+    min(var(--intro-col-w), calc(var(--avail-h) * 280 / 180))
+  );
+  --ile-h: var(--avail-h);
+  --ile-heart-w: clamp(18px, calc(var(--ile-w) * 0.048), 40px);
+  perspective: min(1600px, calc(var(--ile-w) * 5));
+  flex-shrink: 0;
+}
+
+/* 봉투 정면 중앙 왁스 스티커 — 뚜껑(z3) 위 */
+.intro-letter-gate .intro-letter-skin.intro-letter-skin--gate-scale .intro-letter-gate__wax-seal {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  translate: -50% -50%;
+  z-index: 4;
+  width: clamp(52px, calc(var(--ile-w) * 0.34), 160px);
+  height: auto;
+  aspect-ratio: 1;
+  object-fit: contain;
+  pointer-events: none;
+  filter: drop-shadow(0 3px 10px rgba(0, 0, 0, 0.28));
+}
+
+.intro-letter-gate__envelope-wrap {
+  position: relative;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  transform-origin: 50% 55%;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .intro-letter-gate {
+    transition-duration: 0.22s;
+  }
+}

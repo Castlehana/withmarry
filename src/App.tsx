@@ -22,7 +22,7 @@ import { WeddingCalendar } from "./WeddingCalendar";
 import { WeddingFlipCountdown } from "./WeddingFlipCountdown";
 import { DirectionsNavLinks } from "./DirectionsNavLinks";
 import { DirectionsTransportToggles } from "./DirectionsTransportToggles";
-import { IntroEnvelopeGate, type IntroGatePhase } from "./IntroEnvelopeGate";
+import { IntroLetterGate } from "./IntroLetterGate";
 import "./audio-hint-waves";
 
 /** `directionsNote` 한 줄에서 이모지·픽토그램만 제거 (본문은 유지) */
@@ -152,18 +152,16 @@ function WeddingAppContent({ weddingId, data }: WeddingAppContentProps) {
     () => typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches,
     []
   );
-
+  const [introComplete, setIntroComplete] = useState(() => reduceIntroMotion);
   const heroAudioWaveTrackRef = useRef<HTMLSpanElement>(null);
   const mainContentRef = useRef<HTMLElement>(null);
   const phoneShellRef = useRef<HTMLDivElement>(null);
   const [hourglassScrollLock, setHourglassScrollLock] = useState(false);
   const [hourglassShellMode, setHourglassShellMode] = useState<HourglassInterludeShellMode>("normal");
-  /** 인트로: 검은 화면 → 봉투(흔들림·클릭) → 열림 애니메이션 → 본문 — UI는 `IntroEnvelopeGate` */
-  const [introPhase, setIntroPhase] = useState<IntroGatePhase>(() => (reduceIntroMotion ? "idle" : "black"));
   const { open: copyToastOpen, closing: copyToastClosing, notify: notifyCopied, close: closeCopyToast } =
     useCopyFeedbackToast();
 
-  useScrollRevealRoot(mainContentRef, [introPhase, hourglassShellMode]);
+  useScrollRevealRoot(mainContentRef, [hourglassShellMode, introComplete]);
 
   useLayoutEffect(() => {
     if ("scrollRestoration" in history) {
@@ -186,23 +184,8 @@ function WeddingAppContent({ weddingId, data }: WeddingAppContentProps) {
   }, [meta.documentTitle]);
 
   useEffect(() => {
-    if (introPhase !== "black") return;
-    const ms = reduceIntroMotion ? 0 : 720;
-    const t = window.setTimeout(() => setIntroPhase("idle"), ms);
-    return () => window.clearTimeout(t);
-  }, [introPhase, reduceIntroMotion]);
-
-  useEffect(() => {
-    if (introPhase !== "opening") return;
-    /* 2s 대기 후 커튼·봉투 퇴장(~0.45s) — `IntroEnvelopeGate.css` animation-delay와 맞춤 */
-    const ms = reduceIntroMotion ? 2000 : 2480;
-    const t = window.setTimeout(() => setIntroPhase("done"), ms);
-    return () => window.clearTimeout(t);
-  }, [introPhase, reduceIntroMotion]);
-
-  useEffect(() => {
-    document.body.classList.toggle("overflow-lock", introPhase !== "done" || hourglassScrollLock);
-  }, [introPhase, hourglassScrollLock]);
+    document.body.classList.toggle("overflow-lock", !introComplete || hourglassScrollLock);
+  }, [introComplete, hourglassScrollLock]);
 
   const heroVenueLine = `${wedding.venueName} ${wedding.venueHall}`;
   const groomMbti = splitMbtiLine(couple.groom.mbtiLine);
@@ -216,24 +199,22 @@ function WeddingAppContent({ weddingId, data }: WeddingAppContentProps) {
 
   return (
     <div className="desktop-stage">
-      <IntroEnvelopeGate
-        phase={introPhase}
-        onOpen={() => setIntroPhase("opening")}
-        groomName={couple.groom.이름}
-        brideName={couple.bride.이름}
-      />
-
+      {!introComplete && (
+        <IntroLetterGate onComplete={() => setIntroComplete(true)} />
+      )}
       <div
         ref={phoneShellRef}
         className="phone-shell"
         data-hourglass-interlude={hourglassShellMode !== "normal" ? "" : undefined}
         data-hourglass-interlude-exit-reveal={hourglassShellMode === "exit-reveal" ? "" : undefined}
-        {...(hourglassShellMode !== "normal" ? { inert: true } : {})}
+        {...(hourglassShellMode !== "normal" || !introComplete ? { inert: true } : {})}
       >
         <main
           ref={mainContentRef}
           className="content"
-          aria-hidden={hourglassShellMode === "interlude" ? true : undefined}
+          aria-hidden={
+            !introComplete || hourglassShellMode === "interlude" ? true : undefined
+          }
         >
           <CopyFeedbackToast open={copyToastOpen} closing={copyToastClosing} onClose={closeCopyToast} />
           <section id="main" className="hero">
@@ -245,13 +226,6 @@ function WeddingAppContent({ weddingId, data }: WeddingAppContentProps) {
               <p className="hero-date-line">
                 {formatDaysKo(WEDDING)} {wedding.ceremonyTimeLabel}
               </p>
-              <img
-                className="hero-title-photo"
-                src={`${weddingAssetBase}title-couple.png`}
-                alt={`${couple.groom.성이름}, ${couple.bride.성이름}`}
-                loading="eager"
-                decoding="async"
-              />
               <h1 className="hero-names">
                 <span>{couple.groom.성이름}</span>
                 <span className="ampersand">&</span>
@@ -464,6 +438,13 @@ function WeddingAppContent({ weddingId, data }: WeddingAppContentProps) {
             ) : null}
           </section>
 
+          <img
+            className="hero-title-photo hero-title-photo--pre-footer"
+            src={`${weddingAssetBase}title-couple.png`}
+            alt={`${couple.groom.성이름}, ${couple.bride.성이름}`}
+            loading="lazy"
+            decoding="async"
+          />
           <footer className="site-credit" role="contentinfo">
             <p className="site-credit__text">Powered by With Marry</p>
           </footer>
