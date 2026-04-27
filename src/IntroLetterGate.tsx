@@ -7,10 +7,17 @@ export type IntroLetterGateProps = {
   onComplete: () => void;
 };
 
-/** 이 거리(px)만큼 위로 끌면 `--peel` 이 1에 도달 — 스티커 상승량과 맞춤 */
-const PEEL_THRESHOLD_PX = 792;
+/** 이 거리(px)만큼 위로 끌면 `--peel` 이 1에 도달 — 값↑일수록 더 천천히 차함 */
+const PEEL_THRESHOLD_PX = 1000;
 /** 이 비율 이상에서 손을 떼면 완전히 열림으로 확정 */
-const PEEL_COMMIT = 0.5;
+const PEEL_COMMIT = 0.3;
+
+/** `--veil-full` 시 opacity 0.7→1 CSS 전환 시간과 동일(손 떼는 즉시 재생) */
+const VEIL_RAMP_TO_FULL_MS = 200;
+/** 100% 하얀 뒤 유지 */
+const HOLD_FULL_WHITE_MS = 1000;
+/** 게이트 전체 페이드아웃(본문 노출) */
+const EXIT_FADE_MS = 900;
 
 export function IntroLetterGate({ onComplete }: IntroLetterGateProps) {
   const reduceMotion = useMemo(
@@ -20,8 +27,8 @@ export function IntroLetterGate({ onComplete }: IntroLetterGateProps) {
 
   const [peel, setPeel] = useState(0);
   const [scrubbing, setScrubbing] = useState(false);
-  /** 끝 프레임 후 1초: 살짝 확대 + 블러 */
-  const [exitBloom, setExitBloom] = useState(false);
+  /** PEEL_COMMIT 이상에서 손 떼면 즉시 0.7→1 베일 전환 */
+  const [veilFull, setVeilFull] = useState(false);
   const [exiting, setExiting] = useState(false);
 
   const peelRef = useRef(0);
@@ -29,16 +36,13 @@ export function IntroLetterGate({ onComplete }: IntroLetterGateProps) {
 
   const dragRef = useRef<{ peel0: number; startY: number; pointerId: number } | null>(null);
   const committedRef = useRef(false);
-  const exitBloomTimerRef = useRef<ReturnType<typeof window.setTimeout> | null>(null);
-
-  /** 블룸 1초 후 게이트 페이드(기존) */
-  const EXIT_BLOOM_MS = 1000;
+  const exitSequenceTimerRef = useRef<ReturnType<typeof window.setTimeout> | null>(null);
 
   useEffect(
     () => () => {
-      if (exitBloomTimerRef.current != null) {
-        window.clearTimeout(exitBloomTimerRef.current);
-        exitBloomTimerRef.current = null;
+      if (exitSequenceTimerRef.current != null) {
+        window.clearTimeout(exitSequenceTimerRef.current);
+        exitSequenceTimerRef.current = null;
       }
     },
     []
@@ -46,7 +50,7 @@ export function IntroLetterGate({ onComplete }: IntroLetterGateProps) {
 
   useEffect(() => {
     if (!exiting) return;
-    const fadeMs = reduceMotion ? 180 : 420;
+    const fadeMs = reduceMotion ? 200 : EXIT_FADE_MS;
     const t = window.setTimeout(onComplete, fadeMs);
     return () => window.clearTimeout(t);
   }, [exiting, reduceMotion, onComplete]);
@@ -72,21 +76,20 @@ export function IntroLetterGate({ onComplete }: IntroLetterGateProps) {
       if (releasePeel >= PEEL_COMMIT) {
         committedRef.current = true;
         setPeel(1);
-        if (exitBloomTimerRef.current != null) window.clearTimeout(exitBloomTimerRef.current);
-        if (reduceMotion) {
-          setExiting(true);
-        } else {
-          setExitBloom(true);
-          exitBloomTimerRef.current = window.setTimeout(() => {
-            exitBloomTimerRef.current = null;
-            setExiting(true);
-          }, EXIT_BLOOM_MS);
+        setVeilFull(true);
+        if (exitSequenceTimerRef.current != null) {
+          window.clearTimeout(exitSequenceTimerRef.current);
+          exitSequenceTimerRef.current = null;
         }
+        exitSequenceTimerRef.current = window.setTimeout(() => {
+          exitSequenceTimerRef.current = null;
+          setExiting(true);
+        }, VEIL_RAMP_TO_FULL_MS + HOLD_FULL_WHITE_MS);
       } else {
         setPeel(0);
       }
     },
-    [exiting, reduceMotion]
+    [exiting]
   );
 
   const onWaxPointerDown = useCallback(
@@ -138,25 +141,18 @@ export function IntroLetterGate({ onComplete }: IntroLetterGateProps) {
     [endDrag]
   );
 
-  const skinStyle = useMemo(
-    () =>
-      ({
-        "--peel": String(peel),
-      }) as React.CSSProperties,
-    [peel]
-  );
+  const gateStyle = useMemo(() => ({ "--peel": String(peel) }) as React.CSSProperties, [peel]);
+
+  const gateClass =
+    `intro-letter-gate${scrubbing ? " intro-letter-gate--scrubbing" : ""}${veilFull ? " intro-letter-gate--veil-full" : ""}${exiting ? " intro-letter-gate--exiting" : ""}`;
 
   return (
-    <div
-      className={`intro-letter-gate${exitBloom ? " intro-letter-gate--exit-bloom" : ""}${exiting ? " intro-letter-gate--exiting" : ""}`}
-      role="presentation"
-    >
+    <div className={gateClass} style={gateStyle} role="presentation">
       <div className="intro-letter-gate__content">
         <div className="intro-letter-gate__inner">
           <div className="intro-letter-gate__envelope-wrap">
             <div
               className={`intro-letter-skin intro-letter-skin--gate-scale intro-letter-skin--close${scrubbing ? " intro-letter-gate__skin--scrub" : ""}`}
-              style={skinStyle}
             >
               <div className="intro-letter-skin__pocket intro-letter-skin__front" />
               <div className="intro-letter-skin__flap intro-letter-skin__front" />
@@ -177,7 +173,8 @@ export function IntroLetterGate({ onComplete }: IntroLetterGateProps) {
           </div>
         </div>
       </div>
-      {/* 콘텐츠 열 밖은 무대색 — 봉투·블룸보다 위(포인터는 통과) */}
+      <div className="intro-letter-gate__white-veil" aria-hidden />
+      {/* 콘텐츠 열 밖은 무대색 — 베일 위(포인터는 통과) */}
       <div className="intro-letter-gate__stage-chrome" aria-hidden>
         <div className="intro-letter-gate__stage-chrome-cutout" />
       </div>
