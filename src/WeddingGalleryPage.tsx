@@ -1,8 +1,7 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { createPortal } from "react-dom";
+import { useEffect, useLayoutEffect, useRef } from "react";
 import * as THREE from "three";
-import { Navigate, useNavigate, useParams } from "react-router-dom";
-import { DEFAULT_WEDDING_ID, isValidWeddingId, weddingBundleBaseUrl } from "./wedding-data";
+import { useNavigate } from "react-router-dom";
+import { weddingBundleBaseUrl } from "./wedding-data";
 import { WEDDING_GALLERY_IMAGE_IDS, WEDDING_GALLERY_SLIDES } from "./weddingGallerySlides";
 import "./WeddingGalleryPage.css";
 
@@ -34,18 +33,18 @@ function disposeObject3D(root: THREE.Object3D): void {
   });
 }
 
-export function WeddingGalleryPage() {
-  const { weddingId = "" } = useParams();
+export type WeddingGalleryPageProps = {
+  weddingId: string;
+  reduceMotion: boolean;
+  /** 모션 허용 시 홈: 부모가 body 베일 후 라우팅 (베일이 갤러리 위에 유지되도록) */
+  onRequestNavigateHome: () => void;
+};
+
+export function WeddingGalleryPage({ weddingId, reduceMotion, onRequestNavigateHome }: WeddingGalleryPageProps) {
   const navigate = useNavigate();
   const pageRef = useRef<HTMLDivElement>(null);
   const canvasMountRef = useRef<HTMLDivElement>(null);
   const uiLayerRef = useRef<HTMLDivElement>(null);
-  const reduceMotion = useMemo(
-    () => typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches,
-    []
-  );
-  const [exitVeil, setExitVeil] = useState(false);
-  const EXIT_VEIL_MS = 480;
 
   useEffect(() => {
     const prev = document.title;
@@ -56,7 +55,6 @@ export function WeddingGalleryPage() {
   }, []);
 
   useLayoutEffect(() => {
-    if (!isValidWeddingId(weddingId)) return;
     const page = pageRef.current;
     const mount = canvasMountRef.current;
     const uiRoot = uiLayerRef.current;
@@ -280,25 +278,22 @@ export function WeddingGalleryPage() {
     };
   }, [reduceMotion, weddingId]);
 
-  if (!isValidWeddingId(weddingId)) {
-    return <Navigate to={`/${DEFAULT_WEDDING_ID}`} replace />;
-  }
-
   const goHome = () => {
-    const path = `/${encodeURIComponent(weddingId)}#gallery`;
     const state = { fromGalleryExit: true as const };
+    const next = {
+      pathname: `/${encodeURIComponent(weddingId)}`,
+      search: "",
+      hash: "#gallery",
+    } as const;
     if (reduceMotion) {
-      void navigate(path, { state });
+      void navigate(next, { state });
       return;
     }
-    setExitVeil(true);
-    window.setTimeout(() => {
-      void navigate(path, { state });
-    }, EXIT_VEIL_MS);
+    onRequestNavigateHome();
   };
 
   return (
-    <div className="desktop-stage">
+    <>
       <div className="phone-shell phone-shell--gallery">
         <div ref={pageRef} className="wedding-gallery-page" lang="ko">
           <div ref={canvasMountRef} className="wedding-gallery-page__canvas" aria-hidden />
@@ -335,10 +330,10 @@ export function WeddingGalleryPage() {
               </svg>
             </button>
           </div>
+          {!reduceMotion ? <div className="wedding-gallery-page__from-white" aria-hidden /> : null}
         </div>
       </div>
-      {exitVeil ? createPortal(<div className="gallery-nav-white-veil" aria-hidden />, document.body) : null}
-    </div>
+    </>
   );
 }
 

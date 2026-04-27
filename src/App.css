@@ -109,6 +109,24 @@ body.overflow-lock {
   background: var(--stage);
 }
 
+.desktop-stage__phone-wrap {
+  position: relative;
+  width: 100%;
+  max-width: var(--shell-max);
+  height: 100%;
+  max-height: 100%;
+  min-height: 0;
+}
+
+.desktop-stage__gallery-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: flex;
+  justify-content: center;
+  pointer-events: auto;
+}
+
 .phone-shell {
   width: 100%;
   max-width: var(--shell-max);
@@ -2351,15 +2369,6 @@ button.directions-transport__mapsearch:focus-visible {
   letter-spacing: 0.04em;
 }
 
-.gallery__lead {
-  margin: 0 auto 20px;
-  max-width: min(26rem, 100%);
-  text-align: center;
-  font-size: 15px;
-  line-height: 1.75;
-  color: var(--muted);
-}
-
 .gallery__enter-wrap {
   display: flex;
   justify-content: center;
@@ -2400,17 +2409,36 @@ button.directions-transport__mapsearch:focus-visible {
   outline-offset: 3px;
 }
 
-/* 갤러리 진입 버튼 → 흰 베일 후 `/gallery` 라우트 */
+/*
+ * 갤러리 진·퇴(포털): 바깥은 투명해야 함.
+ * 시트 opacity 0일 때 부모가 검정이면 그만 보여 청첩장/갤러리 대신 검은 화면이 됨.
+ * 레터박스는 그 아래 desktop-stage(#000)가 그대로 보임.
+ */
 .gallery-nav-white-veil {
   position: fixed;
   inset: 0;
   z-index: 10050;
-  background: #fff;
+  display: flex;
+  justify-content: center;
+  align-items: stretch;
+  background: transparent;
   pointer-events: none;
-  animation: gallery-nav-white-veil-in 480ms ease forwards;
 }
 
-@keyframes gallery-nav-white-veil-in {
+/* 홈 퇴장 베일: 복귀 베일(20000)보다 위에 두어 라우트 직후에도 흰 시트가 이어짐 */
+.gallery-nav-white-veil.gallery-nav-white-veil--body-exit {
+  z-index: 21000;
+}
+
+.gallery-nav-white-veil__sheet {
+  width: 100%;
+  max-width: var(--shell-max);
+  height: 100%;
+  background: #fff;
+  animation: gallery-nav-white-veil-sheet-in 1s ease-out forwards;
+}
+
+@keyframes gallery-nav-white-veil-sheet-in {
   from {
     opacity: 0;
   }
@@ -2421,29 +2449,42 @@ button.directions-transport__mapsearch:focus-visible {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .gallery-nav-white-veil {
+  .gallery-nav-white-veil__sheet {
     animation: none;
     opacity: 1;
   }
 }
 
-/* 갤러리 홈 → 본문: 흰 화면 유지 후 서서히 걷힘 */
+/*
+ * 갤러리 → 본문: 시트만 흰색으로 페이드아웃.
+ * 바깥을 검정으로 두면 시트가 투명해질 때 본문 대신 검은색이 보임(gallery-nav-white-veil과 동일 이슈).
+ */
 .gallery-return-veil {
   position: fixed;
   inset: 0;
   z-index: 20000;
-  background: #fff;
+  display: flex;
+  justify-content: center;
+  align-items: stretch;
+  background: transparent;
   pointer-events: none;
+}
+
+.gallery-return-veil__sheet {
+  width: 100%;
+  max-width: var(--shell-max);
+  height: 100%;
+  background: #fff;
   opacity: 1;
 }
 
-.gallery-return-veil--fading {
-  transition: opacity 0.55s ease;
+.gallery-return-veil--fading .gallery-return-veil__sheet {
+  transition: opacity 1s ease;
   opacity: 0;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .gallery-return-veil--fading {
+  .gallery-return-veil--fading .gallery-return-veil__sheet {
     transition: none;
     opacity: 0;
   }
