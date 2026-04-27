@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Navigate, useParams } from "react-router-dom";
 import type { WeddingLoadErrorState } from "./WeddingLoadErrorPage";
 import { useScrollRevealRoot } from "./useScrollRevealRoot";
@@ -32,6 +32,35 @@ function stripDirectionNoteEmojis(line: string): string {
     .replace(/\uFE0F|\u200D/g, "")
     .replace(/\s{2,}/g, " ")
     .trim();
+}
+
+/** `heroImage` 있을 때만: sticky 히어로의 부모 높이가 본문까지 포함되어 스크롤 내내 사진이 고정되고 본문이 위로 덮임 */
+function WeddingHeroScrollInner({
+  active,
+  heroSrc,
+  children,
+}: {
+  active: boolean;
+  heroSrc: string;
+  children: ReactNode;
+}) {
+  if (!active) {
+    return children;
+  }
+  return (
+    <div className="wedding-hero-scroll-inner">
+      <div className="wedding-hero-sticky" aria-hidden>
+        <img
+          className="wedding-hero-img"
+          src={heroSrc}
+          alt=""
+          decoding="async"
+          fetchPriority="high"
+        />
+      </div>
+      {children}
+    </div>
+  );
 }
 
 function formatDaysKo(d: Date) {
@@ -188,6 +217,8 @@ function WeddingAppContent({ weddingId, data }: WeddingAppContentProps) {
   }, [introComplete, hourglassScrollLock]);
 
   const heroVenueLine = `${wedding.venueName} ${wedding.venueHall}`;
+  const heroImageFile = wedding.heroImage?.trim();
+  const heroImageUrl = heroImageFile ? `${weddingAssetBase}${heroImageFile}` : null;
   const groomMbti = splitMbtiLine(couple.groom.mbtiLine);
   const brideMbti = splitMbtiLine(couple.bride.mbtiLine);
 
@@ -204,18 +235,19 @@ function WeddingAppContent({ weddingId, data }: WeddingAppContentProps) {
       )}
       <div
         ref={phoneShellRef}
-        className="phone-shell"
+        className={`phone-shell${heroImageUrl ? " phone-shell--wedding-hero" : ""}`}
         data-hourglass-interlude={hourglassShellMode !== "normal" ? "" : undefined}
         data-hourglass-interlude-exit-reveal={hourglassShellMode === "exit-reveal" ? "" : undefined}
         {...(hourglassShellMode !== "normal" || !introComplete ? { inert: true } : {})}
       >
-        <main
-          ref={mainContentRef}
-          className="content"
-          aria-hidden={
-            !introComplete || hourglassShellMode === "interlude" ? true : undefined
-          }
-        >
+        <WeddingHeroScrollInner active={Boolean(heroImageUrl)} heroSrc={heroImageUrl ?? ""}>
+          <main
+            ref={mainContentRef}
+            className={`content${heroImageUrl ? " content--wedding-hero" : ""}`}
+            aria-hidden={
+              !introComplete || hourglassShellMode === "interlude" ? true : undefined
+            }
+          >
           <CopyFeedbackToast open={copyToastOpen} closing={copyToastClosing} onClose={closeCopyToast} />
           <section id="main" className="hero">
             <div className="hero-inner">
@@ -449,6 +481,7 @@ function WeddingAppContent({ weddingId, data }: WeddingAppContentProps) {
             <p className="site-credit__text">Powered by With Marry</p>
           </footer>
         </main>
+        </WeddingHeroScrollInner>
       </div>
     </div>
   );

@@ -117,6 +117,11 @@ export interface WeddingData {
     ceremonyTimeLabel: string;
     venueName: string;
     venueHall: string;
+    /**
+     * 맨 위 풀블리드 히어로 이미지 — `public/weddings/{id}/` 안 파일명(예: `hero.jpg`).
+     * 있으면 스크롤 시 이미지는 고정·본문이 위로 덮습니다.
+     */
+    heroImage?: string;
     /** 오시는 길 등에서 쓸 예정이면 JSON에 유지해 두세요. */
     venueAddress?: string;
     /** 네이버·카카오 등 지도 링크 (없으면 버튼 숨김) */

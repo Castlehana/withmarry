@@ -121,6 +121,66 @@ body.overflow-lock {
   position: relative;
 }
 
+/* `wedding.heroImage` — 래퍼 높이 = 히어로 + 본문(sticky 부모가 길어짐) → 스크롤 내내 사진은 상단 고정, 본문만 위로 겹침 */
+.phone-shell.phone-shell--wedding-hero {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  --wedding-hero-h: min(72vh, 580px);
+}
+
+.phone-shell.phone-shell--wedding-hero .wedding-hero-scroll-inner {
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 auto;
+  width: 100%;
+  min-height: min-content;
+}
+
+.phone-shell.phone-shell--wedding-hero .wedding-hero-sticky {
+  position: sticky;
+  top: 0;
+  z-index: 0;
+  flex-shrink: 0;
+  height: var(--wedding-hero-h);
+  overflow: hidden;
+  width: 100%;
+  pointer-events: none;
+}
+
+.phone-shell.phone-shell--wedding-hero .wedding-hero-img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center top;
+  background: var(--paper);
+}
+
+main.content.content--wedding-hero {
+  flex: 0 0 auto;
+  width: 100%;
+  min-height: 0;
+  /* 음수 margin 없음: 첫 화면은 히어로 이미지 아래에 본문이 이어짐. 스크롤 시 sticky 히어로 위로 본문이 올라가며 겹침 */
+  position: relative;
+  z-index: 1;
+  background-color: var(--paper);
+}
+
+main.content.content--wedding-hero #main.hero {
+  margin-top: 0;
+  padding: 60px 0 120px;
+  position: relative;
+  z-index: 1;
+  /* 히어로 위로 스크롤될 때도 이미지가 비치지 않도록 전부 불투명 색 */
+  background:
+    linear-gradient(180deg, #fffdf9 0%, var(--paper) 58%),
+    radial-gradient(80% 50% at 50% 0%, #f0e6dc 0%, var(--paper) 72%);
+}
+
 .phone-shell[data-hourglass-interlude] {
   overflow: hidden !important;
   touch-action: none;
@@ -129,6 +189,14 @@ body.overflow-lock {
 .phone-shell[data-hourglass-interlude] main.content {
   visibility: hidden;
   pointer-events: none;
+}
+
+.phone-shell[data-hourglass-interlude] .wedding-hero-sticky {
+  visibility: hidden;
+}
+
+.phone-shell[data-hourglass-interlude][data-hourglass-interlude-exit-reveal] .wedding-hero-sticky {
+  visibility: visible;
 }
 
 /* 닫기 페이드아웃: 검은 레이어 아래에서 본문을 2s로 페이드 인 (종이 배경만 비치는 현상 방지) */

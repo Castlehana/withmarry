@@ -2,6 +2,7 @@
 # - 오시는 길 지도 아래 티맵·카카오·네이버 버튼: venueAddress 있으면 그 문자열로 검색, 없으면 venueName+venueHall.
 # - couple.groom.phone / couple.bride.phone — 히어로 신랑·신부 옆 전화 아이콘(tel:). 생략 시 아이콘 숨김.
 # - couple.rsvpAttendance — 혼주 연락 아래「참석 여부 전달하기」(formUrl?, formLabel? 등).
+# - wedding.heroImage — 맨 위 히어로(파일명, 예: hero.jpg). 없으면 생략.
 # - wedding.heartAccounts — 오시는 길 위 '마음 전하실 곳'. 토글 제목: 신랑측/신부측 + label. groom/bride: self, father, mother.
 #   kakaoPayUrl 생략 시 '카카오페이 송금' 숨김. holder에 {{groom.성이름}} {{groomFatherName}} 등 토큰 가능.
 # =============================================================================
@@ -50,6 +51,7 @@
   },
   "wedding": {
     "date": { "year": 2026, "month": 6, "day": 27 },
+    "heroImage": "hero.jpg",
     "ceremonyTimeLabel": "오후 1시",
     "venueName": "더살롱드웨딩홀",
     "venueHall": "1층 레터홀",
