@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { Navigate, useParams } from "react-router-dom";
+import { Navigate, useLocation, useNavigate, useParams } from "react-router-dom";
 import type { WeddingLoadErrorState } from "./WeddingLoadErrorPage";
 import { useScrollRevealRoot } from "./useScrollRevealRoot";
 import { HeadsetSineWaves } from "./HeadsetSineWaves";
@@ -24,6 +24,7 @@ import { DirectionsNavLinks } from "./DirectionsNavLinks";
 import { DirectionsTransportToggles } from "./DirectionsTransportToggles";
 import { IntroLetterGate } from "./IntroLetterGate";
 import { HeroConfettiOverlay } from "./HeroConfettiOverlay";
+import { GalleryEnterButton } from "./GalleryEnterButton";
 import "./audio-hint-waves";
 
 /** `directionsNote` 한 줄에서 이모지·픽토그램만 제거 (본문은 유지) */
@@ -198,8 +199,57 @@ function WeddingAppContent({ weddingId, data }: WeddingAppContentProps) {
   const [hourglassShellMode, setHourglassShellMode] = useState<HourglassInterludeShellMode>("normal");
   const { open: copyToastOpen, closing: copyToastClosing, notify: notifyCopied, close: closeCopyToast } =
     useCopyFeedbackToast();
+  const navigate = useNavigate();
+  const [galleryReturnVeilPhase, setGalleryReturnVeilPhase] = useState<"off" | "solid" | "fadeout">("off");
 
   useScrollRevealRoot(mainContentRef, [hourglassShellMode, introComplete, heroImageUrl], heroImageUrl ? phoneShellRef : undefined);
+
+  const location = useLocation();
+  useLayoutEffect(() => {
+    const fromGallery = (location.state as { fromGalleryExit?: boolean } | null)?.fromGalleryExit;
+    if (!fromGallery) return;
+    if (reduceIntroMotion) {
+      void navigate(
+        {
+          pathname: `/${encodeURIComponent(weddingId)}`,
+          hash: location.hash || "#gallery",
+          search: location.search,
+        },
+        { replace: true, state: {} }
+      );
+      return;
+    }
+    let cancelled = false;
+    setGalleryReturnVeilPhase("solid");
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        if (!cancelled) setGalleryReturnVeilPhase("fadeout");
+      });
+    });
+    const t = window.setTimeout(() => {
+      if (cancelled) return;
+      setGalleryReturnVeilPhase("off");
+      void navigate(
+        {
+          pathname: `/${encodeURIComponent(weddingId)}`,
+          hash: location.hash || "#gallery",
+          search: location.search,
+        },
+        { replace: true, state: {} }
+      );
+    }, 580);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(t);
+    };
+  }, [location.hash, location.key, location.search, location.state, navigate, reduceIntroMotion, weddingId]);
+
+  useLayoutEffect(() => {
+    if (location.hash !== "#gallery") return;
+    const el = document.getElementById("gallery");
+    if (!el) return;
+    el.scrollIntoView({ behavior: reduceIntroMotion ? "auto" : "smooth", block: "start" });
+  }, [location.hash, location.pathname, reduceIntroMotion]);
 
   useLayoutEffect(() => {
     if ("scrollRestoration" in history) {
@@ -237,6 +287,12 @@ function WeddingAppContent({ weddingId, data }: WeddingAppContentProps) {
 
   return (
     <div className="desktop-stage">
+      {galleryReturnVeilPhase !== "off" ? (
+        <div
+          className={`gallery-return-veil${galleryReturnVeilPhase === "fadeout" ? " gallery-return-veil--fading" : ""}`}
+          aria-hidden
+        />
+      ) : null}
       {!introComplete && (
         <IntroLetterGate
           onComplete={() => setIntroComplete(true)}
@@ -420,16 +476,11 @@ function WeddingAppContent({ weddingId, data }: WeddingAppContentProps) {
 
           <section id="gallery" className="section gallery gallery--cinemagraph" lang="en" aria-labelledby="gallery-heading">
             <h2 id="gallery-heading">Gallery</h2>
-            <div className="gallery__grid">
-              <figure className="gallery__figure">
-                <img
-                  className="gallery__image"
-                  src={`${weddingAssetBase}gallery-thumbnail.png`}
-                  alt="Bride and groom in silhouette, foreheads touching at sunset on a terrace overlooking hills and the sea"
-                  loading="lazy"
-                  decoding="async"
-                />
-              </figure>
+            <p className="gallery__lead">
+              스크롤로 사진을 둘러볼 수 있는 갤러리 공간으로 이동합니다.
+            </p>
+            <div className="gallery__enter-wrap">
+              <GalleryEnterButton weddingId={weddingId} label="갤러리로 이동" />
             </div>
           </section>
 

@@ -2351,41 +2351,101 @@ button.directions-transport__mapsearch:focus-visible {
   letter-spacing: 0.04em;
 }
 
-.gallery__grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 16px;
+.gallery__lead {
+  margin: 0 auto 20px;
   max-width: min(26rem, 100%);
-  margin: 0 auto;
+  text-align: center;
+  font-size: 15px;
+  line-height: 1.75;
+  color: var(--muted);
 }
 
-.gallery__figure {
-  margin: 0;
-  overflow: visible;
+.gallery__enter-wrap {
   display: flex;
   justify-content: center;
+  margin: 0 auto 8px;
+  max-width: min(26rem, 100%);
+}
+
+.gallery__enter-btn {
+  display: inline-flex;
   align-items: center;
-  padding: 8px 0 24px;
+  justify-content: center;
+  min-height: 48px;
+  padding: 0 28px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--gold) 55%, var(--line));
+  background: linear-gradient(180deg, #fffefa, var(--blush));
+  color: var(--ink);
+  font-family: var(--serif);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
 }
 
-.gallery__image {
-  display: block;
-  width: auto;
-  max-width: min(92vw, 22rem);
-  height: auto;
-  max-height: 70vh;
-  margin-left: auto;
-  margin-right: auto;
-  transform: rotate(15deg) translateY(3vh);
-  border: 0.5em solid #fff;
-  box-shadow: 5px 5px 15px rgb(20 20 20 / 0.5);
-  border-radius: 0;
+.gallery__enter-btn:hover {
+  background: var(--blush);
+  border-color: var(--gold);
 }
 
-@media (max-width: 420px) {
-  .gallery__image {
-    transform: rotate(12deg) translateY(1vh);
-    max-height: 58vh;
+.gallery__enter-btn:active {
+  transform: scale(0.98);
+}
+
+.gallery__enter-btn:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 3px;
+}
+
+/* 갤러리 진입 버튼 → 흰 베일 후 `/gallery` 라우트 */
+.gallery-nav-white-veil {
+  position: fixed;
+  inset: 0;
+  z-index: 10050;
+  background: #fff;
+  pointer-events: none;
+  animation: gallery-nav-white-veil-in 480ms ease forwards;
+}
+
+@keyframes gallery-nav-white-veil-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gallery-nav-white-veil {
+    animation: none;
+    opacity: 1;
+  }
+}
+
+/* 갤러리 홈 → 본문: 흰 화면 유지 후 서서히 걷힘 */
+.gallery-return-veil {
+  position: fixed;
+  inset: 0;
+  z-index: 20000;
+  background: #fff;
+  pointer-events: none;
+  opacity: 1;
+}
+
+.gallery-return-veil--fading {
+  transition: opacity 0.55s ease;
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gallery-return-veil--fading {
+    transition: none;
+    opacity: 0;
   }
 }
 

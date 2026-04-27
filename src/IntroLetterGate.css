@@ -106,11 +106,14 @@
 .intro-letter-gate .intro-letter-skin.intro-letter-skin--gate-scale {
   /* 무대 패딩이 세이프 에어를 담당 — 여기서는 뷰포트 높이만 소폭 여백 */
   --avail-h: calc(100vh - 20px);
+  /* 세로는 +5%, 가로 상한(비율 기반)만 +1% */
+  --ile-envelope-scale-h: 1.05;
+  --ile-envelope-scale-w: 1.01;
   --ile-w: max(
     160px,
-    min(var(--intro-col-w), calc(var(--avail-h) * 280 / 180))
+    min(var(--intro-col-w), calc(var(--avail-h) * 280 / 180 * var(--ile-envelope-scale-w)))
   );
-  --ile-h: var(--avail-h);
+  --ile-h: calc(var(--avail-h) * var(--ile-envelope-scale-h));
   --ile-heart-w: clamp(18px, calc(var(--ile-w) * 0.048), 40px);
   perspective: min(1600px, calc(var(--ile-w) * 5));
   flex-shrink: 0;
