@@ -8,7 +8,9 @@
   /* 옆면·밑면·뚜껑 삼각 — 미묘한 단차로 입체 */
   --intro-env: #f2ebe1;
   --intro-env2: #dcd4c8;
-  --intro-flap: #e8e0d4;
+  --intro-flap: #ebe6dc;
+  /* 움직이는 삼각 뚜껑만 살짝 밝게 */
+  --intro-flap-motion: #f3eee7;
   /*
    * z-index 위계
    * DOM 순서: pocket → flap → letter → hearts
@@ -65,7 +67,7 @@
   border-left: calc(var(--intro-w) / 2) solid transparent;
   border-right: calc(var(--intro-w) / 2) solid transparent;
   border-bottom: calc(var(--intro-h) / 2 - (8px * 0.7)) solid transparent;
-  border-top: calc(var(--intro-h) / 2 + (8px * 0.7)) solid var(--intro-flap);
+  border-top: calc(var(--intro-h) / 2 + (8px * 0.7)) solid var(--intro-flap-motion);
   transition: transform 0.48s ease;
 }
 

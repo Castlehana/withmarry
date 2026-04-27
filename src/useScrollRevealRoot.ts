@@ -18,6 +18,8 @@ export function useScrollRevealRoot(containerRef: RefObject<HTMLElement | null>,
     if (!root) return;
 
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    /** 본문 스크롤이 없으면 인터섹션 관찰이 불가 → 한꺼번에 보이게 */
+    const noDocumentScroll = root.scrollHeight <= root.clientHeight + 2;
     const elements = Array.from(root.querySelectorAll<HTMLElement>(SCROLL_REVEAL_SELECTOR));
 
     for (const el of elements) {
@@ -26,7 +28,7 @@ export function useScrollRevealRoot(containerRef: RefObject<HTMLElement | null>,
       if (ms && /^\d+$/.test(ms)) {
         el.style.setProperty("--scroll-reveal-delay", `${ms}ms`);
       }
-      if (reduce) el.classList.add("scroll-reveal--visible");
+      if (reduce || noDocumentScroll) el.classList.add("scroll-reveal--visible");
     }
 
     const teardownClasses = () => {
@@ -36,7 +38,7 @@ export function useScrollRevealRoot(containerRef: RefObject<HTMLElement | null>,
       }
     };
 
-    if (reduce) {
+    if (reduce || noDocumentScroll) {
       return teardownClasses;
     }
 

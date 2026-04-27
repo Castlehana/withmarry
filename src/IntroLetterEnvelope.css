@@ -6,7 +6,10 @@
   --ile-heart-w: calc(20px * 0.7);
   --ile-face: #f2ebe1;
   --ile-face2: #dcd4c8;
-  --ile-flap: #e8e0d4;
+  /* 봉투 윗면 면 — 완전 투명(뒤가 비침) */
+  --ile-flap: transparent;
+  /* 움직이는 삼각 뚜껑만 살짝 밝게(본체 `background`는 `--ile-flap`) */
+  --ile-flap-motion: #ebe4d9;
   isolation: isolate;
   position: relative;
   width: var(--ile-w);
@@ -50,7 +53,7 @@
   border-left: calc(var(--ile-w) / 2) solid transparent;
   border-right: calc(var(--ile-w) / 2) solid transparent;
   border-bottom: calc(var(--ile-h) / 2 - (8px * 0.7)) solid transparent;
-  border-top: calc(var(--ile-h) / 2 + (8px * 0.7)) solid var(--ile-flap);
+  border-top: calc(var(--ile-h) / 2 + (8px * 0.7)) solid var(--ile-flap-motion);
   transition: transform 0.48s ease;
 }
 

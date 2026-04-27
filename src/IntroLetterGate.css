@@ -1,4 +1,4 @@
-/* 인트로: 콘텐츠 폭(`--shell-max`) 안에만 봉투, 좌우·상하 여백은 무대색 검정 */
+/* 인트로: 콘텐츠 열 안은 투명(본문 비침), 열 밖 검정은 `__stage-chrome`이 봉투 위에 표시 */
 
 .intro-letter-gate {
   /* 콘텐츠 열 너비 — 자기 자신 width와 %를 섞지 않음(0px 순환 방지) */
@@ -14,7 +14,7 @@
   padding-bottom: env(safe-area-inset-bottom);
   padding-left: env(safe-area-inset-left);
   box-sizing: border-box;
-  background: var(--stage, #000);
+  background: transparent;
   pointer-events: none;
   transition:
     opacity 0.42s ease,
@@ -27,8 +27,42 @@
   pointer-events: none;
 }
 
-/* `phone-shell`과 동일한 가로 한도 — 세로는 무대(패딩 안) 전체 높이 */
+/* 콘텐츠 열 밖 무대색 — DOM상 봉투보다 위, `pointer-events: none`으로 조작은 봉투로 전달 */
+.intro-letter-gate__stage-chrome {
+  position: fixed;
+  inset: 0;
+  z-index: 10001;
+  display: flex;
+  justify-content: center;
+  align-items: stretch;
+  padding-top: env(safe-area-inset-top);
+  padding-right: env(safe-area-inset-right);
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+  box-sizing: border-box;
+  pointer-events: none;
+}
+
+.intro-letter-gate__stage-chrome-cutout {
+  width: min(var(--intro-col-w), 100%);
+  max-width: 100%;
+  height: 100%;
+  flex: 0 0 auto;
+  background: transparent;
+  box-shadow: 0 0 0 100vmax var(--stage, #000);
+}
+
+/* 열림 확정 직후 1초: 봉투만 살짝 확대 + 블러(게이트 페이드는 그 다음 `--exiting`) */
+.intro-letter-gate--exit-bloom .intro-letter-gate__envelope-wrap {
+  transform: scale(1.06);
+  filter: blur(11px);
+  opacity: 0.78;
+}
+
+/* `phone-shell`과 동일한 가로 한도 — 세로는 무대(패딩 안) 전체 높이 (`__stage-chrome` 아래) */
 .intro-letter-gate__content {
+  position: relative;
+  z-index: 0;
   align-self: center;
   width: min(var(--intro-col-w), 100%);
   max-width: 100%;
@@ -66,21 +100,54 @@
   --ile-heart-w: clamp(18px, calc(var(--ile-w) * 0.048), 40px);
   perspective: min(1600px, calc(var(--ile-w) * 5));
   flex-shrink: 0;
+  /* React `style` 로 `--peel` 0~1 — 시각은 75% 구간까지 사용(맨 끝 = 75% 오픈) */
+  --peel-range: 0.75;
+  --seal-lift: calc(var(--peel, 0) * var(--peel-range) * min(600px, calc(var(--ile-w) * 1.68)));
 }
 
-/* 봉투 정면 중앙 왁스 스티커 — 뚜껑(z3) 위 */
+/* 뚜껑: 클릭이 아니라 `--peel` 스크럽 (인트로 전용) */
+.intro-letter-gate .intro-letter-skin.intro-letter-skin--gate-scale .intro-letter-skin__flap {
+  transform: rotateX(calc(var(--peel, 0) * var(--peel-range, 1) * 180deg));
+}
+
+.intro-letter-gate .intro-letter-skin.intro-letter-skin--gate-scale:not(.intro-letter-gate__skin--scrub) .intro-letter-skin__flap {
+  transition: transform 0.42s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.intro-letter-gate .intro-letter-skin.intro-letter-skin--gate-scale.intro-letter-gate__skin--scrub .intro-letter-skin__flap {
+  transition: none !important;
+}
+
+/* 봉투 정면 중앙 왁스 스티커 — 위로 드래그해 봉투 벌어짐; `--peel`↑ 세로 납작·밝기↑ */
 .intro-letter-gate .intro-letter-skin.intro-letter-skin--gate-scale .intro-letter-gate__wax-seal {
   position: absolute;
   left: 50%;
   top: 50%;
-  translate: -50% -50%;
   z-index: 4;
   width: clamp(52px, calc(var(--ile-w) * 0.34), 160px);
   height: auto;
   aspect-ratio: 1;
   object-fit: contain;
-  pointer-events: none;
-  filter: drop-shadow(0 3px 10px rgba(0, 0, 0, 0.28));
+  pointer-events: auto;
+  touch-action: none;
+  user-select: none;
+  cursor: grab;
+  transform: translate(-50%, calc(-50% - var(--seal-lift, 0px)))
+    scaleY(calc(1 - var(--peel, 0) * 0.68));
+  transform-origin: 50% 50%;
+  filter: brightness(calc(1 + var(--peel, 0) * 0.8)))
+    drop-shadow(0 3px 10px rgba(0, 0, 0, 0.28));
+  transition:
+    transform 0.42s cubic-bezier(0.32, 0.72, 0, 1),
+    filter 0.42s ease;
+}
+
+.intro-letter-gate .intro-letter-skin.intro-letter-skin--gate-scale.intro-letter-gate__skin--scrub .intro-letter-gate__wax-seal {
+  transition: none !important;
+}
+
+.intro-letter-gate__wax-seal--grabbing {
+  cursor: grabbing;
 }
 
 .intro-letter-gate__envelope-wrap {
@@ -88,12 +155,27 @@
   width: 100%;
   display: flex;
   justify-content: center;
+  transform: scale(1);
   transform-origin: 50% 55%;
-  pointer-events: none;
+  filter: blur(0);
+  opacity: 1;
+  transition:
+    transform 1s cubic-bezier(0.32, 0.72, 0, 1),
+    filter 1s ease,
+    opacity 1s ease;
+  pointer-events: auto;
 }
 
 @media (prefers-reduced-motion: reduce) {
   .intro-letter-gate {
+    transition-duration: 0.22s;
+  }
+
+  .intro-letter-gate__envelope-wrap {
+    transition-duration: 0.01ms;
+  }
+
+  .intro-letter-gate .intro-letter-skin.intro-letter-skin--gate-scale .intro-letter-gate__wax-seal {
     transition-duration: 0.22s;
   }
 }
