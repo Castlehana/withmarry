@@ -50,9 +50,14 @@
   padding: 0;
   overflow: hidden;
   touch-action: none;
+  cursor: grab;
   background-color: #f7f7f5;
   font-family: "Lato", sans-serif;
   color: #111;
+}
+
+.wedding-gallery-page.wedding-gallery-page--dragging {
+  cursor: grabbing;
 }
 
 .wedding-gallery-page__canvas {
@@ -168,6 +173,7 @@
 
 .wedding-gallery-page__home {
   pointer-events: auto;
+  cursor: pointer;
   margin: 0;
   padding: 0;
   width: 34px;

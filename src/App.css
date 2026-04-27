@@ -2581,6 +2581,19 @@ button.directions-transport__mapsearch:focus-visible {
   text-align: center;
 }
 
+.guestbook__local-hint {
+  max-width: min(26rem, 100%);
+  margin: 0 auto 14px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: var(--muted);
+  text-align: center;
+  background: color-mix(in srgb, var(--gold-soft) 18%, var(--blush));
+  border: 1px solid color-mix(in srgb, var(--gold) 22%, var(--line));
+}
+
 .guestbook__list {
   list-style: none;
   margin: 0;

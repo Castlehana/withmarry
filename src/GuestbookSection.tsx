@@ -4,7 +4,6 @@ import {
   createGuestbookEntry,
   deleteGuestbookEntryAsAuthor,
   fetchGuestbookList,
-  guestbookUsesRemote,
   updateGuestbookEntry,
   verifyGuestbookEntryPin,
   type GuestbookEntry,
@@ -65,7 +64,6 @@ function PinField({
 }
 
 export function GuestbookSection({ weddingId }: Props) {
-  const remote = guestbookUsesRemote();
   const titleCompose = useId();
   const titleGate = useId();
   const titleEdit = useId();
@@ -76,6 +74,7 @@ export function GuestbookSection({ weddingId }: Props) {
   const [entries, setEntries] = useState<GuestbookEntry[]>([]);
   const [loading, setLoading] = useState(false);
   const [listErr, setListErr] = useState<string | null>(null);
+  const [usedLocalStore, setUsedLocalStore] = useState(false);
 
   const [menuOpenEntryId, setMenuOpenEntryId] = useState<string | null>(null);
   const [menuDropdownPos, setMenuDropdownPos] = useState<{ top: number; right: number } | null>(null);
@@ -106,20 +105,21 @@ export function GuestbookSection({ weddingId }: Props) {
   const [deleteSuccessOpen, setDeleteSuccessOpen] = useState(false);
 
   const refresh = useCallback(async () => {
-    if (!remote) return;
     setLoading(true);
     setListErr(null);
     try {
       const r = await fetchGuestbookList(weddingId);
       setEntries(r.entries);
       setListErr(r.error);
+      setUsedLocalStore(Boolean(r.usedLocalStore));
     } catch {
       setListErr("목록을 불러오지 못했습니다.");
       setEntries([]);
+      setUsedLocalStore(false);
     } finally {
       setLoading(false);
     }
-  }, [remote, weddingId]);
+  }, [weddingId]);
 
   useEffect(() => {
     void refresh();
@@ -366,16 +366,6 @@ export function GuestbookSection({ weddingId }: Props) {
     return () => document.removeEventListener("keydown", onKey);
   }, [closeTopOverlay, modalOpen]);
 
-  if (!remote) {
-    return (
-      <div className="guestbook__offline">
-        <p className="guestbook__offline-msg">
-          이 환경에서는 방명록 서버에 연결되지 않습니다. 배포된 청첩장에서 방명록을 작성할 수 있습니다.
-        </p>
-      </div>
-    );
-  }
-
   const menuEntry = useMemo(
     () => (menuOpenEntryId ? (entries.find((x) => x.id === menuOpenEntryId) ?? null) : null),
     [entries, menuOpenEntryId]
@@ -395,6 +385,11 @@ export function GuestbookSection({ weddingId }: Props) {
 
   return (
     <>
+      {usedLocalStore ? (
+        <p className="guestbook__local-hint" role="status">
+          서버에 연결되지 않아 방명록은 이 브라우저에만 저장됩니다. 다른 기기나 배포 URL에서는 보이지 않습니다.
+        </p>
+      ) : null}
       <div className="guestbook__toolbar">
         <button type="button" className="guestbook__write-btn" onClick={() => setComposeOpen(true)}>
           작성

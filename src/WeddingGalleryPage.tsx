@@ -5,13 +5,17 @@ import { weddingBundleBaseUrl } from "./wedding-data";
 import { WEDDING_GALLERY_IMAGE_IDS, WEDDING_GALLERY_SLIDES } from "./weddingGallerySlides";
 import "./WeddingGalleryPage.css";
 
+const PAINTING_SCALE = 0.7;
+
 const CONFIG = {
   slideCount: 10,
   spacingX: 45,
-  pWidth: 14,
-  pHeight: 18,
+  pWidth: 14 * PAINTING_SCALE,
+  pHeight: 18 * PAINTING_SCALE,
   camZ: 30,
   wallAngleY: -0.25,
+  /** 벽 전체 월드 X — 클수록 화면에서 더 오른쪽 */
+  galleryWallOffsetX: 2,
   snapDelay: 200,
   lerpSpeed: 0.06,
 } as const;
@@ -121,30 +125,48 @@ export function WeddingGalleryPage({ weddingId, reduceMotion, onRequestNavigateH
     const ac = new AbortController();
     const { signal } = ac;
 
-    const onWheel = (e: WheelEvent): void => {
-      targetScroll += e.deltaY * 0.1;
+    /** 픽셀당 `targetScroll` 반영 — 클수록 같은 드래그에 더 빨리 이동 */
+    const DRAG_SENS = 0.15;
+    let activeDragPointerId: number | null = null;
+    let dragLastClientX = 0;
+
+    const isOnHomeControl = (target: EventTarget | null): boolean =>
+      target instanceof Element && Boolean(target.closest(".wedding-gallery-page__home-anchor"));
+
+    const onPointerDown = (e: PointerEvent): void => {
+      if (isOnHomeControl(e.target)) return;
+      if (e.pointerType === "mouse" && e.button !== 0) return;
+      activeDragPointerId = e.pointerId;
+      dragLastClientX = e.clientX;
+      page.classList.add("wedding-gallery-page--dragging");
+      page.setPointerCapture(e.pointerId);
+      if (snapTimer) window.clearTimeout(snapTimer);
+    };
+
+    const onPointerMove = (e: PointerEvent): void => {
+      if (activeDragPointerId !== e.pointerId) return;
+      const diff = dragLastClientX - e.clientX;
+      dragLastClientX = e.clientX;
+      targetScroll += diff * DRAG_SENS;
       if (snapTimer) window.clearTimeout(snapTimer);
       snapTimer = window.setTimeout(snapToNearest, CONFIG.snapDelay);
     };
 
-    let touchStart = 0;
-    const onTouchStart = (e: TouchEvent): void => {
-      touchStart = e.touches[0]?.clientX ?? 0;
+    const endDrag = (e: PointerEvent): void => {
+      if (activeDragPointerId !== e.pointerId) return;
+      activeDragPointerId = null;
+      page.classList.remove("wedding-gallery-page--dragging");
+      try {
+        page.releasePointerCapture(e.pointerId);
+      } catch {
+        /* already released */
+      }
       if (snapTimer) window.clearTimeout(snapTimer);
-    };
-    const onTouchMove = (e: TouchEvent): void => {
-      const t = e.touches[0];
-      if (!t) return;
-      const diff = touchStart - t.clientX;
-      targetScroll += diff * 0.6;
-      touchStart = t.clientX;
-      if (snapTimer) window.clearTimeout(snapTimer);
-    };
-    const onTouchEnd = (): void => {
       snapToNearest();
     };
 
     const onMouseMove = (e: MouseEvent): void => {
+      if (activeDragPointerId !== null) return;
       const r = page.getBoundingClientRect();
       if (r.width <= 0 || r.height <= 0) return;
       mouse.x = ((e.clientX - r.left) / r.width) * 2 - 1;
@@ -164,10 +186,10 @@ export function WeddingGalleryPage({ weddingId, reduceMotion, onRequestNavigateH
     });
     ro.observe(page);
 
-    page.addEventListener("wheel", onWheel, { passive: true, signal });
-    page.addEventListener("touchstart", onTouchStart, { passive: true, signal });
-    page.addEventListener("touchmove", onTouchMove, { passive: true, signal });
-    page.addEventListener("touchend", onTouchEnd, { signal });
+    page.addEventListener("pointerdown", onPointerDown, { signal, capture: true });
+    page.addEventListener("pointermove", onPointerMove, { signal, capture: true });
+    page.addEventListener("pointerup", endDrag, { signal, capture: true });
+    page.addEventListener("pointercancel", endDrag, { signal, capture: true });
     page.addEventListener("mousemove", onMouseMove, { signal });
 
     const lerp = reduceMotion ? 0.22 : CONFIG.lerpSpeed;
@@ -236,15 +258,16 @@ export function WeddingGalleryPage({ weddingId, reduceMotion, onRequestNavigateH
           opacity: 0.15,
         });
         const shadow = new THREE.Mesh(shadowGeo, shadowMat);
-        shadow.position.set(0.8, -0.8, -0.5);
+        shadow.position.set(0.8 * PAINTING_SCALE, -0.8 * PAINTING_SCALE, -0.5);
 
         const lineZ = -1;
         const lineLen = CONFIG.spacingX;
+        const halfH = CONFIG.pHeight / 2;
         const lineGeo = new THREE.BufferGeometry().setFromPoints([
-          new THREE.Vector3(-lineLen / 2, 14, lineZ),
-          new THREE.Vector3(lineLen / 2, 14, lineZ),
-          new THREE.Vector3(-lineLen / 2, -14, lineZ),
-          new THREE.Vector3(lineLen / 2, -14, lineZ),
+          new THREE.Vector3(-lineLen / 2, halfH, lineZ),
+          new THREE.Vector3(lineLen / 2, halfH, lineZ),
+          new THREE.Vector3(-lineLen / 2, -halfH, lineZ),
+          new THREE.Vector3(lineLen / 2, -halfH, lineZ),
         ]);
         const lines = new THREE.LineSegments(lineGeo, new THREE.LineBasicMaterial({ color: 0xdddddd }));
 
@@ -259,12 +282,13 @@ export function WeddingGalleryPage({ weddingId, reduceMotion, onRequestNavigateH
       if (disposed) return;
 
       galleryGroup.rotation.y = CONFIG.wallAngleY;
-      galleryGroup.position.x = 8;
+      galleryGroup.position.x = CONFIG.galleryWallOffsetX;
       animate();
     })();
 
     return () => {
       disposed = true;
+      page.classList.remove("wedding-gallery-page--dragging");
       ro.disconnect();
       if (snapTimer) window.clearTimeout(snapTimer);
       ac.abort();
@@ -283,7 +307,7 @@ export function WeddingGalleryPage({ weddingId, reduceMotion, onRequestNavigateH
     const next = {
       pathname: `/${encodeURIComponent(weddingId)}`,
       search: "",
-      hash: "#gallery",
+      hash: "",
     } as const;
     if (reduceMotion) {
       void navigate(next, { state });
@@ -316,7 +340,7 @@ export function WeddingGalleryPage({ weddingId, reduceMotion, onRequestNavigateH
             ))}
           </div>
           <div className="wedding-gallery-page__scroll-hint" aria-hidden>
-            Scroll to explore
+            좌우로 드래그해 이동
           </div>
           <div className="wedding-gallery-page__home-anchor">
             <button

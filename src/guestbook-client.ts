@@ -1,15 +1,15 @@
+import {
+  isLocalGuestbookEntryId,
+  localGuestbookCreate,
+  localGuestbookDelete,
+  localGuestbookRead,
+  localGuestbookUpdate,
+  localGuestbookVerifyPin,
+} from "./guestbook-local-store";
+import type { GuestbookEntry, GuestbookSide } from "./guestbook-types";
 import { rsvpApiUrl, rsvpUsesRemote } from "./rsvp-api";
 
-export type GuestbookSide = "groom" | "bride";
-
-export type GuestbookEntry = {
-  id: string;
-  weddingId: string;
-  side: GuestbookSide;
-  authorName: string;
-  body: string;
-  createdAt: string;
-};
+export type { GuestbookEntry, GuestbookSide } from "./guestbook-types";
 
 export function guestbookUsesRemote(): boolean {
   return rsvpUsesRemote();
@@ -23,26 +23,49 @@ function mapGuestbookApiError(code: string | undefined): string {
   return typeof code === "string" && code.length > 0 ? code : "요청에 실패했습니다.";
 }
 
-export type GuestbookListResult = { entries: GuestbookEntry[]; error: string | null };
+export type GuestbookListResult = {
+  entries: GuestbookEntry[];
+  error: string | null;
+  /** 서버 대신(또는 실패 후) 이 브라우저 localStorage만 사용 중 */
+  usedLocalStore?: boolean;
+};
+
+function listFromLocal(weddingId: string): GuestbookListResult {
+  return { entries: localGuestbookRead(weddingId), error: null, usedLocalStore: true };
+}
 
 export async function fetchGuestbookList(weddingId: string): Promise<GuestbookListResult> {
+  if (!guestbookUsesRemote()) {
+    return listFromLocal(weddingId);
+  }
+
   const url = rsvpApiUrl(`/api/guestbook/list?weddingId=${encodeURIComponent(weddingId)}`);
-  const res = await fetch(url);
+  let res: Response;
+  try {
+    res = await fetch(url);
+  } catch {
+    return listFromLocal(weddingId);
+  }
+
   let data: { ok?: boolean; entries?: GuestbookEntry[]; error?: string };
   try {
     data = (await res.json()) as typeof data;
   } catch {
-    return { entries: [], error: "목록을 불러오지 못했습니다." };
+    return listFromLocal(weddingId);
   }
+
   if (data.error === "guestbook_table_missing") {
-    return { entries: [], error: GUESTBOOK_DB_NOT_READY_KO };
+    return listFromLocal(weddingId);
   }
+
   if (!res.ok || !data.ok || !Array.isArray(data.entries)) {
-    if (!data.ok && typeof data.error === "string" && data.error.length > 0) {
-      return { entries: [], error: mapGuestbookApiError(data.error) };
+    const httpClientErr = res.status >= 400 && res.status < 500;
+    if (httpClientErr && typeof data.error === "string" && data.error.length > 0) {
+      return { entries: [], error: mapGuestbookApiError(data.error), usedLocalStore: false };
     }
-    return { entries: [], error: !res.ok ? "목록을 불러오지 못했습니다." : null };
+    return listFromLocal(weddingId);
   }
+
   const entries = data.entries.filter(
     (e) =>
       e &&
@@ -51,7 +74,7 @@ export async function fetchGuestbookList(weddingId: string): Promise<GuestbookLi
       typeof e.authorName === "string" &&
       typeof e.body === "string"
   );
-  return { entries, error: null };
+  return { entries, error: null, usedLocalStore: false };
 }
 
 export async function createGuestbookEntry(payload: {
@@ -61,31 +84,65 @@ export async function createGuestbookEntry(payload: {
   body: string;
   password: string;
 }): Promise<{ ok: true; entry: GuestbookEntry } | { ok: false; error: string }> {
-  const res = await fetch(rsvpApiUrl("/api/guestbook"), {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      weddingId: payload.weddingId,
-      side: payload.side,
-      authorName: payload.authorName,
-      body: payload.body,
-      password: payload.password,
-    }),
-  });
-  const data = (await res.json()) as { ok?: boolean; error?: string; entry?: GuestbookEntry };
-  if (!res.ok || !data.ok || !data.entry) {
+  if (!guestbookUsesRemote()) {
+    return { ok: true, entry: localGuestbookCreate(payload) };
+  }
+
+  let res: Response;
+  try {
+    res = await fetch(rsvpApiUrl("/api/guestbook"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        weddingId: payload.weddingId,
+        side: payload.side,
+        authorName: payload.authorName,
+        body: payload.body,
+        password: payload.password,
+      }),
+    });
+  } catch {
+    return { ok: true, entry: localGuestbookCreate(payload) };
+  }
+
+  let data: { ok?: boolean; error?: string; entry?: GuestbookEntry };
+  try {
+    data = (await res.json()) as typeof data;
+  } catch {
+    return { ok: true, entry: localGuestbookCreate(payload) };
+  }
+
+  if (res.ok && data.ok && data.entry) {
+    return { ok: true, entry: data.entry };
+  }
+
+  const clientErr = res.status >= 400 && res.status < 500;
+  if (clientErr && typeof data.error === "string" && data.error.length > 0) {
     return { ok: false, error: mapGuestbookApiError(data.error) };
   }
-  return { ok: true, entry: data.entry };
+
+  return { ok: true, entry: localGuestbookCreate(payload) };
 }
 
 /** 수정·삭제 전 PIN만 검증 (본문 변경 없음) */
 export async function verifyGuestbookEntryPin(weddingId: string, entryId: string, pin: string): Promise<boolean> {
-  const res = await fetch(rsvpApiUrl("/api/guestbook/verify"), {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ weddingId, entryId, password: pin }),
-  });
+  if (isLocalGuestbookEntryId(entryId)) {
+    return localGuestbookVerifyPin(weddingId, entryId, pin);
+  }
+  if (!guestbookUsesRemote()) {
+    return localGuestbookVerifyPin(weddingId, entryId, pin);
+  }
+
+  let res: Response;
+  try {
+    res = await fetch(rsvpApiUrl("/api/guestbook/verify"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ weddingId, entryId, password: pin }),
+    });
+  } catch {
+    return false;
+  }
   let data: { ok?: boolean };
   try {
     data = (await res.json()) as { ok?: boolean };
@@ -99,17 +156,35 @@ export async function updateGuestbookEntry(
   id: string,
   payload: { weddingId: string; password: string; authorName: string; body: string }
 ): Promise<boolean> {
-  const res = await fetch(rsvpApiUrl(`/api/guestbook/${encodeURIComponent(id)}`), {
-    method: "PATCH",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      weddingId: payload.weddingId,
+  if (isLocalGuestbookEntryId(id) || !guestbookUsesRemote()) {
+    return localGuestbookUpdate(payload.weddingId, id, {
       password: payload.password,
       authorName: payload.authorName,
       body: payload.body,
-    }),
-  });
-  const data = (await res.json()) as { ok?: boolean };
+    });
+  }
+
+  let res: Response;
+  try {
+    res = await fetch(rsvpApiUrl(`/api/guestbook/${encodeURIComponent(id)}`), {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        weddingId: payload.weddingId,
+        password: payload.password,
+        authorName: payload.authorName,
+        body: payload.body,
+      }),
+    });
+  } catch {
+    return false;
+  }
+  let data: { ok?: boolean };
+  try {
+    data = (await res.json()) as { ok?: boolean };
+  } catch {
+    return false;
+  }
   return res.ok && data.ok === true;
 }
 
@@ -118,12 +193,26 @@ export async function deleteGuestbookEntryAsAuthor(
   weddingId: string,
   password: string
 ): Promise<boolean> {
-  const res = await fetch(rsvpApiUrl(`/api/guestbook/${encodeURIComponent(id)}`), {
-    method: "DELETE",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ weddingId, password }),
-  });
-  const data = (await res.json()) as { ok?: boolean };
+  if (isLocalGuestbookEntryId(id) || !guestbookUsesRemote()) {
+    return localGuestbookDelete(weddingId, id, password);
+  }
+
+  let res: Response;
+  try {
+    res = await fetch(rsvpApiUrl(`/api/guestbook/${encodeURIComponent(id)}`), {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ weddingId, password }),
+    });
+  } catch {
+    return false;
+  }
+  let data: { ok?: boolean };
+  try {
+    data = (await res.json()) as { ok?: boolean };
+  } catch {
+    return false;
+  }
   return res.ok && data.ok === true;
 }
 

@@ -214,7 +214,7 @@ function WeddingAppContent({ weddingId, data }: WeddingAppContentProps) {
         {
           pathname: `/${encodeURIComponent(weddingId)}`,
           search: "",
-          hash: "#gallery",
+          hash: "",
         },
         { state: { fromGalleryExit: true as const } }
       );
@@ -226,7 +226,7 @@ function WeddingAppContent({ weddingId, data }: WeddingAppContentProps) {
         {
           pathname: `/${encodeURIComponent(weddingId)}`,
           search: "",
-          hash: "#gallery",
+          hash: "",
         },
         { state: { fromGalleryExit: true as const } }
       );
@@ -243,11 +243,17 @@ function WeddingAppContent({ weddingId, data }: WeddingAppContentProps) {
       void navigate(
         {
           pathname: `/${encodeURIComponent(weddingId)}`,
-          hash: location.hash || "#gallery",
+          hash: "",
           search: "",
         },
         { replace: true, state: {} }
       );
+      requestAnimationFrame(() => {
+        document.getElementById("gallery")?.scrollIntoView({
+          behavior: reduceIntroMotion ? "auto" : "smooth",
+          block: "start",
+        });
+      });
       return;
     }
     setGalleryExitPortal(false);
@@ -264,11 +270,17 @@ function WeddingAppContent({ weddingId, data }: WeddingAppContentProps) {
       void navigate(
         {
           pathname: `/${encodeURIComponent(weddingId)}`,
-          hash: location.hash || "#gallery",
+          hash: "",
           search: "",
         },
         { replace: true, state: {} }
       );
+      requestAnimationFrame(() => {
+        document.getElementById("gallery")?.scrollIntoView({
+          behavior: reduceIntroMotion ? "auto" : "smooth",
+          block: "start",
+        });
+      });
     }, GALLERY_TRANSITION_MS + 100);
     return () => {
       cancelled = true;
