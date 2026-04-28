@@ -1,8 +1,12 @@
-# - wedding.directionsTransport — 지도·길찾기 아래 교통 토글(sections: id, title, bullets[], note?, mapSearchBullets?).
-# - 오시는 길 지도 아래 티맵·카카오·네이버 버튼: venueAddress 있으면 그 문자열로 검색, 없으면 venueName+venueHall.
+# - couple.groom.heroGivenNameEn / couple.bride.heroGivenNameEn — 히어로 위 한 줄 "신랑 신부"(이름만, 대문자 권장). 생략 가능.
+# - wedding.heroNameTone / heroScriptTone / heroScrollCueTone — 히어로 영문·필기체·스크롤 화살표 각각 "black"|"white"만 인정, 그 외·생략은 heroGivenNamesTone → 없으면 흰색.
+# - wedding.heroGivenNamesTone — (구) 세 요소 공통 fallback.
+# - wedding.heroScrollCuePosition — 스크롤 유도 화살표 세로 위치 1(아래)~10(위), 정수만.
+# - wedding.heroImage — 맨 위 히어로(예: hero.jpg). 같은 이름의 hero.png가 있으면 우선 사용, 없으면 jpg.
 # - couple.groom.phone / couple.bride.phone — 히어로 신랑·신부 옆 전화 아이콘(tel:). 생략 시 아이콘 숨김.
 # - couple.rsvpAttendance — 혼주 연락 아래「참석 여부 전달하기」(formUrl?, formLabel? 등).
-# - wedding.heroImage — 맨 위 히어로(파일명, 예: hero.jpg). 없으면 생략.
+# - wedding.directionsTransport — 지도·길찾기 아래 교통 토글(sections: id, title, bullets[], note?, mapSearchBullets?).
+# - 오시는 길 지도 아래 티맵·카카오·네이버 버튼: venueAddress 있으면 그 문자열로 검색, 없으면 venueName+venueHall.
 # - wedding.heartAccounts — 오시는 길 위 '마음 전하실 곳'. 토글 제목: 신랑측/신부측 + label. groom/bride: self, father, mother.
 #   kakaoPayUrl 생략 시 '카카오페이 송금' 숨김. holder에 {{groom.성이름}} {{groomFatherName}} 등 토큰 가능.
 # =============================================================================
@@ -15,6 +19,7 @@
     "groom": {
       "성이름": "김도현",
       "이름": "도현",
+      "heroGivenNameEn": "DOHYUN",
       "phone": "010-9000-1001",
       "mbtiLine": "논리적인 설계자 INTJ",
       "tagAccent": "코드 짜는 남자",
@@ -23,6 +28,7 @@
     "bride": {
       "성이름": "최지수",
       "이름": "지수",
+      "heroGivenNameEn": "JISU",
       "phone": "010-9000-2002",
       "mbtiLine": "감각적인 예술가 ISFP",
       "tagAccent": "색을 입히는 여자",
@@ -50,8 +56,12 @@
     "rsvpAttendance": {}
   },
   "wedding": {
-    "date": { "year": 2026, "month": 6, "day": 27 },
     "heroImage": "hero.jpg",
+    "heroNameTone": "black",
+    "heroScriptTone": "black",
+    "heroScrollCueTone": "black",
+    "heroScrollCuePosition": 4,
+    "date": { "year": 2026, "month": 6, "day": 27 },
     "ceremonyTimeLabel": "오후 1시",
     "venueName": "더살롱드웨딩홀",
     "venueHall": "1층 레터홀",

@@ -78,6 +78,11 @@ export interface WeddingData {
     groom: {
       성이름: string;
       이름: string;
+      /**
+       * 히어로 이미지 위 한 줄 영문 — **이름만**(성 제외), 신랑·신부 순으로 공백 한 칸으로 이어짐. 대문자 권장.
+       * 둘 다 없으면 영문 한 줄을 렌더하지 않습니다.
+       */
+      heroGivenNameEn?: string;
       /** 하이픈 포함 가능 — `tel:` 링크에는 숫자만 사용. 없으면 히어로 통화 아이콘 숨김 */
       phone?: string;
       mbtiLine: string;
@@ -87,6 +92,10 @@ export interface WeddingData {
     bride: {
       성이름: string;
       이름: string;
+      /**
+       * 히어로 이미지 위 한 줄 영문 — **이름만**(성 제외), `groom` 다음 공백 뒤에 붙음. 대문자 권장.
+       */
+      heroGivenNameEn?: string;
       /** 하이픈 포함 가능 — `tel:` 링크에는 숫자만 사용. 없으면 히어로 통화 아이콘 숨김 */
       phone?: string;
       mbtiLine: string;
@@ -118,10 +127,25 @@ export interface WeddingData {
     venueName: string;
     venueHall: string;
     /**
-     * 맨 위 풀블리드 히어로 이미지 — `public/weddings/{id}/` 안 파일명(예: `hero.jpg`).
+     * 맨 위 풀블리드 히어로 — `public/weddings/{id}/` 기준 경로·파일명(예: `hero.jpg`, `static/hero`).
+     * 확장자는 무시하고 같은 이름의 `.png`를 먼저 요청한 뒤, 실패 시 `.jpg`를 씁니다.
      * 있으면 스크롤 시 이미지는 고정·본문이 위로 덮습니다.
      */
     heroImage?: string;
+    /**
+     * @deprecated 개별 톤(`heroNameTone` 등)이 없을 때만 참고. `black` | `white` 외·생략은 개별 필드에서 흰색 기준으로 처리.
+     */
+    heroGivenNamesTone?: "black" | "white";
+    /** 히어로 영문 이름(Cinzel) — `black` | `white`만 인정, 그 외·생략 시 `heroGivenNamesTone` 다음 **흰색**. */
+    heroNameTone?: "black" | "white";
+    /** 히어로 WindSong「Save the Date」— 동일 규칙. */
+    heroScriptTone?: "black" | "white";
+    /** 히어로 아래로 스크롤 유도 화살표(3칸 애니) — 동일 규칙. */
+    heroScrollCueTone?: "black" | "white";
+    /**
+     * 스크롤 유도 표시 세로 위치 — **1**이면 거의 **아래**, **10**이면 거의 **위** (1–10 정수, 그 외는 2로 보정).
+     */
+    heroScrollCuePosition?: number;
     /** 오시는 길 등에서 쓸 예정이면 JSON에 유지해 두세요. */
     venueAddress?: string;
     /** 네이버·카카오 등 지도 링크 (없으면 버튼 숨김) */

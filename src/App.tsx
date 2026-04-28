@@ -1,4 +1,14 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+  type MouseEvent,
+  type ReactNode,
+} from "react";
 import { Navigate, useParams } from "react-router-dom";
 import type { WeddingLoadErrorState } from "./WeddingLoadErrorPage";
 import { useScrollRevealRoot } from "./useScrollRevealRoot";
@@ -23,8 +33,8 @@ import { WeddingFlipCountdown } from "./WeddingFlipCountdown";
 import { DirectionsNavLinks } from "./DirectionsNavLinks";
 import { DirectionsTransportToggles } from "./DirectionsTransportToggles";
 import { IntroLetterGate } from "./IntroLetterGate";
-import { WeddingCircularGallery } from "./WeddingCircularGallery";
 import { HeroConfettiOverlay } from "./HeroConfettiOverlay";
+import { WeddingCircularGallery } from "./WeddingCircularGallery";
 import "./audio-hint-waves";
 
 /** `directionsNote` 한 줄에서 이모지·픽토그램만 제거 (본문은 유지) */
@@ -36,34 +46,120 @@ function stripDirectionNoteEmojis(line: string): string {
     .trim();
 }
 
+/** `wedding.heroImage`에서 확장자 제거 후 `.png` 우선, 로드 실패 시 `.jpg` */
+function weddingHeroImageUrls(weddingAssetBase: string, heroImageFile: string): { png: string; jpg: string } {
+  const stem = heroImageFile.trim().replace(/\.(png|jpe?g|webp)$/i, "");
+  return {
+    png: `${weddingAssetBase}${stem}.png`,
+    jpg: `${weddingAssetBase}${stem}.jpg`,
+  };
+}
+
+type HeroBwTone = "black" | "white";
+
+/** `black`/`white`만 인정. 그 외·생략 → `legacy` → 최종 흰색. */
+function resolveHeroBwTone(explicit: unknown, legacy: unknown): HeroBwTone {
+  if (explicit === "black") return "black";
+  if (explicit === "white") return "white";
+  if (legacy === "black") return "black";
+  if (legacy === "white") return "white";
+  return "white";
+}
+
+/** 1=아래, 10=위. 1–10 정수만, 아니면 2. */
+function resolveHeroScrollCuePosition(raw: unknown): number {
+  const n = typeof raw === "number" ? raw : Number.NaN;
+  if (!Number.isFinite(n)) return 2;
+  return Math.min(10, Math.max(1, Math.round(n)));
+}
+
 /** `heroImage` 있을 때만: sticky 히어로의 부모 높이가 본문까지 포함되어 스크롤 내내 사진이 고정되고 본문이 위로 덮임 */
 function WeddingHeroScrollInner({
   active,
-  heroSrc,
+  heroSrcPng,
+  heroSrcJpg,
+  heroGivenNamesLine,
+  heroNameTone,
+  heroScriptTone,
+  heroScrollCueTone,
+  heroScrollCuePosition,
   confettiPlay,
   reduceMotion,
   children,
 }: {
   active: boolean;
-  heroSrc: string;
+  heroSrcPng: string;
+  heroSrcJpg: string;
+  /** `couple.groom.heroGivenNameEn` + 공백 + `couple.bride.heroGivenNameEn` 한 줄 */
+  heroGivenNamesLine?: string;
+  heroNameTone: HeroBwTone;
+  heroScriptTone: HeroBwTone;
+  heroScrollCueTone: HeroBwTone;
+  heroScrollCuePosition: number;
+  /** 인트로 베일이 흰색으로 가득 찬 뒤 히어로 위 컨페티(모션 축소 시 비활성) */
   confettiPlay: boolean;
   reduceMotion: boolean;
   children: ReactNode;
 }) {
+  const [heroImgSrc, setHeroImgSrc] = useState(heroSrcPng);
+  useEffect(() => {
+    setHeroImgSrc(heroSrcPng);
+  }, [heroSrcPng, heroSrcJpg]);
+
+  const scrollCueStyle = {
+    "--wedding-hero-scroll-cue-pos": heroScrollCuePosition,
+  } as CSSProperties;
+
+  const onScrollCueClick = (e: MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault();
+    const el = document.getElementById("main");
+    if (!el) return;
+    el.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
+  };
+
   if (!active) {
     return children;
   }
   return (
     <div className="wedding-hero-scroll-inner">
-      <div className="wedding-hero-sticky" aria-hidden>
+      <div className="wedding-hero-sticky">
         <img
           className="wedding-hero-img"
-          src={heroSrc}
+          src={heroImgSrc}
           alt=""
           decoding="async"
           fetchPriority="high"
+          aria-hidden
+          onError={() => {
+            setHeroImgSrc((prev) => (prev === heroSrcPng ? heroSrcJpg : prev));
+          }}
         />
+        <div className="wedding-hero-sticky__paper-grain" aria-hidden />
         {confettiPlay && !reduceMotion ? <HeroConfettiOverlay active /> : null}
+        <div className="wedding-hero-sticky__hero-tagline" aria-hidden>
+          {heroGivenNamesLine ? (
+            <div className="wedding-hero-sticky__en-names" data-hero-bw-tone={heroNameTone}>
+              {heroGivenNamesLine}
+            </div>
+          ) : null}
+          <p className="wedding-hero-sticky__save-the-date-script" data-hero-bw-tone={heroScriptTone}>
+            Save the Date
+          </p>
+        </div>
+        <a
+          href="#main"
+          className="wedding-hero-sticky__scroll-cue"
+          style={scrollCueStyle}
+          data-hero-bw-tone={heroScrollCueTone}
+          aria-label="아래 본문으로 이동"
+          onClick={onScrollCueClick}
+        >
+          <span className="wedding-hero-sticky__scroll-cue-box" aria-hidden>
+            <span />
+            <span />
+            <span />
+          </span>
+        </a>
       </div>
       {children}
     </div>
@@ -183,7 +279,15 @@ function WeddingAppContent({ weddingId, data }: WeddingAppContentProps) {
   const { meta, couple, wedding } = data;
   const weddingAssetBase = weddingBundleBaseUrl(weddingId);
   const heroImageFile = wedding.heroImage?.trim();
-  const heroImageUrl = heroImageFile ? `${weddingAssetBase}${heroImageFile}` : null;
+  const heroImageUrls = heroImageFile ? weddingHeroImageUrls(weddingAssetBase, heroImageFile) : null;
+  const heroGivenNamesLine = [couple.groom.heroGivenNameEn?.trim(), couple.bride.heroGivenNameEn?.trim()]
+    .filter((s): s is string => Boolean(s && s.length > 0))
+    .join(" ");
+  const legacyHeroTone = wedding.heroGivenNamesTone;
+  const heroNameTone = resolveHeroBwTone(wedding.heroNameTone, legacyHeroTone);
+  const heroScriptTone = resolveHeroBwTone(wedding.heroScriptTone, legacyHeroTone);
+  const heroScrollCueTone = resolveHeroBwTone(wedding.heroScrollCueTone, legacyHeroTone);
+  const heroScrollCuePosition = resolveHeroScrollCuePosition(wedding.heroScrollCuePosition);
 
   const WEDDING = useMemo(() => new Date(wedding.dateTimeISO), [wedding.dateTimeISO]);
   const reduceIntroMotion = useMemo(
@@ -200,7 +304,7 @@ function WeddingAppContent({ weddingId, data }: WeddingAppContentProps) {
   const { open: copyToastOpen, closing: copyToastClosing, notify: notifyCopied, close: closeCopyToast } =
     useCopyFeedbackToast();
 
-  useScrollRevealRoot(mainContentRef, [hourglassShellMode, introComplete, heroImageUrl], heroImageUrl ? phoneShellRef : undefined);
+  useScrollRevealRoot(mainContentRef, [hourglassShellMode, introComplete, heroImageUrls?.png], heroImageUrls ? phoneShellRef : undefined);
 
   useLayoutEffect(() => {
     if ("scrollRestoration" in history) {
@@ -238,12 +342,23 @@ function WeddingAppContent({ weddingId, data }: WeddingAppContentProps) {
 
   return (
     <>
+      <svg className="paper-filter-defs" aria-hidden width={0} height={0}>
+        <defs>
+          <filter id="roughpaper" x="0%" y="0%" width="100%" height="100%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.04" result="noise" numOctaves="5" />
+            <feDiffuseLighting in="noise" lightingColor="#fff" surfaceScale={2}>
+              <feDistantLight azimuth={45} elevation={60} />
+            </feDiffuseLighting>
+          </filter>
+        </defs>
+      </svg>
     <div className="desktop-stage">
       {!introComplete && (
         <IntroLetterGate
           onComplete={() => setIntroComplete(true)}
+          scrollCueTone={heroScrollCueTone}
           onVeilFull={() => {
-            if (heroImageUrl && !reduceIntroMotion) {
+            if (heroImageUrls && !reduceIntroMotion) {
               setHeroConfettiPlay(true);
             }
           }}
@@ -252,24 +367,31 @@ function WeddingAppContent({ weddingId, data }: WeddingAppContentProps) {
       <div className="desktop-stage__phone-wrap">
         <div
           ref={phoneShellRef}
-          className={`phone-shell${heroImageUrl ? " phone-shell--wedding-hero" : ""}`}
+          className={`phone-shell${heroImageUrls ? " phone-shell--wedding-hero" : ""}`}
           data-hourglass-interlude={hourglassShellMode !== "normal" ? "" : undefined}
           data-hourglass-interlude-exit-reveal={hourglassShellMode === "exit-reveal" ? "" : undefined}
           {...(hourglassShellMode !== "normal" || !introComplete ? { inert: true } : {})}
         >
         <WeddingHeroScrollInner
-          active={Boolean(heroImageUrl)}
-          heroSrc={heroImageUrl ?? ""}
+          active={Boolean(heroImageUrls)}
+          heroSrcPng={heroImageUrls?.png ?? ""}
+          heroSrcJpg={heroImageUrls?.jpg ?? ""}
+          heroGivenNamesLine={heroGivenNamesLine || undefined}
+          heroNameTone={heroNameTone}
+          heroScriptTone={heroScriptTone}
+          heroScrollCueTone={heroScrollCueTone}
+          heroScrollCuePosition={heroScrollCuePosition}
           confettiPlay={heroConfettiPlay}
           reduceMotion={reduceIntroMotion}
         >
           <main
             ref={mainContentRef}
-            className={`content${heroImageUrl ? " content--wedding-hero" : ""}`}
+            className={`content${heroImageUrls ? " content--wedding-hero" : ""}`}
             aria-hidden={
               !introComplete || hourglassShellMode === "interlude" ? true : undefined
             }
           >
+          <div className="content__paper-filter-overlay" aria-hidden />
           <CopyFeedbackToast open={copyToastOpen} closing={copyToastClosing} onClose={closeCopyToast} />
           <section id="main" className="hero">
             <div className="hero-inner">
@@ -371,42 +493,41 @@ function WeddingAppContent({ weddingId, data }: WeddingAppContentProps) {
                 />
               </div>
             </div>
-          </section>
-
-          <div className="audio-hint-block" data-scroll-reveal="">
-            <p className="hero-audio-hint" role="note">
-              <span ref={heroAudioWaveTrackRef} className="hero-audio-hint__wave-track">
-                <HeadsetSineWaves containerRef={heroAudioWaveTrackRef} />
-                <span className="hero-audio-hint__ic">
-                  <svg
-                    className="hero-audio-hint__svg"
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="26"
-                    height="26"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    aria-hidden="true"
-                  >
-                    <path
-                      d="M3 18v-6a9 9 0 0 1 18 0v6"
-                      stroke="currentColor"
-                      strokeWidth="1.25"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                    <path
-                      d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"
-                      stroke="currentColor"
-                      strokeWidth="1.25"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
+            <div className="audio-hint-block" data-scroll-reveal="">
+              <p className="hero-audio-hint" role="note">
+                <span ref={heroAudioWaveTrackRef} className="hero-audio-hint__wave-track">
+                  <HeadsetSineWaves containerRef={heroAudioWaveTrackRef} />
+                  <span className="hero-audio-hint__ic">
+                    <svg
+                      className="hero-audio-hint__svg"
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="26"
+                      height="26"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      aria-hidden="true"
+                    >
+                      <path
+                        d="M3 18v-6a9 9 0 0 1 18 0v6"
+                        stroke="currentColor"
+                        strokeWidth="1.25"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                      <path
+                        d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"
+                        stroke="currentColor"
+                        strokeWidth="1.25"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </span>
                 </span>
-              </span>
-              <span className="hero-audio-hint__text">이어폰과 함께 해주세요.</span>
-            </p>
-          </div>
+                <span className="hero-audio-hint__text">이어폰과 함께 해주세요.</span>
+              </p>
+            </div>
+          </section>
 
           <section id="our-stroy" className="section our-stroy" lang="en">
             <h2>Our Stroy</h2>

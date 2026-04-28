@@ -10,11 +10,15 @@ function introStaticUrl(path: string): string {
 const INTRO_FOLDER_BODY_SRC = introStaticUrl("static/folder.png");
 const INTRO_FOLDER_FLAP_SRC = introStaticUrl("static/folder-motion.png");
 
+export type IntroScrollCueTone = "black" | "white";
+
 export type IntroLetterGateProps = {
   /** 인트로가 끝나고 본문으로 넘어갈 때 한 번 호출 */
   onComplete: () => void;
   /** 봉투 확정 직후 베일이 완전 흰색이 된 시점(퇴장 페이드 전) — 히어로 컨페티 등 */
   onVeilFull?: () => void;
+  /** 히어로 스크롤 힌트와 동일한 `data-hero-bw-tone` (인트로 세로 가운데~하단 사이, 위를 향하도록 뒤집힘) */
+  scrollCueTone?: IntroScrollCueTone;
 };
 
 /** 이 거리(px)만큼 위로 끌면 `--peel` 이 1에 도달 — 값↑일수록 더 천천히 차함 */
@@ -29,12 +33,13 @@ const HOLD_FULL_WHITE_MS = 1000;
 /** 게이트 전체 페이드아웃(본문 노출) */
 const EXIT_FADE_MS = 900;
 
-export function IntroLetterGate({ onComplete, onVeilFull }: IntroLetterGateProps) {
+export function IntroLetterGate({ onComplete, onVeilFull, scrollCueTone = "white" }: IntroLetterGateProps) {
   const reduceMotion = useMemo(
     () => typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches,
     []
   );
 
+  const [scrollCuesIn, setScrollCuesIn] = useState(reduceMotion);
   const [peel, setPeel] = useState(0);
   const [scrubbing, setScrubbing] = useState(false);
   /** PEEL_COMMIT 이상에서 손 떼면 즉시 0.7→1 베일 전환 */
@@ -57,6 +62,12 @@ export function IntroLetterGate({ onComplete, onVeilFull }: IntroLetterGateProps
     },
     []
   );
+
+  useEffect(() => {
+    if (reduceMotion) return;
+    const t = window.setTimeout(() => setScrollCuesIn(true), 80);
+    return () => window.clearTimeout(t);
+  }, [reduceMotion]);
 
   useEffect(() => {
     if (!exiting) return;
@@ -155,12 +166,25 @@ export function IntroLetterGate({ onComplete, onVeilFull }: IntroLetterGateProps
 
   const gateStyle = useMemo(() => ({ "--peel": String(peel) }) as React.CSSProperties, [peel]);
 
+  const scrollCuesVisible = scrollCuesIn && !scrubbing;
   const gateClass =
-    `intro-letter-gate${scrubbing ? " intro-letter-gate--scrubbing" : ""}${veilFull ? " intro-letter-gate--veil-full" : ""}${exiting ? " intro-letter-gate--exiting" : ""}`;
+    `intro-letter-gate${reduceMotion ? " intro-letter-gate--reduced-motion" : ""}${scrubbing ? " intro-letter-gate--scrubbing" : ""}${veilFull ? " intro-letter-gate--veil-full" : ""}${exiting ? " intro-letter-gate--exiting" : ""}`;
 
   return (
     <div className={gateClass} style={gateStyle} role="presentation">
       <div className="intro-letter-gate__content">
+        <div
+          className={`intro-letter-gate__scroll-cues${scrollCuesVisible ? " intro-letter-gate__scroll-cues--visible" : ""}`}
+          aria-hidden
+        >
+          <div className="intro-letter-gate__scroll-cue" data-hero-bw-tone={scrollCueTone}>
+            <span className="intro-letter-gate__scroll-cue-box" aria-hidden>
+              <span />
+              <span />
+              <span />
+            </span>
+          </div>
+        </div>
         <div className="intro-letter-gate__inner">
           <div className="intro-letter-gate__envelope-wrap">
             <div

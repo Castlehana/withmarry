@@ -116,6 +116,8 @@ body.overflow-lock {
   height: 100%;
   max-height: 100%;
   min-height: 0;
+  /* 히어로 높이 `100cqh` 기준(폰 열 실제 높이) */
+  container-type: size;
 }
 
 .phone-shell {
@@ -138,7 +140,14 @@ body.overflow-lock {
   overflow-x: hidden;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  --wedding-hero-h: min(72vh, 580px);
+  /* 스크롤 셸 안에서 뷰포트 높이만큼 히어로(아래 `@supports`에서 `100cqh`로 셸에 더 정확히 맞춤) */
+  --wedding-hero-h: 100dvh;
+}
+
+@supports (height: 1cqh) {
+  .phone-shell.phone-shell--wedding-hero {
+    --wedding-hero-h: 100cqh;
+  }
 }
 
 .phone-shell.phone-shell--wedding-hero .wedding-hero-scroll-inner {
@@ -160,18 +169,36 @@ body.overflow-lock {
   pointer-events: none;
 }
 
+@keyframes wedding-hero-img-float {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1.035);
+  }
+
+  33% {
+    transform: translate3d(0.45%, -0.85%, 0) scale(1.035);
+  }
+
+  66% {
+    transform: translate3d(-0.4%, 0.55%, 0) scale(1.035);
+  }
+}
+
 .phone-shell.phone-shell--wedding-hero .wedding-hero-img {
   display: block;
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: center top;
+  object-position: center center;
   background: var(--paper);
   position: relative;
   z-index: 0;
+  transform-origin: center center;
+  will-change: transform;
+  animation: wedding-hero-img-float 16s ease-in-out infinite;
 }
 
-/* 인트로 흰 베일 직후 — 이미지 위·본문(z-index) 아래 */
+/* 인트로 끝 직후: 질감(roughpaper) 위 · 태그라인/스크롤 힌트 아래 */
 .phone-shell.phone-shell--wedding-hero .wedding-hero-confetti-wrap {
   position: absolute;
   inset: 0;
@@ -185,6 +212,157 @@ body.overflow-lock {
   width: 100%;
   height: 100%;
   vertical-align: top;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .phone-shell.phone-shell--wedding-hero .wedding-hero-img {
+    animation: none;
+    will-change: auto;
+    transform: none;
+  }
+
+  .phone-shell.phone-shell--wedding-hero .wedding-hero-sticky__scroll-cue-box span {
+    animation: none;
+    opacity: 0.92;
+  }
+}
+
+/* 히어로 사진 전체 높이에 본문과 동일 roughpaper 질감 — 이미지 위 */
+.phone-shell.phone-shell--wedding-hero .wedding-hero-sticky__paper-grain {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  filter: url(#roughpaper);
+  mix-blend-mode: multiply;
+  opacity: 0.48;
+}
+
+/* 히어로 사진 위 — 영문 이름(Cinzel) + Save the Date(WindSong, 약 -10°). 글자색은 각각 `data-hero-bw-tone` */
+.phone-shell.phone-shell--wedding-hero .wedding-hero-sticky__hero-tagline {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: clamp(10px, 2.2dvh, 28px);
+  padding: clamp(20px, 5.5dvh, 56px) clamp(14px, 4.5vw, 28px) 0;
+  pointer-events: none;
+}
+
+@keyframes wedding-hero-scroll-cue-pulse {
+  0% {
+    opacity: 0;
+    transform: rotate(45deg);
+  }
+
+  50% {
+    opacity: 1;
+    transform: rotate(45deg) translate(10px, 10px);
+  }
+
+  100% {
+    opacity: 0;
+    transform: rotate(45deg);
+  }
+}
+
+/* 아래로 스크롤 유도(3 chevron). 세로: `--wedding-hero-scroll-cue-pos` 1=아래…10=위 */
+.phone-shell.phone-shell--wedding-hero .wedding-hero-sticky__scroll-cue {
+  position: absolute;
+  z-index: 3;
+  left: 50%;
+  top: calc(5% + (10 - var(--wedding-hero-scroll-cue-pos, 2)) / 9 * 90%);
+  translate: -50% -50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  text-decoration: none;
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+.phone-shell.phone-shell--wedding-hero .wedding-hero-sticky__scroll-cue-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.phone-shell.phone-shell--wedding-hero .wedding-hero-sticky__scroll-cue-box span {
+  width: 20px;
+  height: 20px;
+  display: block;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(45deg);
+  margin: -10px;
+  animation: wedding-hero-scroll-cue-pulse 2s infinite;
+}
+
+.phone-shell.phone-shell--wedding-hero .wedding-hero-sticky__scroll-cue-box span:nth-child(2) {
+  animation-delay: -0.2s;
+}
+
+.phone-shell.phone-shell--wedding-hero .wedding-hero-sticky__scroll-cue-box span:nth-child(3) {
+  animation-delay: -0.4s;
+}
+
+.phone-shell.phone-shell--wedding-hero .wedding-hero-sticky__scroll-cue[data-hero-bw-tone="black"] {
+  color: var(--ink);
+}
+
+.phone-shell.phone-shell--wedding-hero .wedding-hero-sticky__scroll-cue[data-hero-bw-tone="white"] {
+  color: rgb(255 253 249 / 0.95);
+}
+
+.phone-shell.phone-shell--wedding-hero .wedding-hero-sticky__en-names {
+  width: 100%;
+  max-width: min(100% - 28px, 28rem);
+  margin: 0;
+  font-family: "Cinzel Decorative", "Noto Serif KR", serif;
+  font-weight: 700;
+  font-size: clamp(1.9rem, 8.4vw, 2.7rem);
+  letter-spacing: 0.12em;
+  line-height: 1.35;
+  text-transform: uppercase;
+  text-align: center;
+  white-space: normal;
+  overflow-wrap: break-word;
+}
+
+.phone-shell.phone-shell--wedding-hero .wedding-hero-sticky__save-the-date-script {
+  margin: 0;
+  padding: 0;
+  font-family: WindSong, "Noto Serif KR", cursive;
+  font-weight: 400;
+  font-size: clamp(2.4rem, 12vw, 4.25rem);
+  line-height: 1;
+  letter-spacing: 0.02em;
+  transform: rotate(-10deg);
+  transform-origin: center center;
+  text-align: center;
+}
+
+.phone-shell.phone-shell--wedding-hero .wedding-hero-sticky__en-names[data-hero-bw-tone="black"],
+.phone-shell.phone-shell--wedding-hero .wedding-hero-sticky__save-the-date-script[data-hero-bw-tone="black"] {
+  color: var(--ink);
+  text-shadow:
+    0 0 1px rgb(255 253 249 / 0.9),
+    0 1px 2px rgb(255 253 249 / 0.55),
+    0 0 20px rgb(255 253 249 / 0.35);
+}
+
+.phone-shell.phone-shell--wedding-hero .wedding-hero-sticky__en-names[data-hero-bw-tone="white"],
+.phone-shell.phone-shell--wedding-hero .wedding-hero-sticky__save-the-date-script[data-hero-bw-tone="white"] {
+  color: rgb(255 253 249 / 0.96);
+  text-shadow:
+    0 0 1px rgb(42 38 34 / 0.45),
+    0 1px 3px rgb(0 0 0 / 0.5),
+    0 0 28px rgb(0 0 0 / 0.25);
 }
 
 main.content.content--wedding-hero {
@@ -202,10 +380,13 @@ main.content.content--wedding-hero #main.hero {
   padding: 60px 0 120px;
   position: relative;
   z-index: 1;
-  /* 히어로 위로 스크롤될 때도 이미지가 비치지 않도록 전부 불투명 색 */
-  background:
-    linear-gradient(180deg, #fffdf9 0%, var(--paper) 58%),
-    radial-gradient(80% 50% at 50% 0%, #f0e6dc 0%, var(--paper) 72%);
+  /* 스티키 사진은 main(z-index 1) 전체가 가리므로 배경은 투명·연한 틴트만 — 질감 오버레이가 SAVE THE DATE부터 보이게 */
+  background-image:
+    linear-gradient(180deg, rgb(255 253 249 / 0.5) 0%, rgb(255 253 249 / 0.12) 45%, transparent 78%),
+    radial-gradient(80% 52% at 50% 0%, rgb(240 230 220 / 0.38) 0%, transparent 72%);
+  background-size: auto, auto;
+  background-repeat: no-repeat, no-repeat;
+  background-blend-mode: normal, normal;
 }
 
 .phone-shell[data-hourglass-interlude] {
@@ -258,28 +439,76 @@ main.content.content--wedding-hero #main.hero {
 }
 
 .content {
+  position: relative;
   padding: 0 0 120px;
+}
+
+/* 본문 전역: 종이색; roughpaper 질감은 오버레이(`filter: url(#roughpaper)`) */
+main.content {
+  background-color: var(--paper);
+}
+
+.paper-filter-defs {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* `main`에 필터를 직접 쓰지 않음 — preserve-3d 갤러리 깨짐 방지 */
+.content__paper-filter-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  filter: url(#roughpaper);
+  mix-blend-mode: multiply;
+  opacity: 0.48;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .content__paper-filter-overlay,
+  .phone-shell.phone-shell--wedding-hero .wedding-hero-sticky__paper-grain {
+    display: none;
+  }
 }
 
 .hero {
   --hero-pad-x: 0px;
   /* 큰 블록 사이(장소↔이어폰↔신랑·신부)만 넓게 — 블록 내부 패딩은 각 요소에서 따로 */
   --hero-block-gap: clamp(72px, 20vw, 112px);
+  position: relative;
   min-height: 72vh;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   text-align: center;
   padding: 60px 0 120px;
-  background:
-    linear-gradient(180deg, rgba(255, 253, 249, 0.2) 0%, var(--paper) 100%),
-    radial-gradient(80% 50% at 50% 0%, #f0e6dc 0%, transparent 70%);
+  background-color: transparent;
+  /* 하단까지 불투명 종이색이면 `.content__paper-filter-overlay`가 가려짐 — 본문·히어로 동일 질감 */
+  background-image:
+    linear-gradient(180deg, rgb(255 253 249 / 0.42) 0%, rgb(255 253 249 / 0.1) 48%, transparent 80%),
+    radial-gradient(80% 52% at 50% 0%, rgb(240 230 220 / 0.35) 0%, transparent 70%);
+  background-size: auto, auto;
+  background-repeat: no-repeat, no-repeat;
+  background-blend-mode: normal, normal;
 }
 
 .hero-inner {
+  position: relative;
+  z-index: 1;
   width: 100%;
   max-width: none;
   margin: 0 auto;
+}
+
+.hero > .audio-hint-block {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  flex-shrink: 0;
 }
 
 .hero-kicker {
