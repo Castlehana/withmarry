@@ -1,26 +1,22 @@
 /* 인트로 전용 봉투·편지 스킨 — `IntroEnvEnvelope.css`(히어로·RSVP)와 클래스·키프레임 분리 */
 
 .intro-letter-skin {
+  /* 기본(게이트 외 참조 시): 구 자산과 비슷한 박스 비율 — 인트로는 `--gate-scale`에서 덮음 */
+  --ile-folder-ar-w: 526;
+  --ile-folder-ar-h: 1082;
+  --ile-motion-ar-w: 526;
+  --ile-motion-ar-h: 1080;
   --ile-w: min(calc(252px * 0.7), calc(84vw * 0.7));
-  --ile-h: calc(var(--ile-w) * 180 / 280);
+  --ile-h: calc(var(--ile-w) * var(--ile-folder-ar-h) / var(--ile-folder-ar-w));
   --ile-heart-w: calc(20px * 0.7);
-  --ile-face: #f2ebe1;
-  --ile-face2: #dcd4c8;
-  /* 봉투 윗면 면 — 완전 투명(뒤가 비침) */
-  --ile-flap: transparent;
-  /* 움직이는 삼각 뚜껑만 살짝 밝게(본체 `background`는 `--ile-flap`) */
-  --ile-flap-motion: #ebe4d9;
   isolation: isolate;
   position: relative;
   width: var(--ile-w);
   height: var(--ile-h);
   margin: 0 auto;
-  border-bottom-left-radius: 4px;
-  border-bottom-right-radius: 4px;
-  background-color: var(--ile-flap);
-  box-shadow:
-    0 10px 32px rgba(58, 48, 40, 0.14),
-    0 2px 0 rgba(255, 255, 255, 0.35) inset;
+  border-radius: 0;
+  background-color: transparent;
+  box-shadow: 0 14px 36px rgba(58, 48, 40, 0.18);
   perspective: calc(880px * 0.7);
   transform-style: preserve-3d;
 }
@@ -28,8 +24,6 @@
 .intro-letter-skin__front {
   position: absolute;
   left: 50%;
-  width: 0;
-  height: 0;
   translate: -50% 0;
   pointer-events: none;
 }
@@ -37,24 +31,42 @@
 .intro-letter-skin__pocket {
   bottom: 0;
   z-index: 2;
-  border-left: calc(var(--ile-w) / 2) solid var(--ile-face);
-  border-right: calc(var(--ile-w) / 2) solid var(--ile-face);
-  border-bottom: calc(var(--ile-h) / 2) solid var(--ile-face2);
-  border-top: calc(var(--ile-h) / 2) solid transparent;
-  border-bottom-left-radius: 4px;
-  border-bottom-right-radius: 4px;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.intro-letter-skin__pocket img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center bottom;
+  pointer-events: none;
+  user-select: none;
 }
 
 .intro-letter-skin__flap {
   top: 0;
   z-index: 3;
+  width: calc(100% * var(--ile-motion-ar-w) / var(--ile-folder-ar-w));
   transform: rotateX(0deg);
   transform-origin: top center;
-  border-left: calc(var(--ile-w) / 2) solid transparent;
-  border-right: calc(var(--ile-w) / 2) solid transparent;
-  border-bottom: calc(var(--ile-h) / 2 - (8px * 0.7)) solid transparent;
-  border-top: calc(var(--ile-h) / 2 + (8px * 0.7)) solid var(--ile-flap-motion);
   transition: transform 0.48s ease;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.intro-letter-skin__flap img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: var(--ile-motion-ar-w) / var(--ile-motion-ar-h);
+  pointer-events: none;
+  user-select: none;
 }
 
 .intro-letter-skin--open .intro-letter-skin__flap {

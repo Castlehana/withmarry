@@ -100,27 +100,41 @@
 }
 
 /*
- * 인트로 봉투: 세로는 가용 높이 전체(`--ile-h`), 가로는 열 한도·세로에 맞는 비율 상한.
- * `IntroLetterEnvelope.css` 기본 `--ile-h: ile_w*180/280` 을 여기서 덮어씀.
+ * 인트로 봉투: `folder.png`(526×1082)·`folder-motion.png`(526×1080) 비율에 맞춤.
+ * 가로·세로 모두 한도 안에 들어가도록 너비를 먼저 잡고 `--ile-h` = w×1082/526×`--ile-envelope-height-boost`(1.05).
  */
 .intro-letter-gate .intro-letter-skin.intro-letter-skin--gate-scale {
   /* 무대 패딩이 세이프 에어를 담당 — 여기서는 뷰포트 높이만 소폭 여백 */
   --avail-h: calc(100vh - 20px);
-  /* 세로는 +5%, 가로 상한(비율 기반)만 +1% */
+  /* 세로 한도에 맞춘 최대 너비(조금 여유) + 열 한도 */
   --ile-envelope-scale-h: 1.05;
   --ile-envelope-scale-w: 1.01;
+  /* 봉투 박스 세로만 자산 비율 대비 +5% 확대(뷰포트 맞춤 시 너비 상한에도 동일 반영) */
+  --ile-envelope-height-boost: 1.05;
+  --ile-folder-ar-w: 526;
+  --ile-folder-ar-h: 1082;
+  --ile-motion-ar-w: 526;
+  --ile-motion-ar-h: 1080;
   --ile-w: max(
     160px,
-    min(var(--intro-col-w), calc(var(--avail-h) * 280 / 180 * var(--ile-envelope-scale-w)))
+    min(
+      calc(var(--intro-col-w) * var(--ile-envelope-scale-w)),
+      calc(
+        var(--avail-h) * var(--ile-envelope-scale-h) * var(--ile-folder-ar-w) /
+          (var(--ile-folder-ar-h) * var(--ile-envelope-height-boost))
+      )
+    )
   );
-  --ile-h: calc(var(--avail-h) * var(--ile-envelope-scale-h));
+  --ile-h: calc(
+    var(--ile-w) * var(--ile-folder-ar-h) / var(--ile-folder-ar-w) * var(--ile-envelope-height-boost)
+  );
   --ile-heart-w: clamp(18px, calc(var(--ile-w) * 0.048), 40px);
   perspective: min(1600px, calc(var(--ile-w) * 5));
   flex-shrink: 0;
-  /* `--peel-range`는 부모 `.intro-letter-gate` — 스티커 상승만 `--seal-lift-range` */
-  /* 스티커 `--seal-lift` 전용. 뚜껑과 독립 — 낮출수록 같은 peel에서 덜 올라감 */
-  --seal-lift-range: 0.65;
-  --seal-lift: calc(var(--peel, 0) * var(--seal-lift-range) * min(600px, calc(var(--ile-w) * 1.68)));
+  pointer-events: auto;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
 }
 
 /* 뚜껑: 클릭이 아니라 `--peel` 스크럽 (인트로 전용) */
@@ -136,35 +150,7 @@
   transition: none !important;
 }
 
-/* 봉투 정면 중앙 왁스 스티커 — 위로 드래그해 봉투 벌어짐; `--peel`↑ 세로 납작·밝기↑ */
-.intro-letter-gate .intro-letter-skin.intro-letter-skin--gate-scale .intro-letter-gate__wax-seal {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  z-index: 4;
-  width: clamp(52px, calc(var(--ile-w) * 0.34), 160px);
-  height: auto;
-  aspect-ratio: 1;
-  object-fit: contain;
-  pointer-events: auto;
-  touch-action: none;
-  user-select: none;
-  cursor: grab;
-  transform: translate(-50%, calc(-50% - var(--seal-lift, 0px)))
-    scaleY(calc(1 - var(--peel, 0) * 0.96));
-  transform-origin: 50% 50%;
-  filter: brightness(calc(1 + var(--peel, 0) * 0.8))
-    drop-shadow(0 3px 10px rgba(0, 0, 0, 0.28));
-  transition:
-    transform 0.42s cubic-bezier(0.32, 0.72, 0, 1),
-    filter 0.42s ease;
-}
-
-.intro-letter-gate .intro-letter-skin.intro-letter-skin--gate-scale.intro-letter-gate__skin--scrub .intro-letter-gate__wax-seal {
-  transition: none !important;
-}
-
-.intro-letter-gate__wax-seal--grabbing {
+.intro-letter-gate.intro-letter-gate--scrubbing .intro-letter-skin.intro-letter-skin--gate-scale {
   cursor: grabbing;
 }
 
@@ -186,7 +172,7 @@
     transition-duration: 0.2s;
   }
 
-  .intro-letter-gate .intro-letter-skin.intro-letter-skin--gate-scale .intro-letter-gate__wax-seal {
+  .intro-letter-gate .intro-letter-skin.intro-letter-skin--gate-scale:not(.intro-letter-gate__skin--scrub) .intro-letter-skin__flap {
     transition-duration: 0.22s;
   }
 }

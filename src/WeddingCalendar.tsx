@@ -2,17 +2,6 @@ import { useMemo } from "react";
 
 const WEEKDAYS: readonly string[] = ["일", "월", "화", "수", "목", "금", "토"];
 
-/** 12~2 겨울(하늘), 3~5 봄(분홍), 6~8 여름(초록), 9~11 가을(가을색) */
-type CalendarPalette = "winter" | "spring" | "summer" | "autumn";
-
-function getCalendarPalette(jsMonthIndex: number): CalendarPalette {
-  const m = jsMonthIndex + 1; /* 1~12 */
-  if (m === 12 || m === 1 || m === 2) return "winter";
-  if (m >= 3 && m <= 5) return "spring";
-  if (m >= 6 && m <= 8) return "summer";
-  return "autumn";
-}
-
 type Props = {
   weddingDate: Date;
 };
@@ -25,7 +14,6 @@ export function WeddingCalendar({ weddingDate }: Props) {
   const year = weddingDate.getFullYear();
   const month = weddingDate.getMonth();
   const weddingDay = weddingDate.getDate();
-  const palette = getCalendarPalette(month);
 
   const { monthLabel, rows } = useMemo(() => {
     const first = new Date(year, month, 1);
@@ -46,7 +34,7 @@ export function WeddingCalendar({ weddingDate }: Props) {
 
   return (
     <div
-      className={`wedding-calendar wedding-calendar--${palette}`}
+      className="wedding-calendar"
       id="wedding-calendar"
       role="group"
       aria-label={`${monthLabel} 결혼식 일정, ${weddingDay}일`}

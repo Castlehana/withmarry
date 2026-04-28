@@ -8,7 +8,6 @@
 - `wedding-data.txt` — 기존과 동일 형식 (# 주석 + JSON)
 - `title-couple.png` — 히어로 커플 사진
 - `hero.jpg` 등 — `wedding.heroImage`에 파일명을 넣으면 본문 맨 위에 고정 풀블리드로 표시(스크롤 시 본문이 덮음). 생략 가능.
-- `gallery-thumbnail.png` — 갤러리 썸네일
 - `directions-map.png` — 오시는 길 지도 이미지
 - `static/Our Story/` — 챕터 폴더·`our-story-pages.txt`·`backgroundbgm.mp3` 등 (빌드 시 `_chapters.json` 생성)
 

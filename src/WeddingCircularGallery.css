@@ -1,0 +1,151 @@
+/* 원형 갤러리 — `--k`는 React(자동 + 가로 드래그), Y축 링. 카드 비율은 이미지 자연 크기. */
+
+@property --k {
+  syntax: "<number>";
+  initial-value: 0;
+  inherits: true;
+}
+
+/*
+ * `--f`: 카드 `translatez` 링 반지름 비율(작을수록 반지름 작음). 깊이 `translate`도 같은 `--z`를 씀.
+ */
+.circular-gallery {
+  --n: 10;
+  --f: 1.68;
+  --ring-shift: min(15.5vmin, 186px);
+  /* 링 전체를 반지름 계산(--z)보다 더 안쪽으로 추가 밀어냄 */
+  --z-depth-extra: 0px;
+  position: relative;
+  width: 100%;
+  max-width: min(100%, 640px);
+  margin: 0 auto;
+  color: var(--ink, #2a2622);
+  font-family: var(--serif, "Apple SD Gothic Neo", serif);
+}
+
+.circular-gallery__scene {
+  display: grid;
+  grid-template-rows: 1fr;
+  overflow: hidden;
+  perspective: min(110em, 240vw);
+  perspective-origin: 50% 40%;
+  min-height: min(44vh, 360px);
+  padding: 10px 0 12px;
+  touch-action: none;
+  cursor: grab;
+  user-select: none;
+}
+
+.circular-gallery__scene:active {
+  cursor: grabbing;
+}
+
+.circular-gallery__assembly,
+.circular-gallery__card {
+  transform-style: preserve-3d;
+}
+
+.circular-gallery__assembly {
+  --w: clamp(6.5em, min(52vw, 38vh), 22em);
+  --z: calc(var(--f) * -0.5 * var(--w) / tan(0.5turn / var(--n)));
+  display: grid;
+  grid-area: 1 / 1;
+  place-self: center;
+  translate: 0 0 calc(var(--z) * 0.98 - var(--z-depth-extra) + var(--ring-shift));
+  rotate: 0 1 0 calc((var(--k) + 0.5) * -1turn + 180deg);
+}
+
+.circular-gallery__card {
+  --j: calc(var(--i) / var(--n));
+  grid-area: 1 / 1;
+  width: var(--w);
+  /* 로드 후: 이미지 자연 비율. 로드 전: 고정 비율 없이 최소 높이만 */
+  min-height: min(22vw, 140px);
+  transform: rotate3d(0, 1, 0, calc(var(--j) * 1turn)) translatez(var(--z));
+}
+
+.circular-gallery__card--sized {
+  aspect-ratio: var(--aw) / var(--ah);
+  min-height: unset;
+}
+
+@supports not (scale: abs(-1)) {
+  .circular-gallery__card {
+    --abs-lin: max(var(--dif-lin), calc(-1 * var(--dif-lin)));
+    --abs-mid: max(var(--dif-mid), calc(-1 * var(--dif-mid)));
+  }
+}
+
+/* 같은 이미지 앞·뒤(Y 180°) — 원통 돌릴 때 뒤에서도 동일 사진 */
+.circular-gallery__card-figure {
+  display: block;
+  position: relative;
+  width: 100%;
+  height: auto;
+  margin: 0;
+}
+
+.circular-gallery__card--sized .circular-gallery__card-figure {
+  height: 100%;
+}
+
+.circular-gallery__card-book {
+  position: relative;
+  width: 100%;
+  transform-style: preserve-3d;
+}
+
+.circular-gallery__card--sized .circular-gallery__card-book {
+  position: absolute;
+  inset: 0;
+  height: 100%;
+}
+
+.circular-gallery__card-face {
+  border-radius: 0.5em;
+  overflow: hidden;
+  backface-visibility: hidden;
+  box-shadow: 4px 6px 18px rgb(0 0 0 / 0.18);
+}
+
+.circular-gallery__card-face--front {
+  position: relative;
+  width: 100%;
+}
+
+/* 시야 위치 0~9 중 2.5~7.5에서만 불투명(또렷) — React `--face-op` */
+.circular-gallery__card-face--front img {
+  opacity: var(--face-op, 1);
+}
+
+.circular-gallery__card-face--back {
+  position: absolute;
+  inset: 0;
+  transform: rotateY(180deg);
+}
+
+.circular-gallery__card--sized .circular-gallery__card-face--front,
+.circular-gallery__card--sized .circular-gallery__card-face--back {
+  position: absolute;
+  inset: 0;
+}
+
+.circular-gallery__card-face img {
+  display: block;
+  width: 100%;
+  height: auto;
+  vertical-align: top;
+  pointer-events: none;
+}
+
+.circular-gallery__card--sized .circular-gallery__card-face img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center center;
+}
+
+.circular-gallery__card-face--back img {
+  opacity: calc(0.38 * var(--face-op, 1));
+  filter: brightness(0.72);
+}

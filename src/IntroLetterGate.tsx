@@ -2,6 +2,14 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import "./IntroLetterEnvelope.css";
 import "./IntroLetterGate.css";
 
+function introStaticUrl(path: string): string {
+  const base = import.meta.env.BASE_URL.endsWith("/") ? import.meta.env.BASE_URL : `${import.meta.env.BASE_URL}/`;
+  return `${base}${path.replace(/^\//, "")}`;
+}
+
+const INTRO_FOLDER_BODY_SRC = introStaticUrl("static/folder.png");
+const INTRO_FOLDER_FLAP_SRC = introStaticUrl("static/folder-motion.png");
+
 export type IntroLetterGateProps = {
   /** 인트로가 끝나고 본문으로 넘어갈 때 한 번 호출 */
   onComplete: () => void;
@@ -12,7 +20,7 @@ export type IntroLetterGateProps = {
 /** 이 거리(px)만큼 위로 끌면 `--peel` 이 1에 도달 — 값↑일수록 더 천천히 차함 */
 const PEEL_THRESHOLD_PX = 1000;
 /** 이 비율 이상에서 손을 떼면 완전히 열림으로 확정 */
-const PEEL_COMMIT = 0.3;
+const PEEL_COMMIT = 0.1;
 
 /** `--veil-full` 시 opacity 0.7→1 CSS 전환 시간과 동일(손 떼는 즉시 재생) */
 const VEIL_RAMP_TO_FULL_MS = 200;
@@ -95,9 +103,10 @@ export function IntroLetterGate({ onComplete, onVeilFull }: IntroLetterGateProps
     [exiting, onVeilFull]
   );
 
-  const onWaxPointerDown = useCallback(
-    (e: React.PointerEvent<HTMLImageElement>) => {
+  const onEnvelopePointerDown = useCallback(
+    (e: React.PointerEvent<HTMLDivElement>) => {
       if (exiting || committedRef.current || peelRef.current >= 1) return;
+      if (e.pointerType === "mouse" && e.button !== 0) return;
       e.preventDefault();
       e.stopPropagation();
       dragRef.current = {
@@ -115,16 +124,16 @@ export function IntroLetterGate({ onComplete, onVeilFull }: IntroLetterGateProps
     [exiting]
   );
 
-  const onWaxPointerMove = useCallback(
-    (e: React.PointerEvent<HTMLImageElement>) => {
+  const onEnvelopePointerMove = useCallback(
+    (e: React.PointerEvent<HTMLDivElement>) => {
       if (!dragRef.current || dragRef.current.pointerId !== e.pointerId) return;
       applyPeelFromClientY(e.clientY);
     },
     [applyPeelFromClientY]
   );
 
-  const onWaxPointerUp = useCallback(
-    (e: React.PointerEvent<HTMLImageElement>) => {
+  const onEnvelopePointerUp = useCallback(
+    (e: React.PointerEvent<HTMLDivElement>) => {
       if (!dragRef.current || dragRef.current.pointerId !== e.pointerId) return;
       try {
         e.currentTarget.releasePointerCapture(e.pointerId);
@@ -136,8 +145,8 @@ export function IntroLetterGate({ onComplete, onVeilFull }: IntroLetterGateProps
     [endDrag]
   );
 
-  const onWaxLostCapture = useCallback(
-    (e: React.PointerEvent<HTMLImageElement>) => {
+  const onEnvelopeLostCapture = useCallback(
+    (e: React.PointerEvent<HTMLDivElement>) => {
       if (!dragRef.current || dragRef.current.pointerId !== e.pointerId) return;
       endDrag(e.clientY);
     },
@@ -156,22 +165,20 @@ export function IntroLetterGate({ onComplete, onVeilFull }: IntroLetterGateProps
           <div className="intro-letter-gate__envelope-wrap">
             <div
               className={`intro-letter-skin intro-letter-skin--gate-scale intro-letter-skin--close${scrubbing ? " intro-letter-gate__skin--scrub" : ""}`}
+              role="group"
+              aria-label="봉투를 위로 드래그해 여세요"
+              onPointerDown={onEnvelopePointerDown}
+              onPointerMove={onEnvelopePointerMove}
+              onPointerUp={onEnvelopePointerUp}
+              onPointerCancel={onEnvelopePointerUp}
+              onLostPointerCapture={onEnvelopeLostCapture}
             >
-              <div className="intro-letter-skin__pocket intro-letter-skin__front" />
-              <div className="intro-letter-skin__flap intro-letter-skin__front" />
-              <img
-                className={`intro-letter-gate__wax-seal${scrubbing ? " intro-letter-gate__wax-seal--grabbing" : ""}`}
-                src={`${import.meta.env.BASE_URL}static/wax-seal-wm.png`}
-                alt=""
-                decoding="async"
-                draggable={false}
-                aria-label="실 스티커를 위로 드래그해 봉투를 여세요"
-                onPointerDown={onWaxPointerDown}
-                onPointerMove={onWaxPointerMove}
-                onPointerUp={onWaxPointerUp}
-                onPointerCancel={onWaxPointerUp}
-                onLostPointerCapture={onWaxLostCapture}
-              />
+              <div className="intro-letter-skin__pocket intro-letter-skin__front">
+                <img src={INTRO_FOLDER_BODY_SRC} alt="" width={526} height={1082} decoding="async" draggable={false} />
+              </div>
+              <div className="intro-letter-skin__flap intro-letter-skin__front">
+                <img src={INTRO_FOLDER_FLAP_SRC} alt="" width={526} height={1080} decoding="async" draggable={false} />
+              </div>
             </div>
           </div>
         </div>

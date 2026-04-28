@@ -118,15 +118,6 @@ body.overflow-lock {
   min-height: 0;
 }
 
-.desktop-stage__gallery-layer {
-  position: absolute;
-  inset: 0;
-  z-index: 3;
-  display: flex;
-  justify-content: center;
-  pointer-events: auto;
-}
-
 .phone-shell {
   width: 100%;
   max-width: var(--shell-max);
@@ -1545,45 +1536,20 @@ button.hero-venue.hero-venue--copy:focus-visible {
 }
 
 .wedding-calendar {
-  /* 기본(봄) — `wedding-calendar--*`가 헤더·강조일 색 덮어씀 */
-  --wcal-head-tint: #fff5f6;
+  /* 결혼일 강조 — 계절과 무관하게 분홍 고정 */
   --wcal-highlight: #da89a2;
   width: 100%;
-  background: #fdfdfd;
-  border-radius: 10px;
-  box-shadow: 0 4px 18px rgb(42 38 34 / 0.07);
-  overflow: hidden;
-}
-
-/* 12~2: 하늘색 */
-.wedding-calendar--winter {
-  --wcal-head-tint: #e8f4fd;
-  --wcal-highlight: #4a8fd1;
-}
-
-/* 3~5: 분홍 */
-.wedding-calendar--spring {
-  --wcal-head-tint: #fff2f4;
-  --wcal-highlight: #da89a2;
-}
-
-/* 6~8: 초록 */
-.wedding-calendar--summer {
-  --wcal-head-tint: #e8f5ee;
-  --wcal-highlight: #3d9a6e;
-}
-
-/* 9~11: 가을색 */
-.wedding-calendar--autumn {
-  --wcal-head-tint: #f7ede3;
-  --wcal-highlight: #b8773d;
+  background: transparent;
+  border-radius: 0;
+  box-shadow: none;
+  overflow: visible;
 }
 
 .wedding-calendar__head {
   padding: 1.1em 1em 0.9em;
   text-align: center;
-  background: linear-gradient(180deg, var(--wcal-head-tint) 0%, #fdfdfd 100%);
-  border-bottom: 1px solid rgba(42, 38, 34, 0.06);
+  background: transparent;
+  border-bottom: none;
 }
 
 .wedding-calendar__month {
@@ -2359,135 +2325,6 @@ button.directions-transport__mapsearch:focus-visible {
   display: flex;
   justify-content: center;
   align-items: center;
-}
-
-/* Gallery — 기울어진 프레임 이미지, 배경은 페이지와 동일 */
-.section.gallery.gallery--cinemagraph h2 {
-  font-family: "Cormorant", "Cormorant Garamond", serif;
-  font-weight: 600;
-  font-style: italic;
-  letter-spacing: 0.04em;
-}
-
-.gallery__enter-wrap {
-  display: flex;
-  justify-content: center;
-  margin: 0 auto 8px;
-  max-width: min(26rem, 100%);
-}
-
-.gallery__enter-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 48px;
-  padding: 0 28px;
-  border-radius: 999px;
-  border: 1px solid color-mix(in srgb, var(--gold) 55%, var(--line));
-  background: linear-gradient(180deg, #fffefa, var(--blush));
-  color: var(--ink);
-  font-family: var(--serif);
-  font-size: 15px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-  transition: background 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
-}
-
-.gallery__enter-btn:hover {
-  background: var(--blush);
-  border-color: var(--gold);
-}
-
-.gallery__enter-btn:active {
-  transform: scale(0.98);
-}
-
-.gallery__enter-btn:focus-visible {
-  outline: 2px solid var(--gold);
-  outline-offset: 3px;
-}
-
-/*
- * 갤러리 진·퇴(포털): 바깥은 투명해야 함.
- * 시트 opacity 0일 때 부모가 검정이면 그만 보여 청첩장/갤러리 대신 검은 화면이 됨.
- * 레터박스는 그 아래 desktop-stage(#000)가 그대로 보임.
- */
-.gallery-nav-white-veil {
-  position: fixed;
-  inset: 0;
-  z-index: 10050;
-  display: flex;
-  justify-content: center;
-  align-items: stretch;
-  background: transparent;
-  pointer-events: none;
-}
-
-/* 홈 퇴장 베일: 복귀 베일(20000)보다 위에 두어 라우트 직후에도 흰 시트가 이어짐 */
-.gallery-nav-white-veil.gallery-nav-white-veil--body-exit {
-  z-index: 21000;
-}
-
-.gallery-nav-white-veil__sheet {
-  width: 100%;
-  max-width: var(--shell-max);
-  height: 100%;
-  background: #fff;
-  animation: gallery-nav-white-veil-sheet-in 1s ease-out forwards;
-}
-
-@keyframes gallery-nav-white-veil-sheet-in {
-  from {
-    opacity: 0;
-  }
-
-  to {
-    opacity: 1;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .gallery-nav-white-veil__sheet {
-    animation: none;
-    opacity: 1;
-  }
-}
-
-/*
- * 갤러리 → 본문: 시트만 흰색으로 페이드아웃.
- * 바깥을 검정으로 두면 시트가 투명해질 때 본문 대신 검은색이 보임(gallery-nav-white-veil과 동일 이슈).
- */
-.gallery-return-veil {
-  position: fixed;
-  inset: 0;
-  z-index: 20000;
-  display: flex;
-  justify-content: center;
-  align-items: stretch;
-  background: transparent;
-  pointer-events: none;
-}
-
-.gallery-return-veil__sheet {
-  width: 100%;
-  max-width: var(--shell-max);
-  height: 100%;
-  background: #fff;
-  opacity: 1;
-}
-
-.gallery-return-veil--fading .gallery-return-veil__sheet {
-  transition: opacity 1s ease;
-  opacity: 0;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .gallery-return-veil--fading .gallery-return-veil__sheet {
-    transition: none;
-    opacity: 0;
-  }
 }
 
 /* 방명록 — 청첩장 `--paper` / `--blush` 아이보리 톤 */

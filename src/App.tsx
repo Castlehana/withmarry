@@ -1,6 +1,5 @@
-import { createPortal } from "react-dom";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { Navigate, useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { Navigate, useParams } from "react-router-dom";
 import type { WeddingLoadErrorState } from "./WeddingLoadErrorPage";
 import { useScrollRevealRoot } from "./useScrollRevealRoot";
 import { HeadsetSineWaves } from "./HeadsetSineWaves";
@@ -24,10 +23,8 @@ import { WeddingFlipCountdown } from "./WeddingFlipCountdown";
 import { DirectionsNavLinks } from "./DirectionsNavLinks";
 import { DirectionsTransportToggles } from "./DirectionsTransportToggles";
 import { IntroLetterGate } from "./IntroLetterGate";
+import { WeddingCircularGallery } from "./WeddingCircularGallery";
 import { HeroConfettiOverlay } from "./HeroConfettiOverlay";
-import { GalleryEnterButton } from "./GalleryEnterButton";
-import { GALLERY_TRANSITION_MS } from "./galleryTransition";
-import { WeddingGalleryPage } from "./WeddingGalleryPage";
 import "./audio-hint-waves";
 
 /** `directionsNote` 한 줄에서 이모지·픽토그램만 제거 (본문은 유지) */
@@ -184,8 +181,6 @@ type WeddingAppContentProps = { weddingId: string; data: WeddingData };
 
 function WeddingAppContent({ weddingId, data }: WeddingAppContentProps) {
   const { meta, couple, wedding } = data;
-  const [searchParams] = useSearchParams();
-  const galleryOpen = searchParams.get("gallery") === "1";
   const weddingAssetBase = weddingBundleBaseUrl(weddingId);
   const heroImageFile = wedding.heroImage?.trim();
   const heroImageUrl = heroImageFile ? `${weddingAssetBase}${heroImageFile}` : null;
@@ -204,96 +199,8 @@ function WeddingAppContent({ weddingId, data }: WeddingAppContentProps) {
   const [hourglassShellMode, setHourglassShellMode] = useState<HourglassInterludeShellMode>("normal");
   const { open: copyToastOpen, closing: copyToastClosing, notify: notifyCopied, close: closeCopyToast } =
     useCopyFeedbackToast();
-  const navigate = useNavigate();
-  const [galleryReturnVeilPhase, setGalleryReturnVeilPhase] = useState<"off" | "solid" | "fadeout">("off");
-  const [galleryExitPortal, setGalleryExitPortal] = useState(false);
-
-  const handleGalleryNavigateHome = useCallback(() => {
-    if (reduceIntroMotion) {
-      void navigate(
-        {
-          pathname: `/${encodeURIComponent(weddingId)}`,
-          search: "",
-          hash: "",
-        },
-        { state: { fromGalleryExit: true as const } }
-      );
-      return;
-    }
-    setGalleryExitPortal(true);
-    window.setTimeout(() => {
-      void navigate(
-        {
-          pathname: `/${encodeURIComponent(weddingId)}`,
-          search: "",
-          hash: "",
-        },
-        { state: { fromGalleryExit: true as const } }
-      );
-    }, GALLERY_TRANSITION_MS);
-  }, [navigate, reduceIntroMotion, weddingId]);
 
   useScrollRevealRoot(mainContentRef, [hourglassShellMode, introComplete, heroImageUrl], heroImageUrl ? phoneShellRef : undefined);
-
-  const location = useLocation();
-  useLayoutEffect(() => {
-    const fromGallery = (location.state as { fromGalleryExit?: boolean } | null)?.fromGalleryExit;
-    if (!fromGallery) return;
-    if (reduceIntroMotion) {
-      void navigate(
-        {
-          pathname: `/${encodeURIComponent(weddingId)}`,
-          hash: "",
-          search: "",
-        },
-        { replace: true, state: {} }
-      );
-      requestAnimationFrame(() => {
-        document.getElementById("gallery")?.scrollIntoView({
-          behavior: reduceIntroMotion ? "auto" : "smooth",
-          block: "start",
-        });
-      });
-      return;
-    }
-    setGalleryExitPortal(false);
-    let cancelled = false;
-    setGalleryReturnVeilPhase("solid");
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        if (!cancelled) setGalleryReturnVeilPhase("fadeout");
-      });
-    });
-    const t = window.setTimeout(() => {
-      if (cancelled) return;
-      setGalleryReturnVeilPhase("off");
-      void navigate(
-        {
-          pathname: `/${encodeURIComponent(weddingId)}`,
-          hash: "",
-          search: "",
-        },
-        { replace: true, state: {} }
-      );
-      requestAnimationFrame(() => {
-        document.getElementById("gallery")?.scrollIntoView({
-          behavior: reduceIntroMotion ? "auto" : "smooth",
-          block: "start",
-        });
-      });
-    }, GALLERY_TRANSITION_MS + 100);
-    return () => {
-      cancelled = true;
-      window.clearTimeout(t);
-    };
-  }, [location.hash, location.key, location.search, location.state, navigate, reduceIntroMotion, weddingId]);
-
-  useLayoutEffect(() => {
-    if (location.hash !== "#gallery") return;
-    const el = document.getElementById("gallery");
-    if (!el) return;
-    el.scrollIntoView({ behavior: reduceIntroMotion ? "auto" : "smooth", block: "start" });
-  }, [location.hash, location.pathname, reduceIntroMotion]);
 
   useLayoutEffect(() => {
     if ("scrollRestoration" in history) {
@@ -332,14 +239,6 @@ function WeddingAppContent({ weddingId, data }: WeddingAppContentProps) {
   return (
     <>
     <div className="desktop-stage">
-      {galleryReturnVeilPhase !== "off" ? (
-        <div
-          className={`gallery-return-veil${galleryReturnVeilPhase === "fadeout" ? " gallery-return-veil--fading" : ""}`}
-          aria-hidden
-        >
-          <div className="gallery-return-veil__sheet" />
-        </div>
-      ) : null}
       {!introComplete && (
         <IntroLetterGate
           onComplete={() => setIntroComplete(true)}
@@ -356,12 +255,7 @@ function WeddingAppContent({ weddingId, data }: WeddingAppContentProps) {
           className={`phone-shell${heroImageUrl ? " phone-shell--wedding-hero" : ""}`}
           data-hourglass-interlude={hourglassShellMode !== "normal" ? "" : undefined}
           data-hourglass-interlude-exit-reveal={hourglassShellMode === "exit-reveal" ? "" : undefined}
-          aria-hidden={galleryOpen ? true : undefined}
-          {...(galleryOpen ||
-          hourglassShellMode !== "normal" ||
-          !introComplete
-            ? { inert: true }
-            : {})}
+          {...(hourglassShellMode !== "normal" || !introComplete ? { inert: true } : {})}
         >
         <WeddingHeroScrollInner
           active={Boolean(heroImageUrl)}
@@ -527,10 +421,10 @@ function WeddingAppContent({ weddingId, data }: WeddingAppContentProps) {
             </div>
           </section>
 
-          <section id="gallery" className="section gallery gallery--cinemagraph" lang="en" aria-labelledby="gallery-heading">
-            <h2 id="gallery-heading">Gallery</h2>
-            <div className="gallery__enter-wrap">
-              <GalleryEnterButton label="갤러리로 이동" />
+          <section id="gallery" className="section wedding-circular-gallery-section" lang="ko" aria-labelledby="gallery-heading">
+            <h2 id="gallery-heading">갤러리</h2>
+            <div data-scroll-reveal="" data-scroll-reveal-delay-ms="140">
+              <WeddingCircularGallery weddingId={weddingId} reduceMotion={reduceIntroMotion} />
             </div>
           </section>
 
@@ -603,25 +497,8 @@ function WeddingAppContent({ weddingId, data }: WeddingAppContentProps) {
         </main>
         </WeddingHeroScrollInner>
         </div>
-        {galleryOpen ? (
-          <div className="desktop-stage__gallery-layer">
-            <WeddingGalleryPage
-              weddingId={weddingId}
-              reduceMotion={reduceIntroMotion}
-              onRequestNavigateHome={handleGalleryNavigateHome}
-            />
-          </div>
-        ) : null}
       </div>
     </div>
-    {galleryExitPortal
-      ? createPortal(
-          <div className="gallery-nav-white-veil gallery-nav-white-veil--body-exit" aria-hidden>
-            <div className="gallery-nav-white-veil__sheet" />
-          </div>,
-          document.body
-        )
-      : null}
     </>
   );
 }
