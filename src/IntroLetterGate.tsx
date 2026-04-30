@@ -1,4 +1,12 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type RefObject,
+} from "react";
 import "./IntroLetterEnvelope.css";
 import "./IntroLetterGate.css";
 
@@ -13,6 +21,8 @@ const INTRO_FOLDER_FLAP_SRC = introStaticUrl("static/folder-motion.png");
 export type IntroScrollCueTone = "black" | "white";
 
 export type IntroLetterGateProps = {
+  /** 있으면 이 요소의 `clientWidth`(예: `main.content`)로 봉투·열 너비 동기 — 없으면 `intro-letter-gate__content` 자체 측정 */
+  mainContentRef?: RefObject<HTMLElement | null>;
   /** 인트로가 끝나고 본문으로 넘어갈 때 한 번 호출 */
   onComplete: () => void;
   /** 봉투 확정 직후 베일이 완전 흰색이 된 시점(퇴장 페이드 전) — 히어로 컨페티 등 */
@@ -33,7 +43,12 @@ const HOLD_FULL_WHITE_MS = 1000;
 /** 게이트 전체 페이드아웃(본문 노출) */
 const EXIT_FADE_MS = 900;
 
-export function IntroLetterGate({ onComplete, onVeilFull, scrollCueTone = "white" }: IntroLetterGateProps) {
+export function IntroLetterGate({
+  mainContentRef,
+  onComplete,
+  onVeilFull,
+  scrollCueTone = "white",
+}: IntroLetterGateProps) {
   const reduceMotion = useMemo(
     () => typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches,
     []
@@ -48,6 +63,32 @@ export function IntroLetterGate({ onComplete, onVeilFull, scrollCueTone = "white
 
   const peelRef = useRef(0);
   peelRef.current = peel;
+  const introContentRef = useRef<HTMLDivElement>(null);
+  const gateRef = useRef<HTMLDivElement>(null);
+
+  /** 실측 열 너비 → `--intro-measured-px`(봉투·컷아웃 — `main.content`와 동일 px). layout 이후 측정해 ref·폭이 안정된 뒤 값 적용 */
+  useLayoutEffect(() => {
+    const gate = gateRef.current;
+    if (!gate) return;
+    const pickTarget = () => mainContentRef?.current ?? introContentRef.current;
+    const sync = () => {
+      const target = pickTarget();
+      if (!target) return;
+      const w = target.clientWidth;
+      if (w <= 0) return;
+      gate.style.setProperty("--intro-measured-px", `${w}px`);
+      const src = mainContentRef?.current === target ? "main.content" : "intro-letter-gate__content";
+      console.log("[withmarry] 인트로 열 너비", `${w}px`, `(${src})`);
+    };
+    sync();
+    const ro = new ResizeObserver(() => sync());
+    const t0 = pickTarget();
+    if (t0) ro.observe(t0);
+    return () => {
+      ro.disconnect();
+      gate.style.removeProperty("--intro-measured-px");
+    };
+  }, [mainContentRef]);
 
   const dragRef = useRef<{ peel0: number; startY: number; pointerId: number } | null>(null);
   const committedRef = useRef(false);
@@ -171,8 +212,8 @@ export function IntroLetterGate({ onComplete, onVeilFull, scrollCueTone = "white
     `intro-letter-gate${reduceMotion ? " intro-letter-gate--reduced-motion" : ""}${scrubbing ? " intro-letter-gate--scrubbing" : ""}${veilFull ? " intro-letter-gate--veil-full" : ""}${exiting ? " intro-letter-gate--exiting" : ""}`;
 
   return (
-    <div className={gateClass} style={gateStyle} role="presentation">
-      <div className="intro-letter-gate__content">
+    <div ref={gateRef} className={gateClass} style={gateStyle} role="presentation">
+      <div ref={introContentRef} className="intro-letter-gate__content">
         <div
           className={`intro-letter-gate__scroll-cues${scrollCuesVisible ? " intro-letter-gate__scroll-cues--visible" : ""}`}
           aria-hidden

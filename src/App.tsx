@@ -34,6 +34,8 @@ import { DirectionsNavLinks } from "./DirectionsNavLinks";
 import { DirectionsTransportToggles } from "./DirectionsTransportToggles";
 import { IntroLetterGate } from "./IntroLetterGate";
 import { HeroConfettiOverlay } from "./HeroConfettiOverlay";
+import { WeddingShareFab } from "./WeddingShareFab";
+import { buildWeddingPageAbsoluteUrl } from "./kakaoSdk";
 import { WeddingCircularGallery } from "./WeddingCircularGallery";
 import "./audio-hint-waves";
 
@@ -330,6 +332,26 @@ function WeddingAppContent({ weddingId, data }: WeddingAppContentProps) {
     document.body.classList.toggle("overflow-lock", !introComplete || hourglassScrollLock);
   }, [introComplete, hourglassScrollLock]);
 
+  useEffect(() => {
+    const shell = phoneShellRef.current;
+    const main = mainContentRef.current;
+    if (!shell) return;
+    const log = () => {
+      const shellW = shell.clientWidth;
+      const mainW = main?.clientWidth ?? null;
+      console.log(
+        "[withmarry] 콘텐츠 영역 너비",
+        `phone-shell: ${shellW}px`,
+        mainW != null ? `main.content: ${mainW}px` : "main.content: (없음)"
+      );
+    };
+    log();
+    const ro = new ResizeObserver(() => log());
+    ro.observe(shell);
+    if (main) ro.observe(main);
+    return () => ro.disconnect();
+  }, [introComplete, hourglassShellMode]);
+
   const heroVenueLine = `${wedding.venueName} ${wedding.venueHall}`;
   const groomMbti = splitMbtiLine(couple.groom.mbtiLine);
   const brideMbti = splitMbtiLine(couple.bride.mbtiLine);
@@ -339,6 +361,16 @@ function WeddingAppContent({ weddingId, data }: WeddingAppContentProps) {
     if (!t) return;
     void copyTextToClipboard(t).then(() => notifyCopied());
   }, [notifyCopied, wedding.venueAddress]);
+
+  const sharePageUrl = useMemo(() => buildWeddingPageAbsoluteUrl(weddingId), [weddingId]);
+  const kakaoShareImageUrl = useMemo((): string | null => {
+    const u = data.meta.kakaoShareImageUrl?.trim();
+    if (u) return u;
+    if (heroImageUrls) {
+      return new URL(heroImageUrls.png, window.location.origin).href;
+    }
+    return null;
+  }, [data.meta.kakaoShareImageUrl, heroImageUrls]);
 
   return (
     <>
@@ -355,6 +387,7 @@ function WeddingAppContent({ weddingId, data }: WeddingAppContentProps) {
     <div className="desktop-stage">
       {!introComplete && (
         <IntroLetterGate
+          mainContentRef={mainContentRef}
           onComplete={() => setIntroComplete(true)}
           scrollCueTone={heroScrollCueTone}
           onVeilFull={() => {
@@ -617,6 +650,15 @@ function WeddingAppContent({ weddingId, data }: WeddingAppContentProps) {
           </footer>
         </main>
         </WeddingHeroScrollInner>
+        <WeddingShareFab
+          pageUrl={sharePageUrl}
+          shareTitle={meta.documentTitle}
+          shareDescription={meta.introTypingLine}
+          shareImageUrl={kakaoShareImageUrl}
+          envKakaoKey={import.meta.env.VITE_KAKAO_JAVASCRIPT_KEY}
+          metaKakaoKey={data.meta.kakaoJavaScriptKey}
+          onLinkCopied={notifyCopied}
+        />
         </div>
       </div>
     </div>

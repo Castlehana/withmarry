@@ -1,0 +1,72 @@
+/* `phone-shell` 직계 — 스크롤·본문 위( z ). 종이/그라데이션 위에서도 보이도록 짙은 반투명 + 흰 아이콘 */
+.phone-shell .wedding-share-fab {
+  position: absolute;
+  z-index: 40;
+  right: max(12px, env(safe-area-inset-right));
+  bottom: max(12px, env(safe-area-inset-bottom));
+  top: auto;
+  left: auto;
+  pointer-events: auto;
+}
+
+.wedding-share-fab__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  border: 1px solid rgb(255 255 255 / 0.3);
+  border-radius: 50%;
+  /* 밝은 배경·크림 종이에서도 윤곽이 보이게 */
+  background: rgb(42 38 34 / 0.5);
+  color: #fff;
+  box-shadow:
+    0 1px 0 rgb(255 255 255 / 0.12) inset,
+    0 4px 18px rgb(0 0 0 / 0.2);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  backdrop-filter: blur(10px);
+  transition: background 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+@supports not (backdrop-filter: blur(1px)) {
+  .wedding-share-fab__btn {
+    background: rgb(42 38 34 / 0.65);
+  }
+}
+
+.wedding-share-fab__btn:hover {
+  background: rgb(42 38 34 / 0.6);
+  transform: translateY(-1px);
+  box-shadow:
+    0 1px 0 rgb(255 255 255 / 0.15) inset,
+    0 6px 20px rgb(0 0 0 / 0.25);
+}
+
+.wedding-share-fab__btn:active:not(:disabled) {
+  transform: translateY(0);
+  background: rgb(42 38 34 / 0.55);
+}
+
+.wedding-share-fab__btn:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+
+.wedding-share-fab__icon {
+  display: flex;
+  line-height: 0;
+  color: #fff;
+}
+
+.wedding-share-fab__icon svg {
+  display: block;
+  filter: drop-shadow(0 0 1px rgb(0 0 0 / 0.25));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wedding-share-fab__btn {
+    transition: none;
+  }
+}

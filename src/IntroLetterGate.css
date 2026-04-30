@@ -1,8 +1,8 @@
 /* 인트로: 콘텐츠 열 안은 투명(본문 비침), `__white-veil`·열 밖 `__stage-chrome` */
 
 .intro-letter-gate {
-  /* 콘텐츠 열 너비 — 자기 자신 width와 %를 섞지 않음(0px 순환 방지) */
-  --intro-col-w: min(100vw, var(--shell-max, 430px));
+  /* CSS 폴백 열 너비 — 실측은 JS가 `--intro-measured-px`로 덮음 */
+  --intro-col-w: min(600px, calc(100vw - env(safe-area-inset-left) - env(safe-area-inset-right)));
   /* 뚜껑·하얀 베일 공통: peel 1일 때 시각 최대 70%까지(끝에서 베일 opacity 0.7) */
   --peel-range: 0.7;
   position: fixed;
@@ -46,7 +46,7 @@
 }
 
 .intro-letter-gate__stage-chrome-cutout {
-  width: min(var(--intro-col-w), 100%);
+  width: min(var(--intro-measured-px, var(--intro-col-w)), 100%);
   max-width: 100%;
   height: 100%;
   flex: 0 0 auto;
@@ -73,16 +73,17 @@
   opacity: 1;
 }
 
-/* `phone-shell`과 동일한 가로 한도 — 세로는 무대(패딩 안) 전체 높이 (`__stage-chrome` 아래) */
+/* 열 너비: 실측 `--intro-measured-px` 우선(봉투와 동일). 세로 초과는 잘려도 됨 → overflow visible */
 .intro-letter-gate__content {
   position: relative;
   z-index: 0;
   align-self: center;
-  width: min(var(--intro-col-w), 100%);
+  width: var(--intro-measured-px, var(--intro-col-w));
   max-width: 100%;
   height: 100%;
-  max-height: 100%;
+  max-height: none;
   min-height: 0;
+  overflow: visible;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -94,6 +95,7 @@
   z-index: 0;
   width: 100%;
   min-width: 0;
+  overflow: visible;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -194,34 +196,21 @@
 }
 
 /*
- * 인트로 봉투: `folder.png`(526×1082)·`folder-motion.png`(526×1080) 비율에 맞춤.
- * 가로·세로 모두 한도 안에 들어가도록 너비를 먼저 잡고 `--ile-h` = w×1082/526×`--ile-envelope-height-boost`(1.05).
+ * 인트로 봉투: 열 실측 `--intro-measured-px`(없으면 `--intro-col-w`)에 가로 고정.
+ * 세로는 folder 비율만(뷰포트 높이로 가로 축소하지 않음 — 위아래 잘림 허용).
  */
 .intro-letter-gate .intro-letter-skin.intro-letter-skin--gate-scale {
-  /* 무대 패딩이 세이프 에어를 담당 — 여기서는 뷰포트 높이만 소폭 여백 */
-  --avail-h: calc(100vh - 20px);
-  /* 세로 한도에 맞춘 최대 너비(조금 여유) + 열 한도 — 기준(1.05/1.01) 대비 20% 확대(두 한도 모두 1.2×) */
-  --ile-envelope-scale-h: 1.26;
-  --ile-envelope-scale-w: 1.212;
-  /* 봉투 박스 세로만 자산 비율 대비 +5% 확대(뷰포트 맞춤 시 너비 상한에도 동일 반영) */
-  --ile-envelope-height-boost: 1.05;
+  --ile-envelope-scale-w: 1;
+  --ile-envelope-height-boost: 1;
   --ile-folder-ar-w: 526;
   --ile-folder-ar-h: 1082;
   --ile-motion-ar-w: 526;
   --ile-motion-ar-h: 1080;
   --ile-w: max(
     160px,
-    min(
-      calc(var(--intro-col-w) * var(--ile-envelope-scale-w)),
-      calc(
-        var(--avail-h) * var(--ile-envelope-scale-h) * var(--ile-folder-ar-w) /
-          (var(--ile-folder-ar-h) * var(--ile-envelope-height-boost))
-      )
-    )
+    calc(var(--intro-measured-px, var(--intro-col-w)) * var(--ile-envelope-scale-w))
   );
-  --ile-h: calc(
-    var(--ile-w) * var(--ile-folder-ar-h) / var(--ile-folder-ar-w) * var(--ile-envelope-height-boost)
-  );
+  --ile-h: calc(var(--ile-w) * var(--ile-folder-ar-h) / var(--ile-folder-ar-w) * var(--ile-envelope-height-boost));
   --ile-heart-w: clamp(18px, calc(var(--ile-w) * 0.048), 40px);
   perspective: min(1600px, calc(var(--ile-w) * 5));
   flex-shrink: 0;

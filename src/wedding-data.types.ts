@@ -71,6 +71,16 @@ export interface WeddingData {
   meta: {
     documentTitle: string;
     introTypingLine: string;
+    /**
+     * [카카오 JavaScript 키](https://developers.kakao.com/) (선택).
+     * 없으면 빌드·배포 환경의 `VITE_KAKAO_JAVASCRIPT_KEY`를 사용합니다.
+     */
+    kakaoJavaScriptKey?: string;
+    /**
+     * 카카오 공유 썸네일(피드) **HTTPS** 절대 URL. 권한·도메인·크기(200px 이상)는 [카카오 콘솔](https://developers.kakao.com/)에서 맞춥니다.
+     * 없으면 `wedding.heroImage`의 `.png` URL(동일 출처)을 씁니다.
+     */
+    kakaoShareImageUrl?: string;
   };
   couple: {
     /** 상단바 등 — `{{groom.이름}} · {{bride.이름}}` 형태로 비워 두면 로드 시 자동 생성 */

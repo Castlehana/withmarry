@@ -132,6 +132,21 @@ body.overflow-lock {
   position: relative;
 }
 
+/* 폰 셸 안: 스크롤바만 숨김(스크롤·스와이프 동작은 동일) */
+.phone-shell,
+.phone-shell * {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.phone-shell::-webkit-scrollbar,
+.phone-shell *::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+  background: transparent;
+}
+
 /* `wedding.heroImage` — 래퍼 높이 = 히어로 + 본문(sticky 부모가 길어짐) → 스크롤 내내 사진은 상단 고정, 본문만 위로 겹침 */
 .phone-shell.phone-shell--wedding-hero {
   display: flex;
@@ -2603,24 +2618,6 @@ button.directions-transport__mapsearch:focus-visible {
   border: 1px solid var(--line);
   background: linear-gradient(180deg, #fffefa, var(--blush));
   box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.9), 0 4px 20px rgb(42 38 34 / 0.06);
-  scrollbar-width: thin;
-  scrollbar-color: color-mix(in srgb, var(--gold) 55%, transparent) rgb(255 250 244 / 0.9);
-}
-
-.guestbook__list-scroll::-webkit-scrollbar {
-  width: 8px;
-}
-
-.guestbook__list-scroll::-webkit-scrollbar-track {
-  background: rgb(255 250 244 / 0.65);
-  border-radius: 8px;
-}
-
-.guestbook__list-scroll::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, color-mix(in srgb, var(--gold-soft) 80%, #fff), var(--gold));
-  border-radius: 8px;
-  border: 2px solid transparent;
-  background-clip: padding-box;
 }
 
 .guestbook__list-empty {

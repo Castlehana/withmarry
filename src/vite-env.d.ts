@@ -11,6 +11,8 @@ interface ImportMetaEnv {
   readonly VITE_USE_RSVP_API?: string;
   /** 비우면 상대 `/api` (Vite 프록시 또는 Pages 동일 출처). 절대 URL이면 그 호스트 사용 */
   readonly VITE_RSVP_API_BASE?: string;
+  /** [카카오](https://developers.kakao.com/docs/latest/ko/javascript) JavaScript 키 — `meta.kakaoJavaScriptKey`가 없을 때 사용 */
+  readonly VITE_KAKAO_JAVASCRIPT_KEY?: string;
 }
 
 interface ImportMeta {
