@@ -10,7 +10,7 @@
 - 히어로 이미지 — `wedding.heroImage`에 경로·이름(예: `hero.jpg`)을 넣으면 같은 이름의 `hero.png`를 먼저 쓰고, 없으면 `hero.jpg`로 표시. 생략 가능.
 - 히어로 위 — 영문 한 줄(`heroGivenNameEn`×2), WindSong「Save the Date」, 아래로 스크롤 유도(3칸 애니). 글자·화살표 색: `wedding.heroNameTone` / `heroScriptTone` / `heroScrollCueTone` 각각 `"black"`|`"white"`만 인정, 그 외·생략은 `heroGivenNamesTone` 다음 흰색. 화살표 세로: `heroScrollCuePosition` 1(아래)~10(위).
 - `directions-map.png` — 오시는 길 지도 이미지
-- `static/Our Story/` — 챕터 폴더·`our-story-pages.txt`·`backgroundbgm.mp3` 등 (빌드 시 `_chapters.json` 생성)
+- `static/Our Story/` — `our-story-pages.txt`·`backgroundbgm.mp3`·챕터 폴더 등 (빌드 시 `_chapters.json` 생성). 대사 오디오는 `Audio/{챕터폴더}/`, 배경 이미지는 `Back/{챕터폴더}/back.png`(없으면 `back.jpg`), 챕터별 `animation.mp4`는 공용 `public/static/story/animation/{챕터폴더}/`에서 읽습니다.
 
 공용 정적 파일(지도 앱 로고, 인트로 탭 힌트 SVG 등)은 `public/static/`에 그대로 둡니다.
 

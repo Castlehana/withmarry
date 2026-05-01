@@ -37,17 +37,17 @@ function silenceIllustrationVideo(v: HTMLVideoElement | null) {
 }
 
 type InterludeIllustrationFramesProps = {
-  baseUrl: string;
+  animationBaseUrl: string;
   active: boolean;
 };
 
 /**
- * 인터루드 중앙: `baseUrl/animation.mp4` 무음 재생.
+ * 인터루드 중앙: `animationBaseUrl/animation.mp4` 무음 재생.
  * 같은 폴더에 `animation_flip.mp4`가 있으면 그 파일을 쓰고 좌우 반전(스택 `scaleX(-1)`).
  * 끝나기 LOOP_CROSSFADE_SEC 초 전에 다음 레이어 재생·크로스페이드(페이드아웃/인 동시).
  */
-export function InterludeIllustrationFrames({ baseUrl, active }: InterludeIllustrationFramesProps) {
-  const assetBase = baseUrl.replace(/\/$/, "");
+export function InterludeIllustrationFrames({ animationBaseUrl, active }: InterludeIllustrationFramesProps) {
+  const assetBase = animationBaseUrl.replace(/\/$/, "");
   const videoRef0 = useRef<HTMLVideoElement>(null);
   const videoRef1 = useRef<HTMLVideoElement>(null);
   /** 현재 화면에 보이는 레이어(불투명 쪽) */

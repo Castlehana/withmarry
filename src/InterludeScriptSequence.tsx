@@ -49,8 +49,8 @@ function wait(ms: number, signal: { cancelled: boolean }): Promise<void> {
 type InterludeScriptSequenceProps = {
   interludeOpen: boolean;
   scriptGateOpen: boolean;
-  /** 현재 페이지 폴더 URL — `audio` 파일명과 조합 */
-  baseUrl: string;
+  /** 현재 페이지 오디오 폴더 URL — `audio` 파일명과 조합 */
+  audioBaseUrl: string;
   /** `our-story-pages.txt` 에서 현재 페이지에 해당하는 대사 목록 */
   scriptLines: OurStoryScriptLine[];
   couple: WeddingData["couple"];
@@ -72,7 +72,7 @@ type InterludeScriptSequenceProps = {
 export function InterludeScriptSequence({
   interludeOpen,
   scriptGateOpen,
-  baseUrl,
+  audioBaseUrl,
   scriptLines,
   couple,
   waveAnalyserRef,
@@ -94,7 +94,7 @@ export function InterludeScriptSequence({
   const mediaElementSourceRef = useRef<MediaElementAudioSourceNode | null>(null);
   const scriptGainRef = useRef<GainNode | null>(null);
 
-  const assetBase = baseUrl.replace(/\/$/, "");
+  const assetBase = audioBaseUrl.replace(/\/$/, "");
 
   const disconnectScriptWiring = () => {
     if (wavActiveRef) wavActiveRef.current = false;

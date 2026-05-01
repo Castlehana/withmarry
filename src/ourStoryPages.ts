@@ -4,14 +4,14 @@
  */
 export type OurStoryScriptLine = {
   text: string;
-  /** 폴더 내 파일명 e.g. `01.mp3` */
+  /** `Audio/{folder}` 안의 파일명 e.g. `01.mp3` */
   audio: string;
   /** 구분용: `groom` | `bride` | `신랑` | `신부` — 인터루드에서 `wedding-data` 이름(이름 필드)과 매칭 */
   speaker?: string;
 };
 
 export type OurStoryPage = {
-  /** 에셋 폴더 (`back.png`, `animation.mp4`, 대사 mp3 등) */
+  /** 스토리 챕터 id. 배경은 `Back/{folder}`, 대사 오디오는 `Audio/{folder}`, 애니메이션은 `public/static/story/animation/{folder}` 사용 */
   folder: string;
   /** 구분용 페이지 번호/라벨(표시 안 함) */
   page?: string;

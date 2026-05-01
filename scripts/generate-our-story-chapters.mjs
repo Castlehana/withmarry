@@ -37,9 +37,10 @@ function readChaptersFromManifest(manifestFile) {
 
 function readChaptersFromDirectories(root) {
   if (!fs.existsSync(root)) return [];
+  const reserved = new Set(["Audio", "Back"]);
   return fs
     .readdirSync(root, { withFileTypes: true })
-    .filter((e) => e.isDirectory() && !e.name.startsWith("."))
+    .filter((e) => e.isDirectory() && !e.name.startsWith(".") && !reserved.has(e.name))
     .map((e) => e.name)
     .sort((a, b) => a.localeCompare(b, "ko"));
 }

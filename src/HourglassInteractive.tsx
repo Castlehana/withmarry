@@ -118,6 +118,10 @@ export function HourglassInteractive({
   const ourStoryPagesUrl = useMemo(() => `${ourStoryRoot}/our-story-pages.txt`, [ourStoryRoot]);
   const chaptersManifestUrl = useMemo(() => `${ourStoryRoot}/_chapters.json`, [ourStoryRoot]);
   const interludeBgmUrl = useMemo(() => `${ourStoryRoot}/backgroundbgm.mp3`, [ourStoryRoot]);
+  const storyAnimationRoot = useMemo(
+    () => `${import.meta.env.BASE_URL}static/story/animation`.replace(/\/$/, ""),
+    []
+  );
 
   const [ourStoryPages, setOurStoryPages] = useState<OurStoryPage[]>([]);
   const [ourStoryChapterIndex, setOurStoryChapterIndex] = useState(0);
@@ -172,13 +176,25 @@ export function HourglassInteractive({
   }, [interludeBgmUrl]);
   const storyBgmFadeTokenRef = useRef(0);
 
-  const storyPageBase = useMemo(() => {
-    if (!ourStoryPages.length) {
-      return `${ourStoryRoot}/${encodeURIComponent("main_page")}`.replace(/\/$/, "");
-    }
+  const storyFolder = useMemo(() => {
+    if (!ourStoryPages.length) return "main_page";
     const idx = Math.min(Math.max(0, ourStoryChapterIndex), ourStoryPages.length - 1);
-    return `${ourStoryRoot}/${encodeURIComponent(ourStoryPages[idx]!.folder)}`.replace(/\/$/, "");
-  }, [ourStoryPages, ourStoryChapterIndex, ourStoryRoot]);
+    return ourStoryPages[idx]!.folder;
+  }, [ourStoryPages, ourStoryChapterIndex]);
+
+  const storyAudioBase = useMemo(
+    () => `${ourStoryRoot}/Audio/${encodeURIComponent(storyFolder)}`,
+    [ourStoryRoot, storyFolder]
+  );
+
+  const storyBackBase = useMemo(
+    () => `${ourStoryRoot}/Back/${encodeURIComponent(storyFolder)}`,
+    [ourStoryRoot, storyFolder]
+  );
+
+  const storyAnimationBase = useMemo(() => {
+    return `${storyAnimationRoot}/${encodeURIComponent(storyFolder)}`;
+  }, [storyAnimationRoot, storyFolder]);
 
   const interludeScriptLines = useMemo(() => {
     if (!ourStoryPages.length) return [];
@@ -192,7 +208,8 @@ export function HourglassInteractive({
     [ourStoryPages.length, ourStoryChapterIndex]
   );
 
-  const ourStoryBackImg = `${storyPageBase}/back.png`;
+  const ourStoryBackPng = `${storyBackBase}/back.png`;
+  const ourStoryBackJpg = `${storyBackBase}/back.jpg`;
 
   const dragging = useRef(false);
   const lastAngleRef = useRef<number | null>(null);
@@ -891,12 +908,12 @@ export function HourglassInteractive({
                   >
                     <div className="back_photo_layer" aria-hidden>
                       <div className="back_img">
-                        <InterludePhotoFilm src={ourStoryBackImg} alt="" />
+                        <InterludePhotoFilm src={ourStoryBackPng} fallbackSrc={ourStoryBackJpg} alt="" />
                       </div>
                       <InterludeFlash />
                     </div>
                     <div className="hourglass-flash-overlay__interlude-art">
-                      <InterludeIllustrationFrames baseUrl={storyPageBase} active={interludeOpen} />
+                      <InterludeIllustrationFrames animationBaseUrl={storyAnimationBase} active={interludeOpen} />
                     </div>
                     <InterludeSoundWaveCanvas
                       waveAnalyserRef={interludeWaveAnalyserRef}
@@ -905,7 +922,7 @@ export function HourglassInteractive({
                     <InterludeScriptSequence
                       interludeOpen={interludeOpen}
                       scriptGateOpen={interludeScriptGateOpen}
-                      baseUrl={storyPageBase}
+                      audioBaseUrl={storyAudioBase}
                       scriptLines={interludeScriptLines}
                       couple={couple}
                       waveAnalyserRef={interludeWaveAnalyserRef}

@@ -32,11 +32,10 @@ import { WeddingCalendar } from "./WeddingCalendar";
 import { WeddingFlipCountdown } from "./WeddingFlipCountdown";
 import { DirectionsNavLinks } from "./DirectionsNavLinks";
 import { DirectionsTransportToggles } from "./DirectionsTransportToggles";
-import { IntroLetterGate } from "./IntroLetterGate";
-import { HeroConfettiOverlay } from "./HeroConfettiOverlay";
 import { WeddingShareFab } from "./WeddingShareFab";
 import { buildWeddingPageAbsoluteUrl } from "./kakaoSdk";
 import { WeddingCircularGallery } from "./WeddingCircularGallery";
+import { IntroTypingOverlay } from "./IntroTypingOverlay";
 import "./audio-hint-waves";
 
 /** `directionsNote` 한 줄에서 이모지·픽토그램만 제거 (본문은 유지) */
@@ -85,7 +84,6 @@ function WeddingHeroScrollInner({
   heroScriptTone,
   heroScrollCueTone,
   heroScrollCuePosition,
-  confettiPlay,
   reduceMotion,
   children,
 }: {
@@ -98,8 +96,6 @@ function WeddingHeroScrollInner({
   heroScriptTone: HeroBwTone;
   heroScrollCueTone: HeroBwTone;
   heroScrollCuePosition: number;
-  /** 인트로 베일이 흰색으로 가득 찬 뒤 히어로 위 컨페티(모션 축소 시 비활성) */
-  confettiPlay: boolean;
   reduceMotion: boolean;
   children: ReactNode;
 }) {
@@ -137,7 +133,6 @@ function WeddingHeroScrollInner({
           }}
         />
         <div className="wedding-hero-sticky__paper-grain" aria-hidden />
-        {confettiPlay && !reduceMotion ? <HeroConfettiOverlay active /> : null}
         <div className="wedding-hero-sticky__hero-tagline" aria-hidden>
           {heroGivenNamesLine ? (
             <div className="wedding-hero-sticky__en-names" data-hero-bw-tone={heroNameTone}>
@@ -242,6 +237,7 @@ type WeddingAppProps = { weddingId: string };
 function WeddingApp({ weddingId }: WeddingAppProps) {
   const [bundle, setBundle] = useState<WeddingData | null>(null);
   const [loadErr, setLoadErr] = useState<string | null>(null);
+  const [introActive, setIntroActive] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
@@ -266,18 +262,31 @@ function WeddingApp({ weddingId }: WeddingAppProps) {
 
   if (!bundle) {
     return (
-      <div className="wedding-load-screen" aria-busy="true" aria-live="polite">
-        <p className="wedding-load-screen__title">청첩장 불러오는 중…</p>
-      </div>
+      <>
+        {introActive ? <IntroTypingOverlay onComplete={() => setIntroActive(false)} /> : null}
+        <div className="wedding-load-screen wedding-load-screen--intro-backdrop" aria-busy="true" aria-label="청첩장 로딩 중" />
+      </>
     );
   }
 
-  return <WeddingAppContent weddingId={weddingId} data={bundle} />;
+  return (
+    <WeddingAppContent
+      weddingId={weddingId}
+      data={bundle}
+      introActive={introActive}
+      onIntroComplete={() => setIntroActive(false)}
+    />
+  );
 }
 
-type WeddingAppContentProps = { weddingId: string; data: WeddingData };
+type WeddingAppContentProps = {
+  weddingId: string;
+  data: WeddingData;
+  introActive: boolean;
+  onIntroComplete: () => void;
+};
 
-function WeddingAppContent({ weddingId, data }: WeddingAppContentProps) {
+function WeddingAppContent({ weddingId, data, introActive, onIntroComplete }: WeddingAppContentProps) {
   const { meta, couple, wedding } = data;
   const weddingAssetBase = weddingBundleBaseUrl(weddingId);
   const heroImageFile = wedding.heroImage?.trim();
@@ -296,8 +305,6 @@ function WeddingAppContent({ weddingId, data }: WeddingAppContentProps) {
     () => typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches,
     []
   );
-  const [introComplete, setIntroComplete] = useState(() => reduceIntroMotion);
-  const [heroConfettiPlay, setHeroConfettiPlay] = useState(false);
   const heroAudioWaveTrackRef = useRef<HTMLSpanElement>(null);
   const mainContentRef = useRef<HTMLElement>(null);
   const phoneShellRef = useRef<HTMLDivElement>(null);
@@ -306,7 +313,11 @@ function WeddingAppContent({ weddingId, data }: WeddingAppContentProps) {
   const { open: copyToastOpen, closing: copyToastClosing, notify: notifyCopied, close: closeCopyToast } =
     useCopyFeedbackToast();
 
-  useScrollRevealRoot(mainContentRef, [hourglassShellMode, introComplete, heroImageUrls?.png], heroImageUrls ? phoneShellRef : undefined);
+  useScrollRevealRoot(
+    mainContentRef,
+    [hourglassShellMode, introActive, heroImageUrls?.png],
+    heroImageUrls ? phoneShellRef : undefined
+  );
 
   useLayoutEffect(() => {
     if ("scrollRestoration" in history) {
@@ -329,8 +340,8 @@ function WeddingAppContent({ weddingId, data }: WeddingAppContentProps) {
   }, [meta.documentTitle]);
 
   useEffect(() => {
-    document.body.classList.toggle("overflow-lock", !introComplete || hourglassScrollLock);
-  }, [introComplete, hourglassScrollLock]);
+    document.body.classList.toggle("overflow-lock", introActive || hourglassScrollLock);
+  }, [introActive, hourglassScrollLock]);
 
   useEffect(() => {
     const shell = phoneShellRef.current;
@@ -350,7 +361,7 @@ function WeddingAppContent({ weddingId, data }: WeddingAppContentProps) {
     ro.observe(shell);
     if (main) ro.observe(main);
     return () => ro.disconnect();
-  }, [introComplete, hourglassShellMode]);
+  }, [hourglassShellMode]);
 
   const heroVenueLine = `${wedding.venueName} ${wedding.venueHall}`;
   const groomMbti = splitMbtiLine(couple.groom.mbtiLine);
@@ -385,25 +396,14 @@ function WeddingAppContent({ weddingId, data }: WeddingAppContentProps) {
         </defs>
       </svg>
     <div className="desktop-stage">
-      {!introComplete && (
-        <IntroLetterGate
-          mainContentRef={mainContentRef}
-          onComplete={() => setIntroComplete(true)}
-          scrollCueTone={heroScrollCueTone}
-          onVeilFull={() => {
-            if (heroImageUrls && !reduceIntroMotion) {
-              setHeroConfettiPlay(true);
-            }
-          }}
-        />
-      )}
+      {introActive ? <IntroTypingOverlay onComplete={onIntroComplete} /> : null}
       <div className="desktop-stage__phone-wrap">
         <div
           ref={phoneShellRef}
           className={`phone-shell${heroImageUrls ? " phone-shell--wedding-hero" : ""}`}
           data-hourglass-interlude={hourglassShellMode !== "normal" ? "" : undefined}
           data-hourglass-interlude-exit-reveal={hourglassShellMode === "exit-reveal" ? "" : undefined}
-          {...(hourglassShellMode !== "normal" || !introComplete ? { inert: true } : {})}
+          {...(introActive || hourglassShellMode !== "normal" ? { inert: true } : {})}
         >
         <WeddingHeroScrollInner
           active={Boolean(heroImageUrls)}
@@ -414,15 +414,12 @@ function WeddingAppContent({ weddingId, data }: WeddingAppContentProps) {
           heroScriptTone={heroScriptTone}
           heroScrollCueTone={heroScrollCueTone}
           heroScrollCuePosition={heroScrollCuePosition}
-          confettiPlay={heroConfettiPlay}
           reduceMotion={reduceIntroMotion}
         >
           <main
             ref={mainContentRef}
             className={`content${heroImageUrls ? " content--wedding-hero" : ""}`}
-            aria-hidden={
-              !introComplete || hourglassShellMode === "interlude" ? true : undefined
-            }
+            aria-hidden={introActive || hourglassShellMode === "interlude" ? true : undefined}
           >
           <div className="content__paper-filter-overlay" aria-hidden />
           <CopyFeedbackToast open={copyToastOpen} closing={copyToastClosing} onClose={closeCopyToast} />
