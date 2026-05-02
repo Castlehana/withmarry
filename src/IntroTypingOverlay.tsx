@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState, type CSSProperties } from "react";
 import "./IntroTypingOverlay.css";
 
 const HANDWRITING_DURATION_MS = 1000;
@@ -33,13 +33,18 @@ const clipOutlinePaths = [
 
 type IntroTypingOverlayProps = {
   onComplete: () => void;
+  maxWidthPx?: number | null;
 };
 
-export function IntroTypingOverlay({ onComplete }: IntroTypingOverlayProps) {
+export function IntroTypingOverlay({ onComplete, maxWidthPx }: IntroTypingOverlayProps) {
   const [exiting, setExiting] = useState(false);
   const [ready, setReady] = useState(false);
   const svgRef = useRef<SVGSVGElement | null>(null);
   const clipId = useId();
+  const style =
+    typeof maxWidthPx === "number" && Number.isFinite(maxWidthPx) && maxWidthPx > 0
+      ? ({ "--intro-handwriting-max-w": `${Math.round(maxWidthPx)}px` } as CSSProperties)
+      : undefined;
 
   useEffect(() => {
     const svg = svgRef.current;
@@ -93,6 +98,7 @@ export function IntroTypingOverlay({ onComplete }: IntroTypingOverlayProps) {
   return (
     <div
       className={`intro-typing-overlay${exiting ? " intro-typing-overlay--exiting" : ""}`}
+      style={style}
       role="status"
       aria-live="polite"
       aria-label="Intro handwriting animation"

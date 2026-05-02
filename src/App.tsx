@@ -35,7 +35,10 @@ import { DirectionsTransportToggles } from "./DirectionsTransportToggles";
 import { WeddingShareFab } from "./WeddingShareFab";
 import { buildWeddingPageAbsoluteUrl } from "./kakaoSdk";
 import { WeddingCircularGallery } from "./WeddingCircularGallery";
+import { WeddingGalleryGrid } from "./WeddingGalleryGrid";
 import { IntroTypingOverlay } from "./IntroTypingOverlay";
+import { HeroSakuraPetals } from "./HeroSakuraPetals";
+import { MainBgmToggle } from "./MainBgmToggle";
 import "./audio-hint-waves";
 
 /** `directionsNote` 한 줄에서 이모지·픽토그램만 제거 (본문은 유지) */
@@ -56,12 +59,13 @@ function weddingHeroImageUrls(weddingAssetBase: string, heroImageFile: string): 
   };
 }
 
-type HeroBwTone = "black" | "white";
+type HeroBwTone = "black" | "white" | "darkIvory";
 
-/** `black`/`white`만 인정. 그 외·생략 → `legacy` → 최종 흰색. */
+/** 히어로 텍스트 톤. 그 외·생략 → `legacy` → 최종 흰색. */
 function resolveHeroBwTone(explicit: unknown, legacy: unknown): HeroBwTone {
   if (explicit === "black") return "black";
   if (explicit === "white") return "white";
+  if (explicit === "darkIvory") return "darkIvory";
   if (legacy === "black") return "black";
   if (legacy === "white") return "white";
   return "white";
@@ -81,9 +85,11 @@ function WeddingHeroScrollInner({
   heroSrcJpg,
   heroGivenNamesLine,
   heroNameTone,
-  heroScriptTone,
+  heroInfoTone,
   heroScrollCueTone,
   heroScrollCuePosition,
+  heroDateTimeLine,
+  heroVenueLine,
   reduceMotion,
   children,
 }: {
@@ -93,9 +99,11 @@ function WeddingHeroScrollInner({
   /** `couple.groom.heroGivenNameEn` + 공백 + `couple.bride.heroGivenNameEn` 한 줄 */
   heroGivenNamesLine?: string;
   heroNameTone: HeroBwTone;
-  heroScriptTone: HeroBwTone;
+  heroInfoTone: HeroBwTone;
   heroScrollCueTone: HeroBwTone;
   heroScrollCuePosition: number;
+  heroDateTimeLine: string;
+  heroVenueLine: string;
   reduceMotion: boolean;
   children: ReactNode;
 }) {
@@ -133,15 +141,17 @@ function WeddingHeroScrollInner({
           }}
         />
         <div className="wedding-hero-sticky__paper-grain" aria-hidden />
+        <HeroSakuraPetals />
         <div className="wedding-hero-sticky__hero-tagline" aria-hidden>
           {heroGivenNamesLine ? (
             <div className="wedding-hero-sticky__en-names" data-hero-bw-tone={heroNameTone}>
               {heroGivenNamesLine}
             </div>
           ) : null}
-          <p className="wedding-hero-sticky__save-the-date-script" data-hero-bw-tone={heroScriptTone}>
-            Save the Date
-          </p>
+        </div>
+        <div className="wedding-hero-sticky__event-info" data-hero-bw-tone={heroInfoTone} aria-hidden>
+          <p>{heroDateTimeLine}</p>
+          <p>{heroVenueLine}</p>
         </div>
         <a
           href="#main"
@@ -161,15 +171,6 @@ function WeddingHeroScrollInner({
       {children}
     </div>
   );
-}
-
-function formatDaysKo(d: Date) {
-  return d.toLocaleDateString("ko-KR", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-    weekday: "long",
-  });
 }
 
 /** `mbtiLine` 끝의 대문자 4글자(예: ESFJ)를 타입 코드로 분리 — 없으면 전체를 한 줄로 */
@@ -293,10 +294,10 @@ function WeddingAppContent({ weddingId, data, introActive, onIntroComplete }: We
   const heroImageUrls = heroImageFile ? weddingHeroImageUrls(weddingAssetBase, heroImageFile) : null;
   const heroGivenNamesLine = [couple.groom.heroGivenNameEn?.trim(), couple.bride.heroGivenNameEn?.trim()]
     .filter((s): s is string => Boolean(s && s.length > 0))
-    .join(" ");
+    .join(" & ");
   const legacyHeroTone = wedding.heroGivenNamesTone;
   const heroNameTone = resolveHeroBwTone(wedding.heroNameTone, legacyHeroTone);
-  const heroScriptTone = resolveHeroBwTone(wedding.heroScriptTone, legacyHeroTone);
+  const heroInfoTone = resolveHeroBwTone(wedding.heroInfoTone, legacyHeroTone);
   const heroScrollCueTone = resolveHeroBwTone(wedding.heroScrollCueTone, legacyHeroTone);
   const heroScrollCuePosition = resolveHeroScrollCuePosition(wedding.heroScrollCuePosition);
 
@@ -310,6 +311,8 @@ function WeddingAppContent({ weddingId, data, introActive, onIntroComplete }: We
   const phoneShellRef = useRef<HTMLDivElement>(null);
   const [hourglassScrollLock, setHourglassScrollLock] = useState(false);
   const [hourglassShellMode, setHourglassShellMode] = useState<HourglassInterludeShellMode>("normal");
+  const [ourStoryStartSignal, setOurStoryStartSignal] = useState(0);
+  const [introHandwritingMaxWidth, setIntroHandwritingMaxWidth] = useState<number | null>(null);
   const { open: copyToastOpen, closing: copyToastClosing, notify: notifyCopied, close: closeCopyToast } =
     useCopyFeedbackToast();
 
@@ -341,7 +344,7 @@ function WeddingAppContent({ weddingId, data, introActive, onIntroComplete }: We
 
   useEffect(() => {
     document.body.classList.toggle("overflow-lock", introActive || hourglassScrollLock);
-  }, [introActive, hourglassScrollLock]);
+  }, [hourglassScrollLock, introActive]);
 
   useEffect(() => {
     const shell = phoneShellRef.current;
@@ -350,6 +353,7 @@ function WeddingAppContent({ weddingId, data, introActive, onIntroComplete }: We
     const log = () => {
       const shellW = shell.clientWidth;
       const mainW = main?.clientWidth ?? null;
+      setIntroHandwritingMaxWidth(mainW ?? shellW);
       console.log(
         "[withmarry] 콘텐츠 영역 너비",
         `phone-shell: ${shellW}px`,
@@ -364,6 +368,7 @@ function WeddingAppContent({ weddingId, data, introActive, onIntroComplete }: We
   }, [hourglassShellMode]);
 
   const heroVenueLine = `${wedding.venueName} ${wedding.venueHall}`;
+  const heroDateTimeLine = `${wedding.saveTheDateNums} ${wedding.ceremonyTimeLabel}`;
   const groomMbti = splitMbtiLine(couple.groom.mbtiLine);
   const brideMbti = splitMbtiLine(couple.bride.mbtiLine);
 
@@ -385,6 +390,7 @@ function WeddingAppContent({ weddingId, data, introActive, onIntroComplete }: We
 
   return (
     <>
+      <MainBgmToggle />
       <svg className="paper-filter-defs" aria-hidden width={0} height={0}>
         <defs>
           <filter id="roughpaper" x="0%" y="0%" width="100%" height="100%">
@@ -396,7 +402,9 @@ function WeddingAppContent({ weddingId, data, introActive, onIntroComplete }: We
         </defs>
       </svg>
     <div className="desktop-stage">
-      {introActive ? <IntroTypingOverlay onComplete={onIntroComplete} /> : null}
+      {introActive ? (
+        <IntroTypingOverlay onComplete={onIntroComplete} maxWidthPx={introHandwritingMaxWidth} />
+      ) : null}
       <div className="desktop-stage__phone-wrap">
         <div
           ref={phoneShellRef}
@@ -411,9 +419,11 @@ function WeddingAppContent({ weddingId, data, introActive, onIntroComplete }: We
           heroSrcJpg={heroImageUrls?.jpg ?? ""}
           heroGivenNamesLine={heroGivenNamesLine || undefined}
           heroNameTone={heroNameTone}
-          heroScriptTone={heroScriptTone}
+          heroInfoTone={heroInfoTone}
           heroScrollCueTone={heroScrollCueTone}
           heroScrollCuePosition={heroScrollCuePosition}
+          heroDateTimeLine={heroDateTimeLine}
+          heroVenueLine={heroVenueLine}
           reduceMotion={reduceIntroMotion}
         >
           <main
@@ -421,38 +431,30 @@ function WeddingAppContent({ weddingId, data, introActive, onIntroComplete }: We
             className={`content${heroImageUrls ? " content--wedding-hero" : ""}`}
             aria-hidden={introActive || hourglassShellMode === "interlude" ? true : undefined}
           >
-          <div className="content__paper-filter-overlay" aria-hidden />
           <CopyFeedbackToast open={copyToastOpen} closing={copyToastClosing} onClose={closeCopyToast} />
+          <section id="invitation" className="section invitation" lang="ko" aria-labelledby="invitation-heading">
+            <h2 id="invitation-heading" data-title-en="INVITATION">초대합니다</h2>
+            <div className="invitation__body">
+              <p>
+                서로가 마주보며 다져온 사랑을<br />
+                이제 함께 한 곳을 바라보며<br />
+                걸어갈 수 있는 큰 사랑으로 키우고자 합니다.
+              </p>
+              <p>
+                저희 두 사람이 사랑의 이름으로<br />
+                지켜나갈 수 있도록 앞날을<br />
+                축복해 주시면 감사하겠습니다.
+              </p>
+            </div>
+          </section>
           <section id="main" className="hero">
             <div className="hero-inner">
-              <p className="hero-kicker">
-                SAVE <em className="the-italic">The</em> DATE
-              </p>
-              <p className="hero-date-nums">{wedding.saveTheDateNums}</p>
-              <p className="hero-date-line">
-                {formatDaysKo(WEDDING)} {wedding.ceremonyTimeLabel}
-              </p>
-              <h1 className="hero-names">
-                <span>{couple.groom.성이름}</span>
-                <span className="ampersand">&</span>
-                <span>{couple.bride.성이름}</span>
-              </h1>
-              <div className="hero-venue-block">
-                <p className="hero-venue">{heroVenueLine}</p>
-                {wedding.venueAddress?.trim() ? (
-                  <button
-                    type="button"
-                    className="hero-venue hero-venue--copy hero-venue--address"
-                    onClick={copyDirectionsStreetAddress}
-                    aria-label={`주소 복사: ${wedding.venueAddress.trim()}`}
-                    title="눌러서 복사"
-                  >
-                    {wedding.venueAddress.trim()}
-                  </button>
-                ) : null}
-              </div>
               <div data-scroll-reveal="" data-scroll-reveal-delay-ms="90">
-                <section className="hero-couple-intro" aria-label="신랑·신부 소개">
+                <div className="profile-circular-gallery">
+                  <WeddingCircularGallery weddingId={weddingId} reduceMotion={reduceIntroMotion} />
+                </div>
+                <section className="hero-couple-intro" aria-labelledby="profile-heading">
+                  <h2 id="profile-heading" className="hero-couple-intro__title" data-title-en="PROFILE">우리의 소개</h2>
                   <div className="hero-couple-intro__grid">
                     <div className="hero-couple-intro__col hero-couple-intro__col--groom">
                       <p className="hero-couple-intro__head">
@@ -504,16 +506,11 @@ function WeddingAppContent({ weddingId, data, introActive, onIntroComplete }: We
                   <HeroParentsContact block={couple.parentsContact} />
                 </div>
               ) : null}
-              <div data-scroll-reveal="" data-scroll-reveal-delay-ms="128">
-                <RsvpAttendanceSection
-                  weddingId={weddingId}
-                  groomName={couple.groom.이름}
-                  brideName={couple.bride.이름}
-                  block={couple.rsvpAttendance}
-                />
-              </div>
-              <div className="wedding-calendar-wrap">
-                <div data-scroll-reveal="" data-scroll-reveal-delay-ms="150">
+              <section className="wedding-calendar-wrap" aria-labelledby="wedding-date-heading">
+                <h2 id="wedding-date-heading" className="wedding-calendar-wrap__title" data-title-en="DATE">
+                  예식일
+                </h2>
+                <div data-scroll-reveal="" data-scroll-reveal-delay-ms="128">
                   <WeddingCalendar weddingDate={WEDDING} />
                 </div>
                 <WeddingFlipCountdown
@@ -521,8 +518,20 @@ function WeddingAppContent({ weddingId, data, introActive, onIntroComplete }: We
                   groomName={couple.groom.이름}
                   brideName={couple.bride.이름}
                 />
+              </section>
+              <div data-scroll-reveal="" data-scroll-reveal-delay-ms="150">
+                <RsvpAttendanceSection
+                  weddingId={weddingId}
+                  groomName={couple.groom.이름}
+                  brideName={couple.bride.이름}
+                  block={couple.rsvpAttendance}
+                />
               </div>
             </div>
+          </section>
+
+          <section id="our-stroy" className="section our-stroy" lang="ko">
+            <h2 data-title-en="OUR STORY">우리 이야기</h2>
             <div className="audio-hint-block" data-scroll-reveal="">
               <p className="hero-audio-hint" role="note">
                 <span ref={heroAudioWaveTrackRef} className="hero-audio-hint__wave-track">
@@ -557,37 +566,62 @@ function WeddingAppContent({ weddingId, data, introActive, onIntroComplete }: We
                 <span className="hero-audio-hint__text">이어폰과 함께 해주세요.</span>
               </p>
             </div>
-          </section>
-
-          <section id="our-stroy" className="section our-stroy" lang="en">
-            <h2>Our Stroy</h2>
-            <div className="our-stroy__body">
-              <HourglassInteractive
-                key={weddingId}
-                weddingId={weddingId}
-                couple={couple}
-                onScrollLockChange={setHourglassScrollLock}
-                onInterludePageChange={setHourglassShellMode}
-              />
+            <div className="our-story-back-preview" data-scroll-reveal="" data-scroll-reveal-delay-ms="120">
+              <figure className="our-story-back-preview__item">
+                <img
+                  className="our-story-back-preview__img"
+                  src={`${weddingAssetBase}static/${encodeURIComponent("Our Story")}/Back/01_boy/back.png`}
+                  alt="우리 이야기 01페이지 배경 이미지"
+                  loading="lazy"
+                  decoding="async"
+                />
+              </figure>
+              <figure className="our-story-back-preview__item">
+                <img
+                  className="our-story-back-preview__img"
+                  src={`${weddingAssetBase}static/${encodeURIComponent("Our Story")}/Back/01_girl/back.png`}
+                  alt="우리 이야기 02페이지 배경 이미지"
+                  loading="lazy"
+                  decoding="async"
+                />
+              </figure>
             </div>
+            <div className="our-story-action" data-scroll-reveal="" data-scroll-reveal-delay-ms="180">
+              <button
+                type="button"
+                className="our-story-action__btn"
+                onClick={() => setOurStoryStartSignal((n) => n + 1)}
+              >
+                연애 스토리 살펴보기
+              </button>
+            </div>
+            <HourglassInteractive
+              key={weddingId}
+              weddingId={weddingId}
+              couple={couple}
+              startSignal={ourStoryStartSignal}
+              hideTrigger
+              onScrollLockChange={setHourglassScrollLock}
+              onInterludePageChange={setHourglassShellMode}
+            />
           </section>
 
           <section id="gallery" className="section wedding-circular-gallery-section" lang="ko" aria-labelledby="gallery-heading">
-            <h2 id="gallery-heading">갤러리</h2>
+            <h2 id="gallery-heading" data-title-en="GALLERY">갤러리</h2>
             <div data-scroll-reveal="" data-scroll-reveal-delay-ms="140">
-              <WeddingCircularGallery weddingId={weddingId} reduceMotion={reduceIntroMotion} />
+              <WeddingGalleryGrid weddingId={weddingId} />
             </div>
           </section>
 
           <section id="guestbook" className="section guestbook" aria-labelledby="guestbook-heading" lang="ko">
-            <h2 id="guestbook-heading">방명록</h2>
+            <h2 id="guestbook-heading" data-title-en="GUESTBOOK">방명록</h2>
             <GuestbookSection weddingId={weddingId} />
           </section>
 
           {wedding.heartAccounts ? <HeartAccountsSection block={wedding.heartAccounts} /> : null}
 
           <section id="directions" className="section directions" aria-labelledby="directions-heading">
-            <h2 id="directions-heading">오시는 길</h2>
+            <h2 id="directions-heading" data-title-en="LOCATION">오시는 길</h2>
             <div className="directions__inner">
               <p className="directions__venue">
                 {wedding.venueName} {wedding.venueHall}
@@ -635,16 +669,25 @@ function WeddingAppContent({ weddingId, data, introActive, onIntroComplete }: We
             ) : null}
           </section>
 
-          <img
-            className="hero-title-photo hero-title-photo--pre-footer"
-            src={`${weddingAssetBase}title-couple.png`}
-            alt={`${couple.groom.성이름}, ${couple.bride.성이름}`}
-            loading="lazy"
-            decoding="async"
-          />
-          <footer className="site-credit" role="contentinfo">
-            <p className="site-credit__text">Powered by With Marry</p>
-          </footer>
+          <section className="closing-photo" aria-label="감사 인사">
+            <img
+              className="hero-title-photo hero-title-photo--pre-footer"
+              src={`${weddingAssetBase}title-couple.png`}
+              alt={`${couple.groom.성이름}, ${couple.bride.성이름}`}
+              loading="lazy"
+              decoding="async"
+            />
+            <div className="closing-photo__message">
+              <p className="closing-photo__heart" aria-hidden="true">
+                ♥
+              </p>
+              <p className="closing-photo__title">THANK YOU</p>
+              <p className="closing-photo__text">저희의 새로운 시작을 응원해 주세요.</p>
+            </div>
+            <footer className="site-credit closing-photo__credit" role="contentinfo">
+              <p className="site-credit__text">Powered by withmarry</p>
+            </footer>
+          </section>
         </main>
         </WeddingHeroScrollInner>
         <WeddingShareFab

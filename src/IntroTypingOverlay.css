@@ -24,12 +24,15 @@
   pointer-events: none;
 }
 
+
 .intro-handwriting {
   display: block;
-  width: min(90vw, 1100px);
+  width: 100%;
+  max-width: min(var(--intro-handwriting-max-w, 600px), 94vw);
   height: auto;
   overflow: visible;
   opacity: 0;
+  font-family: var(--serif, 'Noto Serif KR', serif);
 }
 
 .intro-handwriting--ready {
@@ -48,9 +51,8 @@
 
 @media (max-width: 520px) {
   .intro-handwriting {
-    width: min(94vw, 480px);
+    max-width: min(var(--intro-handwriting-max-w, 94vw), 94vw);
   }
-
   .intro-handwriting__stroke {
     stroke-width: 13;
   }

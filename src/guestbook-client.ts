@@ -221,10 +221,7 @@ export async function adminDeleteGuestbookEntries(
   bearer: string,
   opts: { ids: string[] } | { deleteAll: true }
 ): Promise<{ ok: boolean; removed?: number; error?: string }> {
-  const body =
-    "deleteAll" in opts && opts.deleteAll
-      ? { weddingId, deleteAll: true }
-      : { weddingId, ids: opts.ids };
+  const body = "ids" in opts ? { weddingId, ids: opts.ids } : { weddingId, deleteAll: true };
   const res = await fetch(rsvpApiUrl("/api/guestbook/admin/delete"), {
     method: "POST",
     headers: {

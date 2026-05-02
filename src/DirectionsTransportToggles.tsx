@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { CopyFeedbackToast } from "./CopyFeedbackToast";
 import { copyTextToClipboard } from "./clipboardUtils";
 import { useCopyFeedbackToast } from "./useCopyFeedbackToast";
@@ -18,6 +18,7 @@ export function DirectionsTransportToggles({ block }: Props) {
       Boolean((s.bullets && s.bullets.length > 0) || s.note?.trim())
   );
   const { open, closing, notify, close } = useCopyFeedbackToast();
+  const [openSectionId, setOpenSectionId] = useState<string | null>(null);
 
   const copySearchLine = useCallback(
     (line: string) => {
@@ -33,43 +34,65 @@ export function DirectionsTransportToggles({ block }: Props) {
   return (
     <div className="directions-transport" role="region" aria-label="대중교통 안내">
       <CopyFeedbackToast open={open} closing={closing} onClose={close} />
-      {sections.map((s) => (
-        <details key={s.id} name="directions-transport" className="directions-transport__item">
-          <summary className="directions-transport__summary">
+      {sections.map((s) => {
+        const sectionOpen = openSectionId === s.id;
+        const panelId = `directions-transport-${s.id}`;
+        const buttonId = `directions-transport-${s.id}-button`;
+        return (
+        <div key={s.id} className={`directions-transport__item${sectionOpen ? " directions-transport__item--open" : ""}`}>
+          <button
+            type="button"
+            id={buttonId}
+            className="directions-transport__summary"
+            aria-expanded={sectionOpen}
+            aria-controls={panelId}
+            onClick={() => setOpenSectionId((current) => (current === s.id ? null : s.id))}
+          >
             <span className="directions-transport__summary-title">{s.title}</span>
-          </summary>
-          <div className="directions-transport__body">
-            {s.bullets && s.bullets.length > 0 ? (
-              <ul
-                className={
-                  s.mapSearchBullets
-                    ? "directions-transport__bullets directions-transport__bullets--mapsearch"
-                    : "directions-transport__bullets"
-                }
-              >
-                {s.bullets.map((line, i) => (
-                  <li key={i}>
-                    {s.mapSearchBullets ? (
-                      <button
-                        type="button"
-                        className="directions-transport__mapsearch"
-                        onClick={() => copySearchLine(line)}
-                        aria-label={`검색어 복사: ${searchTextToCopy(line)}`}
-                        title="눌러서 검색어 복사"
-                      >
-                        {line}
-                      </button>
-                    ) : (
-                      line
-                    )}
-                  </li>
-                ))}
-              </ul>
-            ) : null}
-            {s.note?.trim() ? <p className="directions-transport__note">{s.note}</p> : null}
+          </button>
+          <div
+            id={panelId}
+            className="directions-transport__panel"
+            role="region"
+            aria-labelledby={buttonId}
+            aria-hidden={!sectionOpen}
+          >
+            <div className="directions-transport__panel-inner">
+              <div className="directions-transport__body">
+                {s.bullets && s.bullets.length > 0 ? (
+                  <ul
+                    className={
+                      s.mapSearchBullets
+                        ? "directions-transport__bullets directions-transport__bullets--mapsearch"
+                        : "directions-transport__bullets"
+                    }
+                  >
+                    {s.bullets.map((line, i) => (
+                      <li key={i}>
+                        {s.mapSearchBullets ? (
+                          <button
+                            type="button"
+                            className="directions-transport__mapsearch"
+                            onClick={() => copySearchLine(line)}
+                            aria-label={`검색어 복사: ${searchTextToCopy(line)}`}
+                            title="눌러서 검색어 복사"
+                          >
+                            {line}
+                          </button>
+                        ) : (
+                          line
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
+                {s.note?.trim() ? <p className="directions-transport__note">{s.note}</p> : null}
+              </div>
+            </div>
           </div>
-        </details>
-      ))}
+        </div>
+      );
+      })}
     </div>
   );
 }

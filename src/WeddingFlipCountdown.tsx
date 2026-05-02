@@ -172,7 +172,7 @@ export function WeddingFlipCountdown({ targetDate, groomName, brideName }: Props
               <b className="wfc-card__bottom" />
             </b>
           </b>
-          <span className="wfc-slot">Minutes</span>
+          <span className="wfc-slot">Mins</span>
         </span>
         <span ref={secondsRef} className="wfc-piece">
           <b className="wfc-card">
@@ -182,7 +182,7 @@ export function WeddingFlipCountdown({ targetDate, groomName, brideName }: Props
               <b className="wfc-card__bottom" />
             </b>
           </b>
-          <span className="wfc-slot">Seconds</span>
+          <span className="wfc-slot">Secs</span>
         </span>
       </div>
     </section>

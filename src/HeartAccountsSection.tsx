@@ -140,7 +140,7 @@ export function HeartAccountsSection({ block }: Props) {
   return (
     <section id="accounts" className="section heart-accounts" aria-labelledby="heart-accounts-heading" lang="ko">
       <CopyFeedbackToast open={copyPopupOpen} closing={copyPopupClosing} onClose={closeCopyPopup} />
-      <h2 id="heart-accounts-heading" className="heart-accounts__h2">
+      <h2 id="heart-accounts-heading" className="heart-accounts__h2" data-title-en="ACCOUNT">
         {title}
       </h2>
       <div className="heart-accounts__box">

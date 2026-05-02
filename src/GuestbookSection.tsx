@@ -13,17 +13,14 @@ import {
 type Props = { weddingId: string };
 
 type PinGate = { mode: "edit" | "delete"; entry: GuestbookEntry };
+type GuestbookFilterSide = "all" | GuestbookSide;
+type GuestbookSearchMode = "all" | "author" | "body";
+
+const GUESTBOOK_FULL_EXIT_MS = 220;
+const GUESTBOOK_MODAL_EXIT_MS = 220;
 
 function sideLabel(side: GuestbookSide): string {
   return side === "groom" ? "신랑" : "신부";
-}
-
-function formatAt(iso: string): string {
-  try {
-    return new Date(iso).toLocaleString("ko-KR", { dateStyle: "medium", timeStyle: "short" });
-  } catch {
-    return iso;
-  }
 }
 
 /** 브라우저 비밀번호 저장 유도 완화: text + CSS 마스킹 */
@@ -69,6 +66,7 @@ export function GuestbookSection({ weddingId }: Props) {
   const titleEdit = useId();
   const titleDelConfirm = useId();
   const titleDelDone = useId();
+  const titleList = useId();
   const fieldUid = useId().replace(/:/g, "");
 
   const [entries, setEntries] = useState<GuestbookEntry[]>([]);
@@ -80,6 +78,12 @@ export function GuestbookSection({ weddingId }: Props) {
   const [menuDropdownPos, setMenuDropdownPos] = useState<{ top: number; right: number } | null>(null);
   const menuButtonRef = useRef<HTMLButtonElement | null>(null);
   const listScrollRef = useRef<HTMLDivElement | null>(null);
+  const [listOverlayOpen, setListOverlayOpen] = useState(false);
+  const [listOverlayClosing, setListOverlayClosing] = useState(false);
+  const listOverlayTimerRef = useRef<number | null>(null);
+  const [filterSide, setFilterSide] = useState<GuestbookFilterSide>("all");
+  const [searchMode, setSearchMode] = useState<GuestbookSearchMode>("all");
+  const [searchQuery, setSearchQuery] = useState("");
 
   const [composeOpen, setComposeOpen] = useState(false);
   const [side, setSide] = useState<GuestbookSide>("groom");
@@ -103,6 +107,8 @@ export function GuestbookSection({ weddingId }: Props) {
   const [deleteSubmitting, setDeleteSubmitting] = useState(false);
 
   const [deleteSuccessOpen, setDeleteSuccessOpen] = useState(false);
+  const [modalClosing, setModalClosing] = useState(false);
+  const modalCloseTimerRef = useRef<number | null>(null);
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -160,7 +166,20 @@ export function GuestbookSection({ weddingId }: Props) {
     return () => document.removeEventListener("mousedown", onDoc);
   }, [menuOpenEntryId]);
 
-  const closeCompose = useCallback(() => {
+  const beginModalClose = useCallback((reset: () => void) => {
+    if (modalCloseTimerRef.current !== null) {
+      window.clearTimeout(modalCloseTimerRef.current);
+      modalCloseTimerRef.current = null;
+    }
+    setModalClosing(true);
+    modalCloseTimerRef.current = window.setTimeout(() => {
+      reset();
+      setModalClosing(false);
+      modalCloseTimerRef.current = null;
+    }, GUESTBOOK_MODAL_EXIT_MS);
+  }, []);
+
+  const resetCompose = useCallback(() => {
     setComposeOpen(false);
     setSide("groom");
     setAuthorName("");
@@ -169,27 +188,87 @@ export function GuestbookSection({ weddingId }: Props) {
     setFormErr(null);
   }, []);
 
-  const closeGate = useCallback(() => {
+  const closeCompose = useCallback(() => {
+    beginModalClose(resetCompose);
+  }, [beginModalClose, resetCompose]);
+
+  const resetGate = useCallback(() => {
     setPinGate(null);
     setGatePin("");
     setGateErr(null);
     setGateSubmitting(false);
   }, []);
 
-  const closeEditFlow = useCallback(() => {
+  const closeGate = useCallback(() => {
+    beginModalClose(resetGate);
+  }, [beginModalClose, resetGate]);
+
+  const resetEditFlow = useCallback(() => {
     setEditBundle(null);
     setEditName("");
     setEditBody("");
     setEditFormErr(null);
   }, []);
 
-  const closeDeleteFlow = useCallback(() => {
+  const closeEditFlow = useCallback(() => {
+    beginModalClose(resetEditFlow);
+  }, [beginModalClose, resetEditFlow]);
+
+  const resetDeleteFlow = useCallback(() => {
     setDeleteBundle(null);
   }, []);
 
-  const closeDeleteSuccess = useCallback(() => {
+  const closeDeleteFlow = useCallback(() => {
+    beginModalClose(resetDeleteFlow);
+  }, [beginModalClose, resetDeleteFlow]);
+
+  const resetDeleteSuccess = useCallback(() => {
     setDeleteSuccessOpen(false);
   }, []);
+
+  const closeDeleteSuccess = useCallback(() => {
+    beginModalClose(resetDeleteSuccess);
+  }, [beginModalClose, resetDeleteSuccess]);
+
+  const openListOverlay = useCallback(() => {
+    if (listOverlayTimerRef.current !== null) {
+      window.clearTimeout(listOverlayTimerRef.current);
+      listOverlayTimerRef.current = null;
+    }
+    setListOverlayClosing(false);
+    setListOverlayOpen(true);
+  }, []);
+
+  const closeListOverlay = useCallback((immediate = false) => {
+    if (listOverlayTimerRef.current !== null) {
+      window.clearTimeout(listOverlayTimerRef.current);
+      listOverlayTimerRef.current = null;
+    }
+    if (immediate) {
+      setListOverlayClosing(false);
+      setListOverlayOpen(false);
+      return;
+    }
+    setListOverlayClosing(true);
+    listOverlayTimerRef.current = window.setTimeout(() => {
+      setListOverlayOpen(false);
+      setListOverlayClosing(false);
+      listOverlayTimerRef.current = null;
+    }, GUESTBOOK_FULL_EXIT_MS);
+    setMenuOpenEntryId(null);
+  }, []);
+
+  useEffect(
+    () => () => {
+      if (listOverlayTimerRef.current !== null) {
+        window.clearTimeout(listOverlayTimerRef.current);
+      }
+      if (modalCloseTimerRef.current !== null) {
+        window.clearTimeout(modalCloseTimerRef.current);
+      }
+    },
+    []
+  );
 
   const onGateSubmit = useCallback(async () => {
     if (!pinGate || !/^\d{4}$/.test(gatePin)) return;
@@ -206,17 +285,17 @@ export function GuestbookSection({ weddingId }: Props) {
         setEditName(pinGate.entry.authorName);
         setEditBody(pinGate.entry.body);
         setEditFormErr(null);
-        closeGate();
+        resetGate();
       } else {
         setDeleteBundle({ entry: pinGate.entry, pin: gatePin });
-        closeGate();
+        resetGate();
       }
     } catch {
       setGateErr("확인하지 못했습니다. 잠시 후 다시 시도해 주세요.");
     } finally {
       setGateSubmitting(false);
     }
-  }, [closeGate, gatePin, pinGate, weddingId]);
+  }, [gatePin, pinGate, resetGate, weddingId]);
 
   const onSubmitCreate = useCallback(async () => {
     setFormErr(null);
@@ -311,9 +390,14 @@ export function GuestbookSection({ weddingId }: Props) {
     editBundle !== null ||
     deleteBundle !== null ||
     deleteSuccessOpen;
+  const anyOverlayOpen = modalOpen || modalClosing || listOverlayOpen;
 
   const closeTopOverlay = useCallback(() => {
     if (submitting || gateSubmitting || deleteSubmitting) return;
+    if (listOverlayOpen) {
+      closeListOverlay();
+      return;
+    }
     if (deleteSuccessOpen) {
       closeDeleteSuccess();
       return;
@@ -337,6 +421,7 @@ export function GuestbookSection({ weddingId }: Props) {
     closeDeleteSuccess,
     closeEditFlow,
     closeGate,
+    closeListOverlay,
     composeOpen,
     deleteBundle,
     deleteSubmitting,
@@ -345,26 +430,27 @@ export function GuestbookSection({ weddingId }: Props) {
     gateSubmitting,
     pinGate,
     submitting,
+    listOverlayOpen,
   ]);
 
   useEffect(() => {
-    if (!modalOpen) return;
+    if (!anyOverlayOpen) return;
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => {
       document.body.style.overflow = prev;
     };
-  }, [modalOpen]);
+  }, [anyOverlayOpen]);
 
   useEffect(() => {
-    if (!modalOpen) return;
+    if (!anyOverlayOpen) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== "Escape") return;
       closeTopOverlay();
     };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [closeTopOverlay, modalOpen]);
+  }, [anyOverlayOpen, closeTopOverlay]);
 
   const menuEntry = useMemo(
     () => (menuOpenEntryId ? (entries.find((x) => x.id === menuOpenEntryId) ?? null) : null),
@@ -383,6 +469,66 @@ export function GuestbookSection({ weddingId }: Props) {
             ? titleDelDone
             : titleCompose;
 
+  const marqueeEntriesBySide = useMemo(() => {
+    const repeatEntries = (items: GuestbookEntry[]) => {
+      if (items.length === 0) return [];
+      if (items.length === 1) return Array.from({ length: 6 }, () => items[0]);
+      return [...items, ...items];
+    };
+    const groom = entries.filter((entry) => entry.side === "groom");
+    const bride = entries.filter((entry) => entry.side === "bride");
+    return {
+      groom: repeatEntries(groom),
+      bride: repeatEntries(bride),
+    };
+  }, [entries]);
+
+  const filteredEntries = useMemo(() => {
+    const query = searchQuery.trim().toLocaleLowerCase("ko-KR");
+    return entries.filter((entry) => {
+      if (filterSide !== "all" && entry.side !== filterSide) return false;
+      if (!query) return true;
+      const author = entry.authorName.toLocaleLowerCase("ko-KR");
+      const message = entry.body.toLocaleLowerCase("ko-KR");
+      if (searchMode === "author") return author.includes(query);
+      if (searchMode === "body") return message.includes(query);
+      return author.includes(query) || message.includes(query);
+    });
+  }, [entries, filterSide, searchMode, searchQuery]);
+
+  const renderCard = useCallback(
+    (e: GuestbookEntry, key: string, options?: { menu?: boolean }) => (
+      <li key={key} className="guestbook__card">
+        <div className="guestbook__card-row">
+          <div className="guestbook__card-main">
+            <div className="guestbook__card-meta">
+              <span className={`guestbook__badge guestbook__badge--${e.side}`}>{sideLabel(e.side)}측</span>
+            </div>
+            <p className="guestbook__card-body">{e.body}</p>
+            <p className="guestbook__card-from">From {e.authorName}</p>
+          </div>
+          {options?.menu ? (
+            <div className="guestbook__card-menu">
+              <button
+                ref={menuOpenEntryId === e.id ? menuButtonRef : undefined}
+                type="button"
+                className="guestbook__card-more"
+                aria-haspopup="menu"
+                aria-expanded={menuOpenEntryId === e.id}
+                aria-controls={menuOpenEntryId === e.id ? `guestbook-card-menu-${fieldUid}` : undefined}
+                aria-label="방명록 메뉴"
+                onClick={() => setMenuOpenEntryId((id) => (id === e.id ? null : e.id))}
+              >
+                ...
+              </button>
+            </div>
+          ) : null}
+        </div>
+      </li>
+    ),
+    [fieldUid, menuOpenEntryId]
+  );
+
   return (
     <>
       {usedLocalStore ? (
@@ -394,6 +540,14 @@ export function GuestbookSection({ weddingId }: Props) {
         <button type="button" className="guestbook__write-btn" onClick={() => setComposeOpen(true)}>
           작성
         </button>
+        <button
+          type="button"
+          className="guestbook__fullscreen-btn"
+          onClick={openListOverlay}
+          disabled={entries.length === 0 && loading}
+        >
+          전체보기
+        </button>
       </div>
       {listErr ? (
         <p className="guestbook__list-err" role="alert">
@@ -404,42 +558,131 @@ export function GuestbookSection({ weddingId }: Props) {
         {loading && entries.length === 0 ? (
           <p className="guestbook__list-empty">불러오는 중…</p>
         ) : entries.length === 0 ? (
-          <p className="guestbook__list-empty">첫 방명록을 남겨 주세요.</p>
+          <p className="guestbook__list-empty">첫 방명록을 작성해 주세요.</p>
         ) : (
-          <ul className="guestbook__list">
-            {entries.map((e) => (
-              <li key={e.id} className="guestbook__card">
-                <div className="guestbook__card-row">
-                  <div className="guestbook__card-main">
-                    <div className="guestbook__card-meta">
-                      <span className={`guestbook__badge guestbook__badge--${e.side}`}>{sideLabel(e.side)}</span>
-                      <span className="guestbook__card-name">{e.authorName}</span>
-                      <time className="guestbook__card-time" dateTime={e.createdAt}>
-                        {formatAt(e.createdAt)}
-                      </time>
-                    </div>
-                    <p className="guestbook__card-body">{e.body}</p>
-                  </div>
-                  <div className="guestbook__card-menu">
-                    <button
-                      ref={menuOpenEntryId === e.id ? menuButtonRef : undefined}
-                      type="button"
-                      className="guestbook__card-more"
-                      aria-haspopup="menu"
-                      aria-expanded={menuOpenEntryId === e.id}
-                      aria-controls={menuOpenEntryId === e.id ? `guestbook-card-menu-${fieldUid}` : undefined}
-                      aria-label="방명록 메뉴"
-                      onClick={() => setMenuOpenEntryId((id) => (id === e.id ? null : e.id))}
-                    >
-                      ...
-                    </button>
-                  </div>
-                </div>
-              </li>
-            ))}
-          </ul>
+          <div className="guestbook__marquee-board">
+            {marqueeEntriesBySide.groom.length > 0 ? (
+              <div className="guestbook__marquee-lane">
+                <ul className="guestbook__list guestbook__list--marquee guestbook__list--groom-marquee">
+                  {marqueeEntriesBySide.groom.map((e, index) => renderCard(e, `${e.id}-groom-marquee-${index}`))}
+                </ul>
+              </div>
+            ) : null}
+            {marqueeEntriesBySide.bride.length > 0 ? (
+              <div className="guestbook__marquee-lane">
+                <ul className="guestbook__list guestbook__list--marquee guestbook__list--bride-marquee">
+                  {marqueeEntriesBySide.bride.map((e, index) => renderCard(e, `${e.id}-bride-marquee-${index}`))}
+                </ul>
+              </div>
+            ) : null}
+          </div>
         )}
       </div>
+
+      {listOverlayOpen && typeof document !== "undefined"
+        ? createPortal(
+            <div
+              className={`guestbook-full-root${listOverlayClosing ? " guestbook-full-root--closing" : ""}`}
+              role="presentation"
+            >
+              <div className="guestbook-full-backdrop" aria-hidden="true" onClick={() => closeListOverlay()} />
+              <section className="guestbook-full" role="dialog" aria-modal="true" aria-labelledby={titleList}>
+                <div className="guestbook-full__header">
+                  <h3 id={titleList} className="guestbook-full__title">
+                    방명록
+                  </h3>
+                  <button type="button" className="guestbook-full__close" onClick={() => closeListOverlay()} aria-label="닫기">
+                    ×
+                  </button>
+                </div>
+                <div className="guestbook-full__tools" aria-label="방명록 검색">
+                  <div className="guestbook-full__tool-row">
+                    <span className="guestbook-full__tool-label">필터</span>
+                    <div className="guestbook-full__segmented" role="group" aria-label="하객측 필터">
+                      <button
+                        type="button"
+                        className={`guestbook-full__seg-btn${filterSide === "all" ? " is-on" : ""}`}
+                        onClick={() => setFilterSide("all")}
+                      >
+                        전체
+                      </button>
+                      <button
+                        type="button"
+                        className={`guestbook-full__seg-btn${filterSide === "groom" ? " is-on" : ""}`}
+                        onClick={() => setFilterSide("groom")}
+                      >
+                        신랑측
+                      </button>
+                      <button
+                        type="button"
+                        className={`guestbook-full__seg-btn${filterSide === "bride" ? " is-on" : ""}`}
+                        onClick={() => setFilterSide("bride")}
+                      >
+                        신부측
+                      </button>
+                    </div>
+                  </div>
+                  <div className="guestbook-full__tool-row">
+                    <span className="guestbook-full__tool-label">검색</span>
+                    <div className="guestbook-full__segmented" role="group" aria-label="검색 대상">
+                      <button
+                        type="button"
+                        className={`guestbook-full__seg-btn${searchMode === "all" ? " is-on" : ""}`}
+                        onClick={() => setSearchMode("all")}
+                      >
+                        전체
+                      </button>
+                      <button
+                        type="button"
+                        className={`guestbook-full__seg-btn${searchMode === "author" ? " is-on" : ""}`}
+                        onClick={() => setSearchMode("author")}
+                      >
+                        이름
+                      </button>
+                      <button
+                        type="button"
+                        className={`guestbook-full__seg-btn${searchMode === "body" ? " is-on" : ""}`}
+                        onClick={() => setSearchMode("body")}
+                      >
+                        내용
+                      </button>
+                    </div>
+                  </div>
+                  <div className="guestbook-full__search-row">
+                    <input
+                      className="guestbook-full__search-input"
+                      type="search"
+                      value={searchQuery}
+                      onChange={(event) => setSearchQuery(event.target.value)}
+                      placeholder="검색어를 입력해 주세요"
+                      aria-label="방명록 검색어"
+                    />
+                    {searchQuery ? (
+                      <button type="button" className="guestbook-full__clear" onClick={() => setSearchQuery("")}>
+                        지우기
+                      </button>
+                    ) : null}
+                  </div>
+                  <p className="guestbook-full__result-count" aria-live="polite">
+                    {entries.length === 0 ? "0개" : `${filteredEntries.length} / ${entries.length}개`}
+                  </p>
+                </div>
+                <div className="guestbook-full__body">
+                  {entries.length === 0 ? (
+                    <p className="guestbook__list-empty">첫 방명록을 작성해 주세요.</p>
+                  ) : filteredEntries.length === 0 ? (
+                    <p className="guestbook__list-empty">검색 결과가 없습니다.</p>
+                  ) : (
+                    <ul className="guestbook__list guestbook__list--full">
+                      {filteredEntries.map((e) => renderCard(e, `${e.id}-full`, { menu: true }))}
+                    </ul>
+                  )}
+                </div>
+              </section>
+            </div>,
+            document.body
+          )
+        : null}
 
       {menuEntry && menuDropdownPos && typeof document !== "undefined"
         ? createPortal(
@@ -456,6 +699,7 @@ export function GuestbookSection({ weddingId }: Props) {
                   className="guestbook__dropdown-item"
                   onClick={() => {
                     setMenuOpenEntryId(null);
+                    closeListOverlay(true);
                     setPinGate({ mode: "edit", entry: menuEntry });
                     setGatePin("");
                     setGateErr(null);
@@ -471,6 +715,7 @@ export function GuestbookSection({ weddingId }: Props) {
                   className="guestbook__dropdown-item guestbook__dropdown-item--danger"
                   onClick={() => {
                     setMenuOpenEntryId(null);
+                    closeListOverlay(true);
                     setPinGate({ mode: "delete", entry: menuEntry });
                     setGatePin("");
                     setGateErr(null);
@@ -486,7 +731,7 @@ export function GuestbookSection({ weddingId }: Props) {
 
       {modalOpen && typeof document !== "undefined"
         ? createPortal(
-            <div className="guestbook-modal-root" role="presentation">
+            <div className={`guestbook-modal-root${modalClosing ? " guestbook-modal-root--closing" : ""}`} role="presentation">
               <div
                 className="guestbook-modal-backdrop"
                 aria-hidden="true"

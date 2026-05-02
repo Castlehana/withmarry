@@ -1,0 +1,289 @@
+.hero-sakura-petals {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  overflow: hidden;
+  pointer-events: none;
+  perspective: 900px;
+}
+
+.hero-sakura-petals__petal {
+  position: absolute;
+  top: var(--petal-top);
+  left: -32px;
+  width: var(--petal-size);
+  height: var(--petal-size);
+  border-radius: 65% 20% 65% 0;
+  background: rgb(255 255 255 / 0.94);
+  box-shadow:
+    inset 2px 2px 4px rgb(255 255 255 / 0.72),
+    0 1px 6px rgb(0 0 0 / 0.08);
+  opacity: var(--petal-opacity);
+  transform: translate3d(0, 0, var(--petal-z)) rotate(var(--petal-rotate));
+  transform-style: preserve-3d;
+  backface-visibility: hidden;
+  animation: hero-sakura-fall var(--petal-duration) linear infinite;
+  animation-delay: var(--petal-delay);
+}
+
+.hero-sakura-petals__petal::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: rgb(255 255 255 / 0.88);
+  transform: rotateY(180deg);
+  transform-style: preserve-3d;
+  backface-visibility: hidden;
+}
+
+.hero-sakura-petals__petal:nth-child(1) {
+  --petal-top: 4%;
+  --petal-size: 9px;
+  --petal-z: 120px;
+  --petal-rotate: 12deg;
+  --petal-opacity: 0.72;
+  --petal-duration: 11s;
+  --petal-delay: -1.2s;
+  --petal-drift-y: 28dvh;
+  --petal-drift-z: 180px;
+  --petal-spin: 360deg;
+}
+
+.hero-sakura-petals__petal:nth-child(2) {
+  --petal-top: 12%;
+  --petal-size: 12px;
+  --petal-z: 300px;
+  --petal-rotate: -24deg;
+  --petal-opacity: 0.82;
+  --petal-duration: 14s;
+  --petal-delay: -6.8s;
+  --petal-drift-y: 18dvh;
+  --petal-drift-z: 460px;
+  --petal-spin: 520deg;
+}
+
+.hero-sakura-petals__petal:nth-child(3) {
+  --petal-top: 22%;
+  --petal-size: 8px;
+  --petal-z: -120px;
+  --petal-rotate: 44deg;
+  --petal-opacity: 0.58;
+  --petal-duration: 12.5s;
+  --petal-delay: -3.4s;
+  --petal-drift-y: -10dvh;
+  --petal-drift-z: -260px;
+  --petal-spin: 620deg;
+}
+
+.hero-sakura-petals__petal:nth-child(4) {
+  --petal-top: 30%;
+  --petal-size: 11px;
+  --petal-z: 80px;
+  --petal-rotate: 76deg;
+  --petal-opacity: 0.76;
+  --petal-duration: 16s;
+  --petal-delay: -10.1s;
+  --petal-drift-y: -18dvh;
+  --petal-drift-z: 260px;
+  --petal-spin: 720deg;
+}
+
+.hero-sakura-petals__petal:nth-child(5) {
+  --petal-top: 42%;
+  --petal-size: 7px;
+  --petal-z: 240px;
+  --petal-rotate: -58deg;
+  --petal-opacity: 0.62;
+  --petal-duration: 10.5s;
+  --petal-delay: -5.2s;
+  --petal-drift-y: 16dvh;
+  --petal-drift-z: 320px;
+  --petal-spin: 430deg;
+}
+
+.hero-sakura-petals__petal:nth-child(6) {
+  --petal-top: 55%;
+  --petal-size: 13px;
+  --petal-z: -80px;
+  --petal-rotate: 18deg;
+  --petal-opacity: 0.7;
+  --petal-duration: 18s;
+  --petal-delay: -12.5s;
+  --petal-drift-y: -24dvh;
+  --petal-drift-z: -180px;
+  --petal-spin: 840deg;
+}
+
+.hero-sakura-petals__petal:nth-child(7) {
+  --petal-top: 68%;
+  --petal-size: 9px;
+  --petal-z: 420px;
+  --petal-rotate: -12deg;
+  --petal-opacity: 0.84;
+  --petal-duration: 13s;
+  --petal-delay: -8.6s;
+  --petal-drift-y: -30dvh;
+  --petal-drift-z: 520px;
+  --petal-spin: 700deg;
+}
+
+.hero-sakura-petals__petal:nth-child(8) {
+  --petal-top: 78%;
+  --petal-size: 10px;
+  --petal-z: 160px;
+  --petal-rotate: 32deg;
+  --petal-opacity: 0.66;
+  --petal-duration: 15s;
+  --petal-delay: -2.8s;
+  --petal-drift-y: -36dvh;
+  --petal-drift-z: 120px;
+  --petal-spin: 540deg;
+}
+
+.hero-sakura-petals__petal:nth-child(9) {
+  --petal-top: 86%;
+  --petal-size: 8px;
+  --petal-z: -220px;
+  --petal-rotate: -46deg;
+  --petal-opacity: 0.5;
+  --petal-duration: 12s;
+  --petal-delay: -7.2s;
+  --petal-drift-y: -42dvh;
+  --petal-drift-z: -320px;
+  --petal-spin: 760deg;
+}
+
+.hero-sakura-petals__petal:nth-child(10) {
+  --petal-top: 8%;
+  --petal-size: 7px;
+  --petal-z: -60px;
+  --petal-rotate: 8deg;
+  --petal-opacity: 0.55;
+  --petal-duration: 17s;
+  --petal-delay: -14.4s;
+  --petal-drift-y: 34dvh;
+  --petal-drift-z: 80px;
+  --petal-spin: 680deg;
+}
+
+.hero-sakura-petals__petal:nth-child(11) {
+  --petal-top: 18%;
+  --petal-size: 11px;
+  --petal-z: 360px;
+  --petal-rotate: 65deg;
+  --petal-opacity: 0.78;
+  --petal-duration: 11.8s;
+  --petal-delay: -9.9s;
+  --petal-drift-y: 12dvh;
+  --petal-drift-z: 400px;
+  --petal-spin: 580deg;
+}
+
+.hero-sakura-petals__petal:nth-child(12) {
+  --petal-top: 36%;
+  --petal-size: 9px;
+  --petal-z: 40px;
+  --petal-rotate: -32deg;
+  --petal-opacity: 0.68;
+  --petal-duration: 14.4s;
+  --petal-delay: -4.7s;
+  --petal-drift-y: -8dvh;
+  --petal-drift-z: -120px;
+  --petal-spin: 500deg;
+}
+
+.hero-sakura-petals__petal:nth-child(13) {
+  --petal-top: 48%;
+  --petal-size: 12px;
+  --petal-z: 220px;
+  --petal-rotate: 24deg;
+  --petal-opacity: 0.73;
+  --petal-duration: 19s;
+  --petal-delay: -16s;
+  --petal-drift-y: -20dvh;
+  --petal-drift-z: 300px;
+  --petal-spin: 780deg;
+}
+
+.hero-sakura-petals__petal:nth-child(14) {
+  --petal-top: 60%;
+  --petal-size: 8px;
+  --petal-z: -180px;
+  --petal-rotate: -72deg;
+  --petal-opacity: 0.52;
+  --petal-duration: 13.8s;
+  --petal-delay: -11.3s;
+  --petal-drift-y: -28dvh;
+  --petal-drift-z: -260px;
+  --petal-spin: 900deg;
+}
+
+.hero-sakura-petals__petal:nth-child(15) {
+  --petal-top: 72%;
+  --petal-size: 10px;
+  --petal-z: 140px;
+  --petal-rotate: 52deg;
+  --petal-opacity: 0.64;
+  --petal-duration: 16.5s;
+  --petal-delay: -6.1s;
+  --petal-drift-y: -34dvh;
+  --petal-drift-z: 180px;
+  --petal-spin: 640deg;
+}
+
+.hero-sakura-petals__petal:nth-child(16) {
+  --petal-top: 82%;
+  --petal-size: 13px;
+  --petal-z: 480px;
+  --petal-rotate: -18deg;
+  --petal-opacity: 0.8;
+  --petal-duration: 12.8s;
+  --petal-delay: -1.6s;
+  --petal-drift-y: -44dvh;
+  --petal-drift-z: 560px;
+  --petal-spin: 860deg;
+}
+
+.hero-sakura-petals__petal:nth-child(17) {
+  --petal-top: 26%;
+  --petal-size: 7px;
+  --petal-z: -300px;
+  --petal-rotate: 38deg;
+  --petal-opacity: 0.46;
+  --petal-duration: 18.6s;
+  --petal-delay: -13.2s;
+  --petal-drift-y: 4dvh;
+  --petal-drift-z: -360px;
+  --petal-spin: 740deg;
+}
+
+.hero-sakura-petals__petal:nth-child(18) {
+  --petal-top: 94%;
+  --petal-size: 9px;
+  --petal-z: 60px;
+  --petal-rotate: -8deg;
+  --petal-opacity: 0.58;
+  --petal-duration: 15.6s;
+  --petal-delay: -8s;
+  --petal-drift-y: -52dvh;
+  --petal-drift-z: 140px;
+  --petal-spin: 560deg;
+}
+
+@keyframes hero-sakura-fall {
+  0% {
+    transform: translate3d(-8vw, 0, var(--petal-z)) rotate(var(--petal-rotate));
+  }
+
+  100% {
+    transform: translate3d(112vw, var(--petal-drift-y), var(--petal-drift-z))
+      rotate3d(1, 0.35, 0.5, var(--petal-spin));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-sakura-petals {
+    display: none;
+  }
+}

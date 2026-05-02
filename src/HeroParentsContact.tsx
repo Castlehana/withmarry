@@ -91,7 +91,7 @@ type Props = {
 export function HeroParentsContact({ block }: Props) {
   return (
     <div id="hero-parents-contact" className="hero-parents-contact" aria-labelledby="hero-parents-contact-heading">
-      <h2 id="hero-parents-contact-heading" className="hero-parents-contact__title">
+      <h2 id="hero-parents-contact-heading" className="hero-parents-contact__title" data-title-en="CONTACT">
         {block.title}
       </h2>
       <div className="hero-parents-contact__grid">

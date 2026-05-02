@@ -146,10 +146,10 @@ export interface WeddingData {
      * @deprecated 개별 톤(`heroNameTone` 등)이 없을 때만 참고. `black` | `white` 외·생략은 개별 필드에서 흰색 기준으로 처리.
      */
     heroGivenNamesTone?: "black" | "white";
-    /** 히어로 영문 이름(Cinzel) — `black` | `white`만 인정, 그 외·생략 시 `heroGivenNamesTone` 다음 **흰색**. */
-    heroNameTone?: "black" | "white";
-    /** 히어로 WindSong「Save the Date」— 동일 규칙. */
-    heroScriptTone?: "black" | "white";
+    /** 히어로 영문 이름(Cinzel) — `black` | `white` | `darkIvory`, 그 외·생략 시 `heroGivenNamesTone` 다음 **흰색**. */
+    heroNameTone?: "black" | "white" | "darkIvory";
+    /** 히어로 하단 날짜·시간·장소 — 동일 규칙. */
+    heroInfoTone?: "black" | "white";
     /** 히어로 아래로 스크롤 유도 화살표(3칸 애니) — 동일 규칙. */
     heroScrollCueTone?: "black" | "white";
     /**

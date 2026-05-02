@@ -17,6 +17,7 @@ export function HeadsetSineWaves({ containerRef }: Props) {
     if (!canvas || !container) return;
 
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const waveRgb = getComputedStyle(container).getPropertyValue("--audio-wave-rgb").trim() || "42, 63, 92";
 
     if (reduced) {
       const w = Math.max(1, container.clientWidth);
@@ -29,7 +30,7 @@ export function HeadsetSineWaves({ containerRef }: Props) {
       const ctx = canvas.getContext("2d");
       if (!ctx) return;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      ctx.strokeStyle = "rgba(42, 63, 92, 0.28)";
+      ctx.strokeStyle = `rgba(${waveRgb}, 0.28)`;
       ctx.lineWidth = 0.75;
       const mid = h / 2;
       ctx.beginPath();
@@ -76,9 +77,9 @@ export function HeadsetSineWaves({ containerRef }: Props) {
       ],
       resizeEvent() {
         const gradient = this.ctx.createLinearGradient(0, 0, this.width, 0);
-        gradient.addColorStop(0, "rgba(42, 63, 92, 0)");
-        gradient.addColorStop(0.5, "rgba(42, 63, 92, 0.42)");
-        gradient.addColorStop(1, "rgba(42, 63, 92, 0)");
+        gradient.addColorStop(0, `rgba(${waveRgb}, 0)`);
+        gradient.addColorStop(0.5, `rgba(${waveRgb}, 0.42)`);
+        gradient.addColorStop(1, `rgba(${waveRgb}, 0)`);
         for (let i = 0; i < this.waves.length; i++) {
           this.waves[i] = { ...this.waves[i], strokeStyle: gradient };
         }

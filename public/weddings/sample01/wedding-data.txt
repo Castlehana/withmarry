@@ -1,5 +1,6 @@
 # - couple.groom.heroGivenNameEn / couple.bride.heroGivenNameEn — 히어로 위 한 줄 "신랑 신부"(이름만, 대문자 권장). 생략 가능.
-# - wedding.heroNameTone / heroScriptTone / heroScrollCueTone — 히어로 영문·필기체·스크롤 화살표 각각 "black"|"white"만 인정, 그 외·생략은 heroGivenNamesTone → 없으면 흰색.
+# - wedding.heroNameTone — 히어로 영문 이름: "black"|"white"|"darkIvory".
+# - wedding.heroInfoTone / heroScrollCueTone — 하단 날짜장소·스크롤 화살표 각각 "black"|"white"만 인정, 그 외·생략은 heroGivenNamesTone → 없으면 흰색.
 # - wedding.heroGivenNamesTone — (구) 세 요소 공통 fallback.
 # - wedding.heroScrollCuePosition — 스크롤 유도 화살표 세로 위치 1(아래)~10(위), 정수만.
 # - wedding.heroImage — 맨 위 히어로(예: hero.jpg). 같은 이름의 hero.png가 있으면 우선 사용, 없으면 jpg.
@@ -57,9 +58,9 @@
   },
   "wedding": {
     "heroImage": "hero.jpg",
-    "heroNameTone": "black",
-    "heroScriptTone": "black",
-    "heroScrollCueTone": "black",
+    "heroNameTone": "darkIvory",
+    "heroInfoTone": "white",
+    "heroScrollCueTone": "white",
     "heroScrollCuePosition": 4,
     "date": { "year": 2026, "month": 6, "day": 27 },
     "ceremonyTimeLabel": "오후 1시",

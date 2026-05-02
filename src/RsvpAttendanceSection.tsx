@@ -519,7 +519,7 @@ export function RsvpAttendanceSection({ weddingId, groomName, brideName, block }
 
   return (
     <section className="rsvp-attendance" aria-labelledby="rsvp-attendance-heading" lang="ko">
-      <h2 id="rsvp-attendance-heading" className="rsvp-attendance__title">
+      <h2 id="rsvp-attendance-heading" className="rsvp-attendance__title" data-title-en="RSVP">
         참석 여부 전달하기
       </h2>
       <button

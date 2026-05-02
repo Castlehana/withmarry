@@ -55,6 +55,10 @@ export type HourglassInteractiveProps = {
   /** `public/weddings/{id}/` — Our Story·BGM 경로 */
   weddingId: string;
   couple: WeddingData["couple"];
+  /** 외부 버튼 등에서 증가시키면 모래시계 전환 시퀀스를 시작 */
+  startSignal?: number;
+  /** 모래시계 UI는 숨기고 전환/스토리 포털만 사용 */
+  hideTrigger?: boolean;
   /** 모래 흐름·인터루드 동안 스크롤 잠금 */
   onScrollLockChange?: (locked: boolean) => void;
   /** Our Story 셸: `exit-reveal`일 때 본문·헤더를 레이어와 동시에 서서히 표시 */
@@ -105,6 +109,8 @@ const INTERLUDE_HOME_TAP_HINT_SVG = `${import.meta.env.BASE_URL}static/interlude
 export function HourglassInteractive({
   weddingId,
   couple,
+  startSignal,
+  hideTrigger = false,
   onScrollLockChange,
   onInterludePageChange,
 }: HourglassInteractiveProps) {
@@ -175,6 +181,7 @@ export function HourglassInteractive({
     }
   }, [interludeBgmUrl]);
   const storyBgmFadeTokenRef = useRef(0);
+  const prevStartSignalRef = useRef(startSignal);
 
   const storyFolder = useMemo(() => {
     if (!ourStoryPages.length) return "main_page";
@@ -603,7 +610,7 @@ export function HourglassInteractive({
     return () => window.clearTimeout(t);
   }, [interludeOpen, interludeRevealPhase, ourStoryChapterIndex]);
 
-  const applyResolvedStable = useCallback((rawAngle: number, prevStable: 0 | 180) => {
+  const applyResolvedStable = useCallback((rawAngle: number, prevStable: 0 | 180, flashDelayMs = INTERLUDE_FLASH_AFTER_SAND_MS) => {
     const verified = ensureStableOrientation(rawAngle);
     setRotation(verified);
     setStableOrientation(verified);
@@ -626,12 +633,16 @@ export function HourglassInteractive({
       setSandKey((k) => k + 1);
       setSandDrainPlaying(true);
 
-      const tOpen =
-        INTERLUDE_FLASH_AFTER_SAND_MS + INTERLUDE_FLASH_WHITE_MS + INTERLUDE_FLASH_BLACK_MS;
-      const tWhite = window.setTimeout(() => setTransitionFlash("white"), INTERLUDE_FLASH_AFTER_SAND_MS);
+      const tOpen = flashDelayMs + INTERLUDE_FLASH_WHITE_MS + INTERLUDE_FLASH_BLACK_MS;
+      const flashTimeouts: number[] = [];
+      if (flashDelayMs <= 0) {
+        setTransitionFlash("white");
+      } else {
+        flashTimeouts.push(window.setTimeout(() => setTransitionFlash("white"), flashDelayMs));
+      }
       const tBlack = window.setTimeout(
         () => setTransitionFlash("black"),
-        INTERLUDE_FLASH_AFTER_SAND_MS + INTERLUDE_FLASH_WHITE_MS
+        flashDelayMs + INTERLUDE_FLASH_WHITE_MS
       );
       const tInterlude = window.setTimeout(() => {
         /* 인터루드를 먼저 마운트한 뒤 검은 플래시를 걷어야 한 프레임도 본문이 비치지 않음 */
@@ -641,7 +652,7 @@ export function HourglassInteractive({
           requestAnimationFrame(() => setTransitionFlash("off"));
         });
       }, tOpen);
-      transitionFlashTimeoutsRef.current = [tWhite, tBlack, tInterlude];
+      transitionFlashTimeoutsRef.current = [...flashTimeouts, tBlack, tInterlude];
 
       sandCycleTimeoutRef.current = window.setTimeout(() => {
         sandCycleTimeoutRef.current = null;
@@ -686,6 +697,15 @@ export function HourglassInteractive({
     },
     [applyResolvedStable, cancelSnap]
   );
+
+  useEffect(() => {
+    if (startSignal == null) return;
+    if (prevStartSignalRef.current === startSignal) return;
+    prevStartSignalRef.current = startSignal;
+    if (interactionFrozen || isSnappingRef.current) return;
+    prevStableRef.current = 0;
+    applyResolvedStable(180, 0, 0);
+  }, [applyResolvedStable, interactionFrozen, startSignal]);
 
   const onPointerDown = (e: PointerEvent<HTMLDivElement>) => {
     if (interactionFrozen || isSnappingRef.current) return;
@@ -945,16 +965,17 @@ export function HourglassInteractive({
       ref={wrapRef}
       className={`our-stroy__hourglass${sandDrainPlaying ? " our-stroy__hourglass--locked" : ""}${
         interactionFrozen ? " our-stroy__hourglass--interaction-frozen" : ""
+      }${hideTrigger ? " our-stroy__hourglass--hidden-trigger" : ""
       }`.trim()}
       data-stable-orientation={stableOrientation}
       data-sand-pile-on-top={sandPileOnTop ? "true" : "false"}
       aria-label="모래시계. 드래그하여 0도와 180도 사이로 돌릴 수 있습니다."
-      onPointerDown={onPointerDown}
-      onPointerMove={onPointerMove}
-      onPointerUp={endDrag}
-      onPointerCancel={endDrag}
+      onPointerDown={hideTrigger ? undefined : onPointerDown}
+      onPointerMove={hideTrigger ? undefined : onPointerMove}
+      onPointerUp={hideTrigger ? undefined : endDrag}
+      onPointerCancel={hideTrigger ? undefined : endDrag}
     >
-      <div className="our-stroy__hourglass-column">
+      {!hideTrigger ? <div className="our-stroy__hourglass-column">
         <div className="our-stroy__hourglass-visual" aria-hidden>
           <div className="our-stroy__hourglass-rotate" style={{ transform: `rotate(${rotation}deg)` }}>
             <div key={sandDrainPlaying ? `drain-${sandKey}` : "rest"} className="our-stroy__hourglass-dial">
@@ -990,7 +1011,7 @@ export function HourglassInteractive({
         >
           <p className="our-stroy__hourglass-hint-text">모래시계를 돌려 주세요</p>
         </div>
-      </div>
+      </div> : null}
       {flashPortal ? createPortal(flashPortal, document.body) : null}
       {exitFlashPortal ? createPortal(exitFlashPortal, document.body) : null}
       {interludePortal ? createPortal(interludePortal, document.body) : null}

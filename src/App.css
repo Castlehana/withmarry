@@ -1,11 +1,14 @@
 :root {
   --stage: #000;
-  --paper: #fffdf9;
+  --paper: #f7f7f7;
   --ink: #2a2622;
   --muted: #6f675e;
   --line: rgba(42, 38, 34, 0.12);
   --gold: #b08d57;
   --gold-soft: #d4bc91;
+  --rsvp-accent: rgb(112 112 112);
+  --rsvp-accent-dark: rgb(82 82 82);
+  --rsvp-accent-soft: rgb(190 190 190);
   --blush: #f3ebe3;
   --hero-groom: #6a9ec9;
   --hero-bride: #d98a9a;
@@ -232,7 +235,7 @@ body.overflow-lock {
   }
 }
 
-/* 히어로 사진 전체 높이에 본문과 동일 roughpaper 질감 — 이미지 위 */
+/* 히어로 사진 위 roughpaper 질감 */
 .phone-shell.phone-shell--wedding-hero .wedding-hero-sticky__paper-grain {
   position: absolute;
   inset: 0;
@@ -243,7 +246,7 @@ body.overflow-lock {
   opacity: 0.48;
 }
 
-/* 히어로 사진 위 — 영문 이름(Cinzel) + Save the Date(WindSong, 약 -10°). 글자색은 각각 `data-hero-bw-tone` */
+/* 히어로 사진 위 — 영문 이름(Bodoni Moda). 글자색은 `data-hero-bw-tone` */
 .phone-shell.phone-shell--wedding-hero .wedding-hero-sticky__hero-tagline {
   position: absolute;
   inset: 0;
@@ -326,34 +329,42 @@ body.overflow-lock {
 
 .phone-shell.phone-shell--wedding-hero .wedding-hero-sticky__en-names {
   width: 100%;
-  max-width: min(100% - 28px, 28rem);
+  max-width: min(100% - 12px, 26rem);
   margin: 0;
-  font-family: "Cinzel Decorative", "Noto Serif KR", serif;
+  font-family: "Bodoni Moda", "Cinzel Decorative", serif;
   font-weight: 700;
-  font-size: clamp(1.9rem, 8.4vw, 2.7rem);
-  letter-spacing: 0.12em;
+  font-size: clamp(1.45rem, 8.8cqw, 2.75rem);
+  letter-spacing: clamp(0.01em, 0.55cqw, 0.08em);
   line-height: 1.35;
   text-transform: uppercase;
   text-align: center;
-  white-space: normal;
-  overflow-wrap: break-word;
+  white-space: nowrap;
+  overflow: hidden;
 }
 
-.phone-shell.phone-shell--wedding-hero .wedding-hero-sticky__save-the-date-script {
+.phone-shell.phone-shell--wedding-hero .wedding-hero-sticky__event-info {
+  position: absolute;
+  z-index: 2;
+  left: 50%;
+  bottom: clamp(24px, 6.5dvh, 64px);
+  width: min(100% - 40px, 24rem);
+  translate: -50% 0;
   margin: 0;
-  padding: 0;
-  font-family: WindSong, "Noto Serif KR", cursive;
-  font-weight: 400;
-  font-size: clamp(2.4rem, 12vw, 4.25rem);
-  line-height: 1;
-  letter-spacing: 0.02em;
-  transform: rotate(-10deg);
-  transform-origin: center center;
+  font-family: var(--serif);
+  font-size: clamp(0.82rem, 3.4vw, 1rem);
+  font-weight: 600;
+  line-height: 1.6;
+  letter-spacing: 0.08em;
   text-align: center;
+  pointer-events: none;
+}
+
+.phone-shell.phone-shell--wedding-hero .wedding-hero-sticky__event-info p {
+  margin: 0;
 }
 
 .phone-shell.phone-shell--wedding-hero .wedding-hero-sticky__en-names[data-hero-bw-tone="black"],
-.phone-shell.phone-shell--wedding-hero .wedding-hero-sticky__save-the-date-script[data-hero-bw-tone="black"] {
+.phone-shell.phone-shell--wedding-hero .wedding-hero-sticky__event-info[data-hero-bw-tone="black"] {
   color: var(--ink);
   text-shadow:
     0 0 1px rgb(255 253 249 / 0.9),
@@ -362,7 +373,7 @@ body.overflow-lock {
 }
 
 .phone-shell.phone-shell--wedding-hero .wedding-hero-sticky__en-names[data-hero-bw-tone="white"],
-.phone-shell.phone-shell--wedding-hero .wedding-hero-sticky__save-the-date-script[data-hero-bw-tone="white"] {
+.phone-shell.phone-shell--wedding-hero .wedding-hero-sticky__event-info[data-hero-bw-tone="white"] {
   color: rgb(255 253 249 / 0.96);
   text-shadow:
     0 0 1px rgb(42 38 34 / 0.45),
@@ -370,10 +381,19 @@ body.overflow-lock {
     0 0 28px rgb(0 0 0 / 0.25);
 }
 
+.phone-shell.phone-shell--wedding-hero .wedding-hero-sticky__en-names[data-hero-bw-tone="darkIvory"] {
+  color: rgb(198 188 170 / 0.96);
+  text-shadow:
+    0 0 1px rgb(0 0 0 / 0.35),
+    0 1px 3px rgb(0 0 0 / 0.42),
+    0 0 22px rgb(255 253 245 / 0.16);
+}
+
 main.content.content--wedding-hero {
   flex: 0 0 auto;
   width: 100%;
   min-height: 0;
+  padding-bottom: 0;
   /* 음수 margin 없음: 첫 화면은 히어로 이미지 아래에 본문이 이어짐. 스크롤 시 sticky 히어로 위로 본문이 올라가며 겹침 */
   position: relative;
   z-index: 1;
@@ -382,7 +402,7 @@ main.content.content--wedding-hero {
 
 main.content.content--wedding-hero #main.hero {
   margin-top: 0;
-  padding: 60px 0 120px;
+  padding: clamp(18px, 5vw, 28px) 0 120px;
   position: relative;
   z-index: 1;
   /* 스티키 사진은 main(z-index 1) 전체가 가리므로 배경은 투명·연한 틴트만 — 질감 오버레이가 SAVE THE DATE부터 보이게 */
@@ -448,7 +468,6 @@ main.content.content--wedding-hero #main.hero {
   padding: 0 0 120px;
 }
 
-/* 본문 전역: 종이색; roughpaper 질감은 오버레이(`filter: url(#roughpaper)`) */
 main.content {
   background-color: var(--paper);
 }
@@ -461,19 +480,7 @@ main.content {
   pointer-events: none;
 }
 
-/* `main`에 필터를 직접 쓰지 않음 — preserve-3d 갤러리 깨짐 방지 */
-.content__paper-filter-overlay {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  filter: url(#roughpaper);
-  mix-blend-mode: multiply;
-  opacity: 0.48;
-}
-
 @media (prefers-reduced-motion: reduce) {
-  .content__paper-filter-overlay,
   .phone-shell.phone-shell--wedding-hero .wedding-hero-sticky__paper-grain {
     display: none;
   }
@@ -492,7 +499,6 @@ main.content {
   text-align: center;
   padding: 60px 0 120px;
   background-color: transparent;
-  /* 하단까지 불투명 종이색이면 `.content__paper-filter-overlay`가 가려짐 — 본문·히어로 동일 질감 */
   background-image:
     linear-gradient(180deg, rgb(255 253 249 / 0.42) 0%, rgb(255 253 249 / 0.1) 48%, transparent 80%),
     radial-gradient(80% 52% at 50% 0%, rgb(240 230 220 / 0.35) 0%, transparent 70%);
@@ -516,38 +522,6 @@ main.content {
   flex-shrink: 0;
 }
 
-.hero-kicker {
-  font-family: var(--display);
-  font-size: 13px;
-  letter-spacing: 0.35em;
-  text-transform: uppercase;
-  color: var(--gold);
-  margin: 0 0 26px;
-}
-
-.hero-kicker .the-italic {
-  font-style: italic;
-  text-transform: none;
-  letter-spacing: 0.12em;
-  margin: 0 0.2em;
-}
-
-.hero-date-nums {
-  font-family: var(--display);
-  font-size: clamp(2.2rem, 9vw, 2.8rem);
-  font-weight: 400;
-  letter-spacing: 0.25em;
-  margin: 0 0 18px;
-  color: var(--ink);
-}
-
-.hero-date-line {
-  font-size: 14px;
-  color: var(--muted);
-  margin: 0 0 28px;
-  line-height: 1.65;
-}
-
 .hero-title-photo {
   display: block;
   width: calc(100% + 2 * var(--hero-pad-x));
@@ -562,84 +536,56 @@ main.content {
   box-shadow: none;
 }
 
-/* 커플 사진 — Powered(`site-credit`) 바로 위 */
+/* 마지막 감사 이미지 */
+.closing-photo {
+  position: relative;
+  width: 100%;
+  margin: clamp(40px, 10vw, 72px) 0 0;
+  padding: 0;
+  overflow: hidden;
+  color: #fff;
+  background: #111;
+}
+
 .hero-title-photo.hero-title-photo--pre-footer {
   width: 100%;
   max-width: none;
-  margin-left: 0;
-  margin-right: 0;
-  margin-top: clamp(40px, 10vw, 72px);
-  margin-bottom: 20px;
-}
-
-.hero-names {
-  width: 100%;
-  font-family: var(--serif);
-  font-weight: 400;
-  font-size: clamp(1.75rem, 7vw, 2.1rem);
-  margin: 0 0 28px;
-  line-height: 1.55;
-}
-
-.hero-names span {
-  display: block;
-}
-
-.hero-names .ampersand {
-  font-family: var(--display);
-  font-size: 1.5rem;
-  color: var(--gold);
-  margin: 8px 0;
-}
-
-.hero-venue-block {
-  position: relative;
-  z-index: 2;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  margin: 0 0 4px;
-}
-
-.hero-venue {
-  font-size: 14px;
-  color: var(--muted);
   margin: 0;
-  line-height: 1.75;
+  filter: brightness(0.72);
 }
 
-button.hero-venue.hero-venue--copy {
-  display: block;
-  width: 100%;
-  max-width: 100%;
-  font: inherit;
-  letter-spacing: inherit;
+.closing-photo__message {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: min(100% - 48px, 22rem);
+  transform: translate(-50%, -50%);
   text-align: center;
-  border: none;
-  background: none;
-  padding: 0;
-  cursor: pointer;
-  color: inherit;
-  position: relative;
-  touch-action: manipulation;
-  -webkit-tap-highlight-color: transparent;
+  color: #fff;
+  text-shadow: 0 2px 18px rgb(0 0 0 / 0.35);
 }
 
-button.hero-venue.hero-venue--address {
-  font-size: 13px;
-  line-height: 1.6;
-  white-space: normal;
+.closing-photo__heart {
+  margin: 0 0 8px;
+  font-size: clamp(1rem, 4vw, 1.35rem);
+  line-height: 1;
+  color: #fff;
 }
 
-button.hero-venue.hero-venue--copy:hover {
-  color: var(--gold);
+.closing-photo__title {
+  margin: 0;
+  font-family: "Bodoni Moda", var(--serif);
+  font-size: clamp(1.5rem, 7vw, 2.35rem);
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  line-height: 1.1;
 }
 
-button.hero-venue.hero-venue--copy:focus-visible {
-  outline: 2px solid var(--gold);
-  outline-offset: 3px;
-  border-radius: 4px;
+.closing-photo__text {
+  margin: 14px 0 0;
+  font-size: clamp(0.78rem, 3vw, 0.95rem);
+  line-height: 1.7;
+  letter-spacing: 0.04em;
 }
 
 .hero-couple-intro {
@@ -651,12 +597,41 @@ button.hero-venue.hero-venue--copy:focus-visible {
   border-radius: 0;
 }
 
+.profile-circular-gallery {
+  margin: 0 auto var(--hero-block-gap);
+}
+
+.profile-circular-gallery .circular-gallery__scene {
+  min-height: min(22vh, 180px);
+  padding: 5px 0 6px;
+}
+
+.profile-circular-gallery .circular-gallery__assembly {
+  --w: clamp(3.25em, min(26vw, 19vh), 11em);
+}
+
+.profile-circular-gallery .circular-gallery__card {
+  min-height: min(11vw, 70px);
+}
+
+.hero-couple-intro__title {
+  margin: 0 0 clamp(54px, 13vw, 80px);
+  font-family: var(--serif);
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--ink);
+  text-align: center;
+}
+
 .hero-couple-intro__grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 28px 22px;
+  gap: 12px;
   align-items: start;
-  max-width: 100%;
+  justify-items: center;
+  max-width: min(100%, 22rem);
+  margin: 0 auto;
 }
 
 @media (max-width: 340px) {
@@ -670,8 +645,15 @@ button.hero-venue.hero-venue--copy:focus-visible {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
+  gap: 6px;
+  width: 100%;
+  max-width: 9.7rem;
   min-width: 0;
+  padding: 18px 10px 16px;
+  border: 1px solid rgb(224 224 224);
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 12px 30px rgb(40 40 40 / 0.07);
 }
 
 .hero-couple-intro__head {
@@ -680,26 +662,26 @@ button.hero-venue.hero-venue--copy:focus-visible {
   align-items: center;
   justify-content: center;
   gap: 8px 10px;
-  margin: 0 0 2px;
+  margin: 0 0 6px;
   font-size: 15px;
   line-height: 1.5;
 }
 
 .hero-couple-intro__col--groom .hero-couple-intro__role {
-  color: var(--hero-groom);
+  color: rgb(92 92 92);
   font-weight: 600;
   letter-spacing: 0.04em;
 }
 
 .hero-couple-intro__col--bride .hero-couple-intro__role {
-  color: var(--hero-bride);
+  color: rgb(92 92 92);
   font-weight: 600;
   letter-spacing: 0.04em;
 }
 
 .hero-couple-intro__name {
   font-weight: 600;
-  color: var(--ink);
+  color: rgb(54 54 54);
   letter-spacing: -0.02em;
 }
 
@@ -710,19 +692,19 @@ button.hero-venue.hero-venue--copy:focus-visible {
   line-height: 0;
   margin-inline-start: 2px;
   translate: 0 1px;
-  color: #7a654e;
+  color: rgb(112 112 112);
   text-decoration: none;
   border-radius: 4px;
 }
 
 .hero-couple-intro__col--groom .hero-couple-intro__tel-link:hover,
 .hero-couple-intro__col--groom .hero-couple-intro__tel-link:focus-visible {
-  color: var(--hero-groom);
+  color: rgb(68 68 68);
 }
 
 .hero-couple-intro__col--bride .hero-couple-intro__tel-link:hover,
 .hero-couple-intro__col--bride .hero-couple-intro__tel-link:focus-visible {
-  color: var(--hero-bride);
+  color: rgb(68 68 68);
 }
 
 .hero-couple-intro__tel-link:focus-visible {
@@ -737,29 +719,29 @@ button.hero-venue.hero-venue--copy:focus-visible {
 
 .hero-couple-intro__mbti {
   margin: 0;
-  font-size: 14px;
-  line-height: 1.65;
-  color: var(--ink);
+  font-size: 13px;
+  line-height: 1.35;
+  color: rgb(76 76 76);
 }
 
 .hero-couple-intro__mbti-code {
-  color: var(--gold);
+  color: rgb(88 88 88);
   font-weight: 600;
   letter-spacing: 0.04em;
 }
 
 .hero-couple-intro__accent {
   margin: 0;
-  font-size: 14px;
-  line-height: 1.6;
-  color: var(--ink);
+  font-size: 13px;
+  line-height: 1.35;
+  color: rgb(76 76 76);
 }
 
 .hero-couple-intro__desc {
   margin: 0;
-  font-size: 13px;
-  line-height: 1.65;
-  color: var(--ink);
+  font-size: 12.5px;
+  line-height: 1.35;
+  color: rgb(96 96 96);
   letter-spacing: -0.01em;
 }
 
@@ -767,7 +749,7 @@ button.hero-venue.hero-venue--copy:focus-visible {
   margin: 14px 0 0;
   font-size: 13px;
   line-height: 1.65;
-  color: var(--ink);
+  color: rgb(88 88 88);
   letter-spacing: -0.02em;
 }
 
@@ -912,7 +894,7 @@ button.hero-venue.hero-venue--copy:focus-visible {
 
 /* 참석 여부 — `RsvpAttendanceSection.tsx` + 인트로와 동일 편지(静止) */
 .rsvp-attendance {
-  margin: clamp(36px, 10vw, 72px) 0 0;
+  margin: clamp(36px, 10vw, 72px) 0 clamp(44px, 12vw, 86px);
   padding: 0;
   text-align: center;
   background: transparent;
@@ -942,7 +924,7 @@ button.hero-venue.hero-venue--copy:focus-visible {
 }
 
 .rsvp-attendance__trigger:focus-visible {
-  outline: 2px solid var(--gold);
+  outline: 2px solid var(--rsvp-accent);
   outline-offset: 6px;
   border-radius: 12px;
 }
@@ -951,7 +933,7 @@ button.hero-venue.hero-venue--copy:focus-visible {
   display: block;
   width: max-content;
   max-width: 100%;
-  margin: 0 auto;
+  margin: 20px auto 0;
   pointer-events: none;
   transform-origin: 50% 55%;
   animation: introEnvShake 2.6s ease-in-out infinite;
@@ -974,7 +956,7 @@ button.hero-venue.hero-venue--copy:focus-visible {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 24px 18px;
+  padding: 22px 14px;
   background: rgb(0 0 0 / 0.45);
   backdrop-filter: blur(3px);
   opacity: 0;
@@ -989,11 +971,11 @@ button.hero-venue.hero-venue--copy:focus-visible {
 
 .rsvp-attendance__dialog {
   position: relative;
-  width: min(360px, 100%);
-  max-height: min(86vh, 520px);
+  width: min(340px, calc(100vw - 44px), calc(var(--shell-max) - 52px));
+  max-height: min(86vh, 500px);
   overflow: auto;
-  padding: 22px 20px 20px;
-  border-radius: 14px;
+  padding: 18px 16px 16px;
+  border-radius: 12px;
   border: 1px solid var(--line);
   background: rgb(255 253 249 / 0.98);
   color: var(--ink);
@@ -1020,10 +1002,10 @@ button.hero-venue.hero-venue--copy:focus-visible {
 
 .rsvp-attendance__dialog-close {
   position: absolute;
-  top: 10px;
-  right: 10px;
+  top: 8px;
+  right: 8px;
   margin: 0;
-  padding: 6px 10px;
+  padding: 5px 8px;
   border: none;
   border-radius: 8px;
   background: transparent;
@@ -1046,8 +1028,8 @@ button.hero-venue.hero-venue--copy:focus-visible {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   margin: 0;
   padding: 0;
   border: none;
@@ -1065,30 +1047,30 @@ button.hero-venue.hero-venue--copy:focus-visible {
 }
 
 .rsvp-quiz-back:focus-visible {
-  outline: 2px solid var(--gold);
+  outline: 2px solid var(--rsvp-accent);
   outline-offset: 1px;
 }
 
 .rsvp-quiz-back__chev {
   display: block;
   margin-left: -2px;
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 700;
   line-height: 1;
   letter-spacing: 0;
 }
 
 .rsvp-attendance__dialog-title {
-  margin: 0 28px 14px 0;
+  margin: 0 26px 10px 0;
   font-family: var(--serif);
-  font-size: 17px;
+  font-size: 15px;
   font-weight: 600;
   letter-spacing: -0.02em;
   color: var(--ink);
 }
 
 .rsvp-attendance__dialog-body {
-  font-size: 14px;
+  font-size: 13px;
   line-height: 1.65;
   color: var(--ink);
   text-align: left;
@@ -1106,11 +1088,11 @@ button.hero-venue.hero-venue--copy:focus-visible {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  margin-top: 18px;
-  min-height: 46px;
-  padding: 10px 22px;
+  margin-top: 14px;
+  min-height: 40px;
+  padding: 8px 18px;
   border-radius: 999px;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
   text-decoration: none;
   color: var(--paper);
@@ -1122,16 +1104,16 @@ button.hero-venue.hero-venue--copy:focus-visible {
 }
 
 .rsvp-attendance__dialog-cta:focus-visible {
-  outline: 2px solid var(--gold);
+  outline: 2px solid var(--rsvp-accent);
   outline-offset: 2px;
 }
 
 .rsvp-attendance__dialog--form {
   display: flex;
   flex-direction: column;
-  width: min(440px, calc(100% - 12px));
-  max-height: min(92vh, 640px);
-  min-height: min(420px, 90vh);
+  width: min(340px, calc(100vw - 44px), calc(var(--shell-max) - 52px));
+  max-height: min(90vh, 570px);
+  min-height: min(378px, 86vh);
   text-align: left;
 }
 
@@ -1141,20 +1123,20 @@ button.hero-venue.hero-venue--copy:focus-visible {
   align-items: center;
   justify-content: center;
   min-height: 280px;
-  max-height: min(88vh, 520px);
-  padding-top: 36px;
-  padding-bottom: 28px;
+  max-height: min(88vh, 500px);
+  padding-top: 30px;
+  padding-bottom: 24px;
 }
 
 .rsvp-attendance__dialog-title--form {
   text-align: center;
   margin-right: 0;
-  padding-right: 28px;
+  padding-right: 24px;
   flex-shrink: 0;
 }
 
 .rsvp-attendance__dialog-title--with-quiz-back {
-  padding-left: 34px;
+  padding-left: 30px;
 }
 
 /* RSVP 퀴즈 슬라이드 — 한 화면에 질문 하나, 선택 시 다음으로 이동 */
@@ -1211,11 +1193,7 @@ button.hero-venue.hero-venue--copy:focus-visible {
 .rsvp-quiz-milestones__rail-fill {
   height: 100%;
   border-radius: inherit;
-  background: linear-gradient(
-    90deg,
-    color-mix(in srgb, var(--gold) 88%, #a07010),
-    color-mix(in srgb, var(--gold) 70%, #c48a20)
-  );
+  background: linear-gradient(90deg, var(--rsvp-accent-dark), var(--rsvp-accent));
   transition: width 0.38s cubic-bezier(0.33, 1, 0.32, 1);
 }
 
@@ -1251,8 +1229,8 @@ button.hero-venue.hero-venue--copy:focus-visible {
 }
 
 .rsvp-quiz-milestones__step--done .rsvp-quiz-milestones__dot {
-  border-color: color-mix(in srgb, var(--gold) 70%, #a07010);
-  background: color-mix(in srgb, var(--gold) 82%, #c48a20);
+  border-color: var(--rsvp-accent-dark);
+  background: var(--rsvp-accent);
   box-shadow: 0 0 0 1px rgb(0 0 0 / 0.06);
 }
 
@@ -1261,10 +1239,10 @@ button.hero-venue.hero-venue--copy:focus-visible {
   height: 11px;
   margin-top: -1px;
   border-width: 2px;
-  border-color: color-mix(in srgb, var(--gold) 55%, #8a6020);
-  background: color-mix(in srgb, var(--gold) 88%, #fff);
+  border-color: var(--rsvp-accent-dark);
+  background: color-mix(in srgb, var(--rsvp-accent) 72%, #fff);
   box-shadow:
-    0 0 0 3px color-mix(in srgb, var(--gold) 28%, transparent),
+    0 0 0 3px rgb(112 112 112 / 0.18),
     0 1px 2px rgb(0 0 0 / 0.12);
 }
 
@@ -1280,16 +1258,16 @@ button.hero-venue.hero-venue--copy:focus-visible {
   box-sizing: border-box;
   width: calc(100% / 6);
   min-height: 0;
-  padding: 6px 4px 12px;
+  padding: 4px 2px 10px;
   overflow-x: hidden;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
 }
 
 .rsvp-quiz-question {
-  margin: 0 0 12px;
+  margin: 0 0 10px;
   font-family: var(--serif);
-  font-size: clamp(1.02rem, 3.5vw, 1.26rem);
+  font-size: clamp(0.94rem, 3.15vw, 1.08rem);
   font-weight: 600;
   line-height: 1.32;
   text-align: center;
@@ -1298,7 +1276,7 @@ button.hero-venue.hero-venue--copy:focus-visible {
 
 .rsvp-quiz-question::before {
   content: "Q. ";
-  color: var(--gold);
+  color: var(--rsvp-accent);
   font-weight: 700;
 }
 
@@ -1327,7 +1305,7 @@ button.hero-venue.hero-venue--copy:focus-visible {
   justify-content: space-between;
   gap: 10px 8px;
   width: 100%;
-  max-width: min(326px, calc(100% - 4px));
+  max-width: min(288px, calc(100% - 4px));
   margin: 0 auto;
 }
 
@@ -1336,7 +1314,7 @@ button.hero-venue.hero-venue--copy:focus-visible {
   grid-template-columns: 1fr 1fr;
   gap: 10px;
   width: 100%;
-  max-width: min(326px, calc(100% - 4px));
+  max-width: min(288px, calc(100% - 4px));
   margin: 0 auto;
 }
 
@@ -1360,7 +1338,7 @@ button.hero-venue.hero-venue--copy:focus-visible {
 .rsvp-quiz-options--privacy-agree {
   display: block;
   width: 100%;
-  max-width: min(326px, calc(100% - 4px));
+  max-width: min(288px, calc(100% - 4px));
   margin: 12px auto 0;
 }
 
@@ -1372,14 +1350,14 @@ button.hero-venue.hero-venue--copy:focus-visible {
   box-sizing: border-box;
   width: calc((100% - 8px) / 2);
   margin: 0;
-  padding: 0 10px;
+  padding: 0 8px;
   border: none;
-  border-radius: 16px;
-  background: color-mix(in srgb, var(--gold) 82%, #c48a20);
+  border-radius: 13px;
+  background: var(--rsvp-accent);
   font-family: inherit;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
-  line-height: 2.55rem;
+  line-height: 2.3rem;
   text-align: center;
   color: #fff;
   cursor: pointer;
@@ -1428,34 +1406,34 @@ button.hero-venue.hero-venue--copy:focus-visible {
   width: 100%;
   box-sizing: border-box;
   margin: 0;
-  padding: 11px 12px;
+  padding: 9px 10px;
   border-radius: 10px;
   border: 1px solid rgb(0 0 0 / 0.12);
   background: #fff;
   font-family: inherit;
-  font-size: 14px;
+  font-size: 13px;
   color: var(--ink);
 }
 
 .rsvp-input--quiz {
   display: block;
-  max-width: 276px;
-  margin: 0 auto 14px;
+  max-width: 248px;
+  margin: 0 auto 12px;
 }
 
 .rsvp-quiz-next {
   display: block;
   width: 100%;
-  max-width: 184px;
+  max-width: 168px;
   margin: 0 auto;
-  padding: 10px 14px;
+  padding: 9px 12px;
   border: none;
-  border-radius: 16px;
+  border-radius: 13px;
   font-family: inherit;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   color: #fff;
-  background: color-mix(in srgb, var(--gold) 82%, #c48a20);
+  background: var(--rsvp-accent);
   cursor: pointer;
   transition: opacity 0.15s ease, filter 0.15s ease;
 }
@@ -1476,7 +1454,7 @@ button.hero-venue.hero-venue--copy:focus-visible {
 
 .rsvp-quiz-privacy-lead {
   margin: 0 0 12px;
-  font-size: 13px;
+  font-size: 12px;
   line-height: 1.55;
   color: var(--muted);
   text-align: center;
@@ -1513,9 +1491,9 @@ button.hero-venue.hero-venue--copy:focus-visible {
   grid-template-columns: minmax(4.25rem, auto) 1fr;
   gap: 10px 14px;
   align-items: baseline;
-  padding: 10px 14px;
+  padding: 8px 10px;
   border-bottom: 1px solid rgb(0 0 0 / 0.06);
-  font-size: 13px;
+  font-size: 12px;
   line-height: 1.45;
 }
 
@@ -1573,7 +1551,7 @@ button.hero-venue.hero-venue--copy:focus-visible {
 }
 
 .rsvp-privacy__detail-link:hover {
-  color: var(--gold);
+  color: var(--rsvp-accent-dark);
 }
 
 .rsvp-form__external {
@@ -1604,7 +1582,7 @@ button.hero-venue.hero-venue--copy:focus-visible {
   font-weight: 600;
   letter-spacing: 0.02em;
   color: var(--paper);
-  background: color-mix(in srgb, var(--ink) 88%, #6a5c52);
+  background: var(--rsvp-accent-dark);
   cursor: pointer;
   transition: opacity 0.15s ease;
 }
@@ -1614,7 +1592,7 @@ button.hero-venue.hero-venue--copy:focus-visible {
 }
 
 .rsvp-form__submit:focus-visible {
-  outline: 2px solid var(--gold);
+  outline: 2px solid var(--rsvp-accent);
   outline-offset: 2px;
 }
 
@@ -1756,9 +1734,13 @@ button.hero-venue.hero-venue--copy:focus-visible {
   }
 }
 
-/* Our Story 직전 단독 블록(`.audio-hint-block`) — 히어로 하단 120px 패딩과 Our Story 120px 패딩이 간격담당 */
+/* Our Story 제목 아래 이어폰 안내 */
 .audio-hint-block {
   text-align: center;
+}
+
+.our-stroy .audio-hint-block {
+  margin: 0 0 clamp(24px, 7vw, 42px);
 }
 
 /* 히어로 — 혼주 연락 다음, `WeddingCalendar.tsx` (Unsplash·body 배경 없음) */
@@ -1769,9 +1751,18 @@ button.hero-venue.hero-venue--copy:focus-visible {
   overflow: visible;
 }
 
+.wedding-calendar-wrap__title {
+  margin: 0 0 clamp(54px, 13vw, 80px);
+  font-family: var(--serif);
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--ink);
+  text-align: center;
+}
+
 .wedding-calendar {
-  /* 결혼일 강조 — 계절과 무관하게 분홍 고정 */
-  --wcal-highlight: #da89a2;
+  --wcal-highlight: rgb(112 112 112);
   width: 100%;
   background: transparent;
   border-radius: 0;
@@ -1927,11 +1918,70 @@ button.hero-venue.hero-venue--copy:focus-visible {
 }
 
 .section h2 {
+  position: relative;
+  isolation: isolate;
   font-size: 18px;
   font-weight: 600;
   text-align: center;
   margin: 0 0 24px;
   letter-spacing: 0.08em;
+}
+
+h2[data-title-en] {
+  position: relative;
+  isolation: isolate;
+}
+
+h2[data-title-en]::before {
+  content: attr(data-title-en);
+  position: absolute;
+  z-index: -1;
+  left: 50%;
+  top: 50%;
+  translate: -50% -50%;
+  width: max-content;
+  max-width: calc(100vw - 32px);
+  font-family: "Bodoni Moda", "Cormorant Garamond", serif;
+  font-size: calc(3em - 3px);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.12em;
+  color: rgb(220 220 220);
+  opacity: 0.5;
+  text-transform: uppercase;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.invitation {
+  padding: clamp(86px, 22vw, 132px) 0 clamp(32px, 8vw, 48px);
+  text-align: center;
+  background-color: var(--paper);
+}
+
+.invitation h2 {
+  margin-bottom: clamp(78px, 18vw, 118px);
+  color: var(--ink);
+}
+
+.invitation__body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(28px, 7vw, 42px);
+  max-width: min(25rem, 100%);
+  margin: 0 auto;
+  font-family: var(--serif);
+  color: rgb(118 112 106);
+  font-size: clamp(0.78rem, 3vw, 0.9rem);
+  font-weight: 500;
+  line-height: 2.35;
+  letter-spacing: 0.06em;
+  word-break: keep-all;
+}
+
+.invitation__body p {
+  margin: 0;
 }
 
 .directions__inner {
@@ -2118,22 +2168,21 @@ button.directions__address.directions__address--copy:focus-visible {
 }
 
 .directions-transport__summary {
-  list-style: none;
+  width: 100%;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
   padding: 14px 16px;
+  border: none;
+  background: transparent;
+  font-family: inherit;
   font-size: 15px;
   font-weight: 600;
   color: var(--ink);
   letter-spacing: 0.02em;
   cursor: pointer;
   user-select: none;
-}
-
-.directions-transport__summary::-webkit-details-marker {
-  display: none;
 }
 
 .directions-transport__summary::after {
@@ -2147,17 +2196,44 @@ button.directions__address.directions__address--copy:focus-visible {
   transition: transform 0.2s ease;
 }
 
-.directions-transport__item[open] .directions-transport__summary::after {
+.directions-transport__item--open .directions-transport__summary::after {
   transform: rotate(225deg);
   margin-top: 4px;
 }
 
-.directions-transport__item[open] .directions-transport__summary {
+.directions-transport__item--open .directions-transport__summary {
   border-bottom: 1px solid rgb(0 0 0 / 0.06);
+}
+
+.directions-transport__panel {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.42s cubic-bezier(0.22, 1, 0.32, 1);
+}
+
+.directions-transport__item--open .directions-transport__panel {
+  grid-template-rows: 1fr;
+}
+
+.directions-transport__item:not(.directions-transport__item--open) .directions-transport__panel {
+  pointer-events: none;
+}
+
+.directions-transport__panel-inner {
+  min-height: 0;
+  overflow: hidden;
 }
 
 .directions-transport__body {
   padding: 12px 16px 16px;
+  opacity: 0;
+  transform: translateY(-6px);
+  transition: opacity 0.28s ease, transform 0.38s cubic-bezier(0.22, 1, 0.32, 1);
+}
+
+.directions-transport__item--open .directions-transport__body {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 .directions-transport__bullets {
@@ -2214,6 +2290,22 @@ button.directions-transport__mapsearch:hover,
 button.directions-transport__mapsearch:focus-visible {
   color: var(--gold);
   text-decoration-color: var(--gold);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .directions-transport__panel,
+  .directions-transport__body {
+    transition: none;
+  }
+
+  .directions-transport__item--open .directions-transport__body {
+    opacity: 1;
+    transform: none;
+  }
+
+  .directions-transport__item:not(.directions-transport__item--open) .directions-transport__body {
+    opacity: 0;
+  }
 }
 
 /* 오시는 길 위 `HeartAccountsSection.tsx` */
@@ -2322,9 +2414,9 @@ button.directions-transport__mapsearch:focus-visible {
   min-width: 0;
   padding: 0 16px;
   border-radius: 12px;
-  border: 1px solid var(--line);
-  background: #fdfdf9;
-  box-shadow: 0 4px 20px rgb(42 38 34 / 0.06);
+  border: 1px solid rgb(224 224 224);
+  background: #fff;
+  box-shadow: 0 10px 28px rgb(40 40 40 / 0.06);
 }
 
 .heart-accounts__side:first-of-type {
@@ -2396,7 +2488,7 @@ button.directions-transport__mapsearch:focus-visible {
   font-size: 15px;
   font-weight: 600;
   text-align: left;
-  color: var(--ink);
+  color: rgb(68 68 68);
   cursor: pointer;
 }
 
@@ -2409,7 +2501,7 @@ button.directions-transport__mapsearch:focus-visible {
 .heart-accounts__chev {
   flex-shrink: 0;
   font-size: 10px;
-  color: var(--muted);
+  color: rgb(128 128 128);
   transition: transform 0.2s ease;
   display: inline-block;
 }
@@ -2437,15 +2529,15 @@ button.directions-transport__mapsearch:focus-visible {
 .heart-accounts__card {
   padding: 14px 12px 16px;
   border-radius: 10px;
-  background: rgba(255, 255, 253, 0.9);
-  border: 1px solid rgba(42, 38, 34, 0.08);
+  background: rgb(248 248 248);
+  border: 1px solid rgb(228 228 228);
 }
 
 .heart-accounts__sublabel {
   margin: 0 0 12px;
   font-size: 13px;
   font-weight: 600;
-  color: var(--gold);
+  color: rgb(88 88 88);
   letter-spacing: 0.04em;
 }
 
@@ -2463,7 +2555,7 @@ button.directions-transport__mapsearch:focus-visible {
   margin: 0;
   font-size: 14px;
   line-height: 1.5;
-  color: var(--ink);
+  color: rgb(72 72 72);
 }
 
 .heart-accounts__v {
@@ -2484,15 +2576,15 @@ button.directions-transport__mapsearch:focus-visible {
   border: none;
   border-radius: 999px;
   background: transparent;
-  color: var(--muted);
+  color: rgb(128 128 128);
   display: grid;
   place-items: center;
   cursor: pointer;
 }
 
 .heart-accounts__copy-inline:hover {
-  color: var(--ink);
-  background: rgb(42 38 34 / 0.06);
+  color: rgb(68 68 68);
+  background: rgb(40 40 40 / 0.06);
 }
 
 .heart-accounts__actions {
@@ -2511,17 +2603,17 @@ button.directions-transport__mapsearch:focus-visible {
   font-family: inherit;
   font-size: 13px;
   font-weight: 500;
-  border: 1px solid var(--line);
-  background: var(--paper);
-  color: var(--ink);
+  border: 1px solid rgb(218 218 218);
+  background: #fff;
+  color: rgb(68 68 68);
   text-decoration: none;
   cursor: pointer;
   transition: background 0.15s ease, border-color 0.15s ease;
 }
 
 .heart-accounts__btn:hover {
-  background: var(--blush);
-  border-color: rgba(42, 38, 34, 0.12);
+  background: rgb(242 242 242);
+  border-color: rgb(180 180 180);
 }
 
 .heart-accounts__btn--kakao {
@@ -2548,11 +2640,19 @@ button.directions-transport__mapsearch:focus-visible {
   text-align: center;
 }
 
+.site-credit.closing-photo__credit {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 14px;
+  padding: 0;
+}
+
 .site-credit__text {
   margin: 0;
   font-size: 12px;
   letter-spacing: 0.06em;
-  color: var(--muted);
+  color: rgb(255 255 255 / 0.82);
 }
 
 .our-stroy__body {
@@ -2561,57 +2661,204 @@ button.directions-transport__mapsearch:focus-visible {
   align-items: center;
 }
 
-/* 방명록 — 청첩장 `--paper` / `--blush` 아이보리 톤 */
-.guestbook__toolbar {
-  display: flex;
-  justify-content: flex-end;
-  margin: 0 auto 16px;
-  max-width: min(26rem, 100%);
+.our-stroy {
+  background: #000;
+  color: #fff;
 }
 
-.guestbook__write-btn {
-  padding: 10px 22px;
-  border-radius: 999px;
-  border: 1px solid color-mix(in srgb, var(--gold) 42%, var(--line));
-  background: linear-gradient(180deg, #fffefa, var(--blush));
+.our-stroy h2 {
+  color: rgb(255 255 255 / 0.94);
+}
+
+.our-stroy h2[data-title-en]::before {
+  color: rgb(80 80 80);
+  opacity: 0.5;
+}
+
+.our-stroy .hero-audio-hint__text {
+  color: rgb(255 255 255 / 0.72);
+}
+
+.our-stroy .hero-audio-hint__wave-track {
+  --audio-wave-rgb: 255, 255, 255;
+}
+
+.our-stroy .hero-audio-hint__svg {
+  color: rgb(255 255 255 / 0.95);
+  filter: drop-shadow(0 1px 6px rgb(255 255 255 / 0.18));
+}
+
+.our-story-back-preview {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0;
+  width: 100%;
+  margin: clamp(18px, 5vw, 30px) auto 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.our-story-back-preview::before,
+.our-story-back-preview::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.our-story-back-preview::before {
+  background:
+    linear-gradient(90deg, #000 0%, rgb(0 0 0 / 0.55) 7%, transparent 18%, transparent 82%, rgb(0 0 0 / 0.55) 93%, #000 100%);
+}
+
+.our-story-back-preview::after {
+  left: 50%;
+  right: auto;
+  width: clamp(38px, 12vw, 64px);
+  translate: -50% 0;
+  background:
+    linear-gradient(
+      90deg,
+      transparent 0%,
+      rgb(0 0 0 / 0.42) 30%,
+      rgb(0 0 0 / 0.94) 44%,
+      rgb(0 0 0 / 0.94) 56%,
+      rgb(0 0 0 / 0.42) 70%,
+      transparent 100%
+    );
+}
+
+.our-story-back-preview__item {
+  position: relative;
+  margin: 0;
+  min-width: 0;
+  aspect-ratio: 1;
+  overflow: hidden;
+  border: 1px solid rgb(255 255 255 / 0.16);
+  border-radius: 0;
+  background: rgb(255 255 255 / 0.05);
+  box-shadow: 0 18px 40px rgb(0 0 0 / 0.42);
+}
+
+.our-story-back-preview__img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: saturate(0.86) contrast(1.04) brightness(0.92);
+}
+
+.our-story-action {
+  display: flex;
+  justify-content: center;
+  margin: calc(clamp(20px, 6vw, 34px) + 20px) auto 0;
+}
+
+.our-story-action__btn {
+  min-height: 36px;
+  padding: 0 16px;
+  border: 1px solid rgb(255 255 255 / 0.72);
+  border-radius: 10px;
+  background: transparent;
+  color: #fff;
+  font-family: var(--serif);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  box-shadow: 0 12px 28px rgb(0 0 0 / 0.34);
+  cursor: pointer;
+}
+
+.our-story-action__btn:hover {
+  background: rgb(255 255 255 / 0.08);
+}
+
+.our-story-action__btn:focus-visible {
+  outline: 2px solid rgb(255 255 255 / 0.85);
+  outline-offset: 3px;
+}
+
+.our-stroy__hourglass--hidden-trigger {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* 방명록 */
+.guestbook__toolbar {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin: 0 auto 16px;
+  max-width: min(var(--shell-max), 100%);
+}
+
+.guestbook__write-btn,
+.guestbook__fullscreen-btn {
+  padding: 7px 14px;
+  border-radius: 10px;
+  border: 1px solid rgb(210 210 210);
+  background: #fff;
   color: var(--ink);
   font-family: var(--serif);
-  font-size: clamp(0.85rem, 3vw, 0.95rem);
+  font-size: clamp(0.74rem, 2.7vw, 0.82rem);
   font-weight: 600;
   letter-spacing: 0.06em;
   cursor: pointer;
-  box-shadow: 0 2px 14px rgb(42 38 34 / 0.08), inset 0 1px 0 rgb(255 255 255 / 0.85);
+  box-shadow: 0 8px 22px rgb(40 40 40 / 0.06);
 }
 
-.guestbook__write-btn:hover {
-  border-color: var(--gold);
-  color: var(--gold);
+.guestbook__write-btn:hover,
+.guestbook__fullscreen-btn:hover {
+  border-color: rgb(150 150 150);
+  color: rgb(86 86 86);
+}
+
+.guestbook__fullscreen-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
 }
 
 .guestbook__list-err {
   margin: 0 auto 12px;
-  max-width: min(26rem, 100%);
+  max-width: min(var(--shell-max), 100%);
   font-size: 0.88rem;
   color: #9a5348;
   line-height: 1.5;
 }
 
 .guestbook__list-scroll {
-  max-width: min(26rem, 100%);
+  max-width: min(var(--shell-max), 100%);
   width: 100%;
   margin: 0 auto;
-  height: 300px;
-  overflow-y: auto;
+  min-height: 178px;
+  overflow-y: hidden;
   overflow-x: hidden;
-  padding: 10px 8px 14px 6px;
-  border-radius: 14px;
-  border: 1px solid var(--line);
-  background: linear-gradient(180deg, #fffefa, var(--blush));
-  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.9), 0 4px 20px rgb(42 38 34 / 0.06);
+  padding: 18px 0;
+  border-radius: 0;
+  border: 1px solid rgb(230 230 230);
+  background: #fff;
+  box-shadow: 0 10px 30px rgb(42 42 42 / 0.05);
+  mask-image: linear-gradient(90deg, transparent 0, #000 9%, #000 91%, transparent 100%);
+}
+
+.guestbook__marquee-board {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.guestbook__marquee-lane {
+  overflow: hidden;
 }
 
 .guestbook__list-empty {
-  margin: 32px 16px;
+  margin: 48px 16px;
   text-align: center;
   font-size: 0.9rem;
   color: var(--muted);
@@ -2635,7 +2882,7 @@ button.directions-transport__mapsearch:focus-visible {
 }
 
 .guestbook__local-hint {
-  max-width: min(26rem, 100%);
+  max-width: min(var(--shell-max), 100%);
   margin: 0 auto 14px;
   padding: 10px 14px;
   border-radius: 10px;
@@ -2652,17 +2899,42 @@ button.directions-transport__mapsearch:focus-visible {
   margin: 0;
   padding: 0;
   display: flex;
+  flex-direction: row;
+  gap: 12px;
+}
+
+.guestbook__list--marquee {
+  width: max-content;
+  animation: guestbook-marquee 28s linear infinite;
+}
+
+.guestbook__list-scroll:hover .guestbook__list--marquee {
+  animation-play-state: paused;
+}
+
+.guestbook__list--bride-marquee {
+  animation-direction: reverse;
+}
+
+.guestbook__list--full {
   flex-direction: column;
   gap: 12px;
 }
 
 .guestbook__card {
-  padding: 14px 14px 12px;
+  width: min(280px, calc(var(--shell-max) - 56px));
+  height: 138px;
+  padding: 16px 16px 14px;
   border-radius: 12px;
-  border: 1px solid var(--line);
-  background: rgb(255 255 255 / 0.72);
-  box-shadow: 0 2px 12px rgb(42 38 34 / 0.05);
+  border: 1px solid rgb(226 226 226);
+  background: #fff;
+  box-shadow: 0 12px 28px rgb(44 44 44 / 0.08);
   color: var(--ink);
+}
+
+.guestbook__list--full .guestbook__card {
+  width: 100%;
+  height: 150px;
 }
 
 .guestbook__card-row {
@@ -2670,11 +2942,17 @@ button.directions-transport__mapsearch:focus-visible {
   align-items: flex-start;
   justify-content: space-between;
   gap: 10px;
+  height: 100%;
+  min-height: 0;
 }
 
 .guestbook__card-main {
   flex: 1;
   min-width: 0;
+  min-height: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 .guestbook__card-menu {
@@ -2688,8 +2966,8 @@ button.directions-transport__mapsearch:focus-visible {
   height: 2.25rem;
   padding: 0;
   border-radius: 10px;
-  border: 1px solid var(--line);
-  background: rgb(255 255 255 / 0.85);
+  border: 1px solid rgb(216 216 216);
+  background: rgb(255 255 255 / 0.95);
   color: var(--muted);
   font-size: 0.85rem;
   font-weight: 800;
@@ -2700,8 +2978,8 @@ button.directions-transport__mapsearch:focus-visible {
 }
 
 .guestbook__card-more:hover {
-  border-color: color-mix(in srgb, var(--gold) 40%, var(--line));
-  color: var(--gold);
+  border-color: rgb(150 150 150);
+  color: rgb(86 86 86);
 }
 
 /* `position`·`top`·`right`는 포털에서 인라인으로 지정 (스크롤 영역 밖에 표시) */
@@ -2744,28 +3022,26 @@ button.directions-transport__mapsearch:focus-visible {
   flex-wrap: wrap;
   align-items: baseline;
   gap: 8px 10px;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
 }
 
 .guestbook__badge {
-  font-size: 0.68rem;
+  font-size: 0.72rem;
   font-weight: 700;
-  letter-spacing: 0.06em;
-  padding: 3px 8px;
-  border-radius: 6px;
-  border: 1px solid var(--line);
+  letter-spacing: 0.08em;
+  padding: 0;
+  border-radius: 0;
+  border: none;
 }
 
 .guestbook__badge--groom {
-  color: #4a6d8a;
-  border-color: color-mix(in srgb, var(--hero-groom) 35%, var(--line));
-  background: color-mix(in srgb, var(--hero-groom) 12%, #fff);
+  color: rgb(88 88 88);
+  background: transparent;
 }
 
 .guestbook__badge--bride {
-  color: #8f4a5c;
-  border-color: color-mix(in srgb, var(--hero-bride) 35%, var(--line));
-  background: color-mix(in srgb, var(--hero-bride) 12%, #fff);
+  color: rgb(88 88 88);
+  background: transparent;
 }
 
 .guestbook__card-name {
@@ -2783,11 +3059,278 @@ button.directions-transport__mapsearch:focus-visible {
 
 .guestbook__card-body {
   margin: 0;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
   font-size: 0.88rem;
-  line-height: 1.55;
+  line-height: 1.65;
   white-space: pre-wrap;
   word-break: break-word;
   color: color-mix(in srgb, var(--ink) 92%, var(--muted));
+}
+
+.guestbook__card-from {
+  margin: 14px 0 0;
+  flex-shrink: 0;
+  font-size: 0.78rem;
+  font-family: var(--serif);
+  font-style: italic;
+  letter-spacing: 0.03em;
+  color: rgb(128 128 128);
+}
+
+.guestbook-full-root {
+  position: fixed;
+  inset: 0;
+  z-index: 12400;
+  display: grid;
+  place-items: center;
+  padding: 22px 0;
+  pointer-events: none;
+}
+
+.guestbook-full-root--closing {
+  pointer-events: none;
+}
+
+.guestbook-full-backdrop {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: min(var(--shell-max), calc(100vw - 28px));
+  transform: translateX(-50%);
+  background: rgb(245 245 245 / 0.78);
+  backdrop-filter: blur(10px);
+  pointer-events: auto;
+  animation: guestbook-full-backdrop-in 0.24s ease-out both;
+}
+
+.guestbook-full-root--closing .guestbook-full-backdrop {
+  animation: guestbook-full-backdrop-out 0.22s ease-in both;
+}
+
+.guestbook-full {
+  position: relative;
+  z-index: 1;
+  width: min(var(--shell-max), calc(100vw - 28px));
+  height: min(82vh, 760px);
+  max-height: calc(100vh - 44px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 0;
+  border: 1px solid rgb(220 220 220);
+  background: #fff;
+  box-shadow: 0 22px 60px rgb(30 30 30 / 0.18);
+  pointer-events: auto;
+  transform-origin: center;
+  animation: guestbook-full-in 0.24s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.guestbook-full-root--closing .guestbook-full {
+  animation: guestbook-full-out 0.22s ease-in both;
+}
+
+.guestbook-full__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 18px;
+  border-bottom: 1px solid rgb(232 232 232);
+  flex-shrink: 0;
+}
+
+.guestbook-full__title {
+  margin: 0;
+  font-size: 1rem;
+  font-family: var(--serif);
+  letter-spacing: 0.08em;
+  color: var(--ink);
+}
+
+.guestbook-full__close {
+  width: 2.2rem;
+  height: 2.2rem;
+  padding: 0;
+  border: 1px solid rgb(220 220 220);
+  border-radius: 999px;
+  background: #fff;
+  color: rgb(88 88 88);
+  font-size: 1.35rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.guestbook-full__tools {
+  display: grid;
+  gap: 10px;
+  padding: 14px 16px;
+  border-bottom: 1px solid rgb(232 232 232);
+  background: rgb(248 248 248);
+  flex-shrink: 0;
+}
+
+.guestbook-full__tool-row {
+  display: grid;
+  grid-template-columns: 3rem 1fr;
+  align-items: center;
+  gap: 8px;
+}
+
+.guestbook-full__tool-label {
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: rgb(112 112 112);
+}
+
+.guestbook-full__segmented {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 4px;
+  min-width: 0;
+  padding: 3px;
+  border: 1px solid rgb(224 224 224);
+  background: #fff;
+}
+
+.guestbook-full__seg-btn {
+  min-width: 0;
+  height: 30px;
+  padding: 0 6px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: rgb(118 118 118);
+  font-size: 0.76rem;
+  font-family: var(--serif);
+  letter-spacing: 0.02em;
+  cursor: pointer;
+}
+
+.guestbook-full__seg-btn.is-on {
+  background: rgb(105 105 105);
+  color: #fff;
+}
+
+.guestbook-full__search-row {
+  display: flex;
+  gap: 8px;
+}
+
+.guestbook-full__search-input {
+  flex: 1;
+  min-width: 0;
+  height: 38px;
+  padding: 0 12px;
+  border: 1px solid rgb(218 218 218);
+  border-radius: 0;
+  background: #fff;
+  color: var(--ink);
+  font-size: 0.86rem;
+  font-family: var(--serif);
+  outline: none;
+}
+
+.guestbook-full__search-input:focus {
+  border-color: rgb(116 116 116);
+  box-shadow: 0 0 0 3px rgb(116 116 116 / 0.12);
+}
+
+.guestbook-full__clear {
+  flex: 0 0 auto;
+  height: 38px;
+  padding: 0 12px;
+  border: 1px solid rgb(218 218 218);
+  border-radius: 0;
+  background: #fff;
+  color: rgb(104 104 104);
+  font-size: 0.78rem;
+  font-family: var(--serif);
+  cursor: pointer;
+}
+
+.guestbook-full__result-count {
+  margin: 0;
+  text-align: right;
+  font-size: 0.74rem;
+  color: rgb(132 132 132);
+}
+
+.guestbook-full__body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 16px;
+}
+
+@keyframes guestbook-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes guestbook-full-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes guestbook-full-out {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(10px) scale(0.92);
+  }
+}
+
+@keyframes guestbook-full-backdrop-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes guestbook-full-backdrop-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .guestbook__list--marquee {
+    animation: none;
+  }
+
+  .guestbook-full,
+  .guestbook-full-backdrop,
+  .guestbook-full-root--closing .guestbook-full,
+  .guestbook-full-root--closing .guestbook-full-backdrop,
+  .guestbook-modal,
+  .guestbook-modal-backdrop,
+  .guestbook-modal-root--closing .guestbook-modal,
+  .guestbook-modal-root--closing .guestbook-modal-backdrop {
+    animation: none;
+  }
 }
 
 .guestbook-modal--compact {
@@ -2807,8 +3350,13 @@ button.directions-transport__mapsearch:focus-visible {
 .guestbook-modal-backdrop {
   position: absolute;
   inset: 0;
-  background: rgb(42 38 34 / 0.38);
-  backdrop-filter: blur(5px);
+  background: rgb(245 245 245 / 0.74);
+  backdrop-filter: blur(10px);
+  animation: guestbook-modal-backdrop-in 0.24s ease-out both;
+}
+
+.guestbook-modal-root--closing .guestbook-modal-backdrop {
+  animation: guestbook-modal-backdrop-out 0.22s ease-in both;
 }
 
 .guestbook-modal {
@@ -2818,14 +3366,20 @@ button.directions-transport__mapsearch:focus-visible {
   max-height: min(90dvh, 640px);
   display: flex;
   flex-direction: column;
-  border-radius: 18px;
-  border: 1px solid color-mix(in srgb, var(--gold) 22%, var(--line));
-  background: linear-gradient(165deg, #fffefa 0%, var(--blush) 55%, #faf6f0 100%);
+  border-radius: 16px;
+  border: 1px solid rgb(220 220 220);
+  background: #fff;
   box-shadow:
-    0 28px 56px rgb(42 38 34 / 0.14),
+    0 28px 56px rgb(40 40 40 / 0.14),
     inset 0 1px 0 rgb(255 255 255 / 0.95);
   color: var(--ink);
   font-family: var(--serif);
+  transform-origin: center;
+  animation: guestbook-modal-in 0.24s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.guestbook-modal-root--closing .guestbook-modal {
+  animation: guestbook-modal-out 0.22s ease-in both;
 }
 
 .guestbook-modal__form {
@@ -2840,7 +3394,7 @@ button.directions-transport__mapsearch:focus-visible {
   align-items: center;
   justify-content: space-between;
   padding: 16px 18px 12px;
-  border-bottom: 1px solid var(--line);
+  border-bottom: 1px solid rgb(232 232 232);
   flex-shrink: 0;
 }
 
@@ -2855,18 +3409,18 @@ button.directions-transport__mapsearch:focus-visible {
 .guestbook-modal__close {
   width: 36px;
   height: 36px;
-  border: 1px solid var(--line);
+  border: 1px solid rgb(220 220 220);
   border-radius: 10px;
-  background: rgb(255 255 255 / 0.75);
-  color: var(--muted);
+  background: #fff;
+  color: rgb(112 112 112);
   font-size: 1.4rem;
   line-height: 1;
   cursor: pointer;
 }
 
 .guestbook-modal__close:hover:not(:disabled) {
-  border-color: var(--gold-soft);
-  color: var(--gold);
+  border-color: rgb(150 150 150);
+  color: rgb(68 68 68);
 }
 
 .guestbook-modal__close:disabled {
@@ -2886,9 +3440,9 @@ button.directions-transport__mapsearch:focus-visible {
   justify-content: flex-end;
   gap: 10px;
   padding: 12px 18px 16px;
-  border-top: 1px solid var(--line);
+  border-top: 1px solid rgb(232 232 232);
   flex-shrink: 0;
-  background: linear-gradient(180deg, transparent, rgb(255 254 252 / 0.9));
+  background: rgb(250 250 250);
 }
 
 .guestbook-modal__hint {
@@ -2914,7 +3468,7 @@ button.directions-transport__mapsearch:focus-visible {
   margin-bottom: 6px;
   font-size: 0.78rem;
   font-weight: 600;
-  color: color-mix(in srgb, var(--ink) 88%, var(--muted));
+  color: rgb(88 88 88);
 }
 
 .guestbook-modal__side-toggle {
@@ -2926,18 +3480,18 @@ button.directions-transport__mapsearch:focus-visible {
   flex: 1;
   padding: 10px 12px;
   border-radius: 10px;
-  border: 1px solid var(--line);
-  background: rgb(255 255 255 / 0.7);
-  color: var(--muted);
+  border: 1px solid rgb(218 218 218);
+  background: #fff;
+  color: rgb(112 112 112);
   font-family: var(--serif);
   font-size: 0.88rem;
   cursor: pointer;
 }
 
 .guestbook-modal__side-btn.is-on {
-  border-color: color-mix(in srgb, var(--gold) 45%, var(--line));
-  background: color-mix(in srgb, var(--gold-soft) 22%, #fff);
-  color: var(--ink);
+  border-color: rgb(105 105 105);
+  background: rgb(105 105 105);
+  color: #fff;
   font-weight: 600;
 }
 
@@ -2949,7 +3503,7 @@ button.directions-transport__mapsearch:focus-visible {
   display: inline-block;
   padding: 8px 14px;
   border-radius: 10px;
-  border: 1px solid var(--line);
+  border: 1px solid rgb(218 218 218);
   font-size: 0.88rem;
   font-weight: 600;
   background: rgb(255 255 255 / 0.75);
@@ -2957,15 +3511,15 @@ button.directions-transport__mapsearch:focus-visible {
 }
 
 .guestbook-modal__side-pill--groom {
-  border-color: color-mix(in srgb, var(--hero-groom) 35%, var(--line));
-  background: color-mix(in srgb, var(--hero-groom) 10%, #fff);
-  color: #4a6d8a;
+  border-color: rgb(204 204 204);
+  background: rgb(248 248 248);
+  color: rgb(88 88 88);
 }
 
 .guestbook-modal__side-pill--bride {
-  border-color: color-mix(in srgb, var(--hero-bride) 35%, var(--line));
-  background: color-mix(in srgb, var(--hero-bride) 10%, #fff);
-  color: #8f4a5c;
+  border-color: rgb(204 204 204);
+  background: rgb(248 248 248);
+  color: rgb(88 88 88);
 }
 
 .guestbook-modal__input,
@@ -2974,8 +3528,8 @@ button.directions-transport__mapsearch:focus-visible {
   box-sizing: border-box;
   padding: 10px 12px;
   border-radius: 10px;
-  border: 1px solid var(--line);
-  background: rgb(255 255 255 / 0.92);
+  border: 1px solid rgb(218 218 218);
+  background: #fff;
   color: var(--ink);
   font-size: 0.9rem;
   font-family: var(--serif);
@@ -2983,9 +3537,9 @@ button.directions-transport__mapsearch:focus-visible {
 
 .guestbook-modal__input:focus,
 .guestbook-modal__textarea:focus {
-  outline: 2px solid color-mix(in srgb, var(--gold-soft) 65%, transparent);
+  outline: 2px solid rgb(116 116 116 / 0.16);
   outline-offset: 1px;
-  border-color: color-mix(in srgb, var(--gold) 40%, var(--line));
+  border-color: rgb(116 116 116);
 }
 
 .guestbook-modal__input--pin {
@@ -3000,7 +3554,7 @@ button.directions-transport__mapsearch:focus-visible {
   font-family: ui-monospace, monospace;
   font-weight: 700;
   color: var(--muted);
-  background: color-mix(in srgb, var(--blush) 55%, #fff);
+  background: rgb(246 246 246);
   cursor: not-allowed;
 }
 
@@ -3019,8 +3573,8 @@ button.directions-transport__mapsearch:focus-visible {
   margin: 0 0 14px;
   padding: 12px;
   border-radius: 10px;
-  border: 1px solid var(--line);
-  background: rgb(255 255 255 / 0.65);
+  border: 1px solid rgb(224 224 224);
+  background: rgb(248 248 248);
   font-size: 0.86rem;
   color: var(--ink);
 }
@@ -3043,7 +3597,7 @@ button.directions-transport__mapsearch:focus-visible {
   font-size: 0.88rem;
   font-family: var(--serif);
   cursor: pointer;
-  border: 1px solid var(--line);
+  border: 1px solid rgb(218 218 218);
 }
 
 .guestbook-modal__btn:disabled {
@@ -3052,19 +3606,19 @@ button.directions-transport__mapsearch:focus-visible {
 }
 
 .guestbook-modal__btn.ghost {
-  background: rgb(255 255 255 / 0.75);
-  color: var(--muted);
+  background: #fff;
+  color: rgb(104 104 104);
 }
 
 .guestbook-modal__btn.ghost:hover:not(:disabled) {
-  border-color: var(--gold-soft);
-  color: var(--gold);
+  border-color: rgb(150 150 150);
+  color: rgb(68 68 68);
 }
 
 .guestbook-modal__btn.primary {
-  background: linear-gradient(180deg, color-mix(in srgb, var(--gold-soft) 35%, var(--gold)), var(--gold));
-  color: #1a1512;
-  border-color: color-mix(in srgb, var(--gold) 55%, #6a5638);
+  background: rgb(88 88 88);
+  color: #fff;
+  border-color: rgb(88 88 88);
   font-weight: 700;
 }
 
@@ -3073,14 +3627,54 @@ button.directions-transport__mapsearch:focus-visible {
 }
 
 .guestbook-modal__btn.danger {
-  background: linear-gradient(180deg, #f0e0dd, #e8d0cc);
-  color: #6b3530;
-  border-color: color-mix(in srgb, #c45c52 35%, var(--line));
+  background: rgb(238 238 238);
+  color: rgb(88 88 88);
+  border-color: rgb(204 204 204);
   font-weight: 600;
 }
 
 .guestbook-modal__btn.danger:hover:not(:disabled) {
   filter: brightness(0.98);
+}
+
+@keyframes guestbook-modal-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes guestbook-modal-out {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(10px) scale(0.92);
+  }
+}
+
+@keyframes guestbook-modal-backdrop-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes guestbook-modal-backdrop-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
 }
 
 .our-stroy__hourglass {

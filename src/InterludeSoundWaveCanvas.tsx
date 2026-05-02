@@ -32,7 +32,7 @@ export function InterludeSoundWaveCanvas({
     /** 물결 위상(초) — 재생 중엔 보통 속도, 비재생·무음은 느리게만 증가 */
     let phaseElapsedSec = 0;
     let lastRafTime: number | null = null;
-    let tdBuf: Uint8Array<ArrayBuffer> | null = null;
+    let tdBuf: Uint8Array | null = null;
     let smoothedRms = 0;
     const SILENCE_RMS = 0.014;
     let w = 0;
@@ -80,7 +80,7 @@ export function InterludeSoundWaveCanvas({
       const an = waveAnalyserRef.current;
       const fft = an.fftSize;
       if (!tdBuf || tdBuf.length !== fft) {
-        tdBuf = new Uint8Array(new ArrayBuffer(fft)) as Uint8Array<ArrayBuffer>;
+        tdBuf = new Uint8Array(new ArrayBuffer(fft));
       }
       an.getByteTimeDomainData(tdBuf);
       let s = 0;

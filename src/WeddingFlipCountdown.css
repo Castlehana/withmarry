@@ -2,10 +2,21 @@
 
 .wfc-root {
   position: relative;
-  margin-top: clamp(28px, 7vw, 40px);
-  padding: clamp(20px, 5vw, 28px) clamp(8px, 3vw, 16px) clamp(24px, 6vw, 40px);
+  margin-top: clamp(34px, 8vw, 48px);
+  padding: clamp(34px, 8vw, 46px) clamp(8px, 3vw, 16px) clamp(24px, 6vw, 40px);
   text-align: center;
   overflow: visible;
+}
+
+.wfc-root::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: min(18rem, 72%);
+  height: 1px;
+  translate: -50% 0;
+  background: rgb(190 190 190 / 0.42);
 }
 
 .wfc-root *,
@@ -37,35 +48,49 @@
 }
 
 .wfc-flip-clock {
-  text-align: center;
-  perspective: 400px;
-  margin: 12px auto 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: clamp(8px, 3vw, 14px);
+  width: 100%;
+  max-width: min(25rem, 100%);
+  margin: 14px auto 0;
+  perspective: none;
 }
 
 .wfc-piece {
-  display: inline-block;
-  margin: 0 clamp(3px, 1.2vw, 8px);
-  vertical-align: top;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+  min-height: clamp(78px, 20vw, 108px);
+  padding: clamp(11px, 3vw, 17px) 6px;
+  border-radius: clamp(10px, 2.6vw, 16px);
+  background: #fff;
+  box-shadow:
+    inset 0 12px 18px rgb(255 255 255 / 0.96),
+    inset 0 -8px 18px rgb(235 235 235 / 0.2),
+    0 -10px 22px rgb(215 215 215 / 0.22),
+    0 18px 34px rgb(40 40 40 / 0.08);
 }
 
 .wfc-slot {
   display: block;
-  margin-top: 0.55em;
+  margin-top: clamp(8px, 2vw, 12px);
   font-family: var(--serif);
-  font-size: clamp(0.65rem, 2vw, 0.78rem);
-  font-weight: 500;
-  letter-spacing: 0.08em;
-  color: var(--muted);
-  text-transform: capitalize;
+  font-size: clamp(0.48rem, 1.45vw, 0.58rem);
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  color: rgb(176 176 176);
+  text-transform: uppercase;
 }
 
-/* === 카드 본체: 정답 로직 그대로 === */
 .wfc-card {
   display: block;
   position: relative;
-  padding-bottom: 0.72em; /* halfHeight */
-  font-size: clamp(1.5rem, 7vw, 2.4rem);
-  line-height: 0.95;
+  padding: 0;
+  font-size: clamp(1rem, 4.2vw, 1.42rem);
+  line-height: 1;
+  filter: none;
 }
 
 .wfc-card__top,
@@ -73,37 +98,29 @@
 .wfc-card__back::before,
 .wfc-card__back::after {
   display: block;
-  height: 0.72em;
-  color: #d97a95; /* 핑크 글자 */
-  background: #f5ecdf; /* 아이보리 윗면 */
-  padding: 0.25em 0.25em;
-  border-radius: 0.15em 0.15em 0 0;
+  height: auto;
+  color: rgb(64 64 64);
+  background: transparent;
+  padding: 0;
+  border-radius: 0;
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
   transform-style: preserve-3d;
-  width: 1.8em;
+  width: 100%;
   transform: translateZ(0);
   font-family: var(--serif);
-  font-weight: 600;
+  font-weight: 500;
   font-variant-numeric: tabular-nums;
   text-align: center;
 }
 
 .wfc-card__bottom {
-  color: #cf6b88; /* 아랫면은 살짝 더 진한 핑크 */
-  position: absolute;
-  top: 50%;
-  left: 0;
-  border-top: solid 1px rgba(42, 38, 34, 0.12);
-  background: #fffaf2; /* 아랫면은 좀 더 밝은 아이보리 */
-  border-radius: 0 0 0.15em 0.15em;
-  pointer-events: none;
-  overflow: hidden;
+  display: none;
 }
 
 .wfc-card__bottom::after {
   display: block;
-  margin-top: -0.72em;
+  margin-top: -0.88em;
 }
 
 .wfc-card__back::before,
@@ -112,11 +129,7 @@
 }
 
 .wfc-card__back {
-  position: absolute;
-  top: 0;
-  height: 100%;
-  left: 0;
-  pointer-events: none;
+  display: none;
 }
 
 .wfc-card__back::before {
@@ -125,25 +138,19 @@
   overflow: hidden;
 }
 
-/* === Days 칸은 3자리 대비 더 넓게 === */
 .wfc-card--days .wfc-card__top,
 .wfc-card--days .wfc-card__bottom,
 .wfc-card--days .wfc-card__back::before,
 .wfc-card--days .wfc-card__back::after {
-  width: 2.3em;
+  width: 100%;
 }
 
-/* === 플립 애니메이션 === */
 .wfc-piece--flip .wfc-card__back::before {
-  animation: wfc-flip-top 0.3s cubic-bezier(0.37, 0.01, 0.94, 0.35);
-  animation-fill-mode: both;
-  transform-origin: center bottom;
+  animation: none;
 }
 
 .wfc-piece--flip .wfc-card__back .wfc-card__bottom {
-  transform-origin: center top;
-  animation-fill-mode: both;
-  animation: wfc-flip-bottom 0.6s cubic-bezier(0.15, 0.45, 0.28, 1);
+  animation: none;
 }
 
 @keyframes wfc-flip-top {
